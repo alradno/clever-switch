@@ -1,8 +1,11 @@
 """Pointer position only. No character keys, clicks or clipboard are captured."""
 
 import dataclasses
+import logging
 import sys
 import time
+
+log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -37,9 +40,17 @@ class Edge:
         )
         at_edge = sample.x <= sample.left + 1 if self.side == "left" else sample.x >= sample.left + sample.width - 2
         corners = not sample.top + 40 <= sample.y < sample.top + sample.height - 40
+        if self.latched:
+            # Arrival parks the pointer 24 px inside the screen. It must travel
+            # farther inward before another crossing, even after cooldown ends.
+            inward = sample.x - sample.left if self.side == "left" else sample.left + sample.width - 1 - sample.x
+            if in_screen and sample.safe and inward >= 80:
+                self.latched = False
+                log.info("Edge rearmed after inward movement side=%s", self.side)
+            self.since = None
+            return None
         if not at_edge or not in_screen:
             self.since = None
-            self.latched = False
             return None
         if not sample.safe or corners or now < self.blocked_until or self.latched:
             self.since = None
@@ -48,6 +59,7 @@ class Edge:
             self.since = now
         if now - self.since >= self.dwell:
             self.latched = True
+            log.info("Edge triggered side=%s", self.side)
             return max(0.0, min(1.0, (sample.y - sample.top) / sample.height))
         return None
 
