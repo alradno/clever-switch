@@ -26,6 +26,24 @@ def paired(tmp_path):
     return a, b
 
 
+@pytest.fixture
+def paired_tls(paired):
+    # macOS does not bind arbitrary 127/8 addresses without configuring aliases.
+    # Distinct certificates still authenticate two peers on independent TCP ports.
+    for pairing in paired:
+        config = pairing.load()
+        config["address"] = config["peer"]["address"] = "127.0.0.1"
+        pairing.save(config)
+    return paired
+
+
+def start_tls_peers(la, lb):
+    la.start()
+    lb.start()
+    # Link.port is the peer's RPC port after each listener has bound its own port.
+    la.port, lb.port = lb.port, la.port
+
+
 class Devices:
     def __init__(self, host, owners, events):
         self.host, self.owners, self.events = host, owners, events
@@ -156,12 +174,10 @@ def test_private_network_boundaries():
             private_network(network, "192.168.1.2")
 
 
-def test_tls_real_two_peer_switch_and_reverse(paired, tmp_path):
+def test_tls_real_two_peer_switch_and_reverse(paired_tls, tmp_path):
     a, b, c, d, da, db, owners, events = machines(tmp_path)
-    la, lb = Link(paired[0], da.handle, 0), Link(paired[1], db.handle, 0)
-    la.start()
-    lb.port = la.port
-    lb.start()
+    la, lb = Link(paired_tls[0], da.handle, 0), Link(paired_tls[1], db.handle, 0)
+    start_tls_peers(la, lb)
     try:
         ca, cb = Coordinator(a, c, la, da), Coordinator(b, d, lb, db)
         run(ca, y=0.7)
@@ -180,16 +196,16 @@ def test_tls_real_two_peer_switch_and_reverse(paired, tmp_path):
         lb.close()
 
 
-def test_tls_rejects_unknown_client_and_replay(paired, tmp_path):
-    server = Link(paired[0], lambda op, args: {"ready": True}, 0)
-    client = Link(paired[1], lambda op, args: {}, 0)
+def test_tls_rejects_unknown_client_and_replay(paired_tls, tmp_path):
+    server = Link(paired_tls[0], lambda op, args: {"ready": True}, 0)
+    client = Link(paired_tls[1], lambda op, args: {}, 0)
     server.start()
     client.port = server.port
     try:
         unknown = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         unknown.check_hostname = False
         unknown.verify_mode = ssl.CERT_NONE
-        with socket.create_connection(("127.0.0.1", server.port), source_address=("127.0.0.2", 0)) as raw:
+        with socket.create_connection(("127.0.0.1", server.port), source_address=(client.address, 0)) as raw:
             with unknown.wrap_socket(raw) as secure:
                 send(secure, {"link": server.config["link"], "id": "a" * 32, "op": "ready", "args": {}})
                 with pytest.raises((OSError, ConnectionError)):
@@ -197,7 +213,7 @@ def test_tls_rejects_unknown_client_and_replay(paired, tmp_path):
         assert client.call("ready") == {"ready": True}
         request = {"link": server.config["link"], "id": "a" * 32, "op": "ready", "args": {}}
         for index in range(2):
-            with socket.create_connection(("127.0.0.1", server.port), source_address=("127.0.0.2", 0)) as raw:
+            with socket.create_connection(("127.0.0.1", server.port), source_address=(client.address, 0)) as raw:
                 with client.client_context.wrap_socket(raw) as secure:
                     send(secure, request)
                     if index == 0:
@@ -207,7 +223,7 @@ def test_tls_rejects_unknown_client_and_replay(paired, tmp_path):
                             receive(secure)
         for change in ({"op": "shell"}, {"link": "wrong"}, {"args": []}, {"extra": True}, {"id": 1}):
             invalid = {**request, "id": "b" * 32, **change}
-            with socket.create_connection(("127.0.0.1", server.port), source_address=("127.0.0.2", 0)) as raw:
+            with socket.create_connection(("127.0.0.1", server.port), source_address=(client.address, 0)) as raw:
                 with client.client_context.wrap_socket(raw) as secure:
                     send(secure, invalid)
                     with pytest.raises(ConnectionError):
@@ -643,7 +659,7 @@ def test_commit_stays_pending_then_lease_returns_inputs_if_radio_never_recovers(
 
 
 @pytest.mark.parametrize("host", [0, 1])
-def test_real_tls_repeated_handoffs_with_lost_responses(paired, tmp_path, host):
+def test_real_tls_repeated_handoffs_with_lost_responses(paired_tls, tmp_path, host):
     a, b, c, d, da, db, owners, events = machines(tmp_path)
     faults = set()
 
@@ -659,10 +675,8 @@ def test_real_tls_repeated_handoffs_with_lost_responses(paired, tmp_path, host):
 
         return receive
 
-    la, lb = Link(paired[0], handler(da), 0), Link(paired[1], handler(db), 0)
-    la.start()
-    lb.port = la.port
-    lb.start()
+    la, lb = Link(paired_tls[0], handler(da), 0), Link(paired_tls[1], handler(db), 0)
+    start_tls_peers(la, lb)
     try:
         ca, cb = Coordinator(a, c, la, da), Coordinator(b, d, lb, db)
         owners.update(mouse=host, keyboard=host)

@@ -10,7 +10,7 @@ from cleverswitch.tray import dialogs
 
 def test_windows_cursor_reads_position_and_filters_drag_and_secure_desktop(mocker):
     api = Mock()
-    mocker.patch("ctypes.WinDLL", return_value=api)
+    mocker.patch("ctypes.WinDLL", return_value=api, create=True)
     api.OpenInputDesktop.return_value = 42
     api.GetUserObjectInformationW.side_effect = lambda handle, key, name, size, out: (
         setattr(name, "value", "Default") or True
@@ -109,7 +109,7 @@ def test_mac_cursor_permissions_lock_drag_and_pointer_placement(mocker):
 def test_windows_pairing_dialog_uses_native_file_picker_without_side_effects(mocker):
     api = Mock()
     mocker.patch.object(sys, "platform", "win32")
-    mocker.patch("ctypes.WinDLL", return_value=api)
+    mocker.patch("ctypes.WinDLL", return_value=api, create=True)
     choose = mocker.patch(
         "cleverswitch.tray.windows_dialog.choose_file", return_value=__import__("pathlib").Path("enlace.json")
     )

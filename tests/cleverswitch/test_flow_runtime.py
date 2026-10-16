@@ -349,3 +349,11 @@ def test_cleanup_still_closes_network_when_recovery_journal_fails():
     hardware.close.assert_called_once()
     assert runtime.link is None
     assert "Cierre incompleto" in runtime.status()
+
+
+def test_manual_reconnect_clears_stale_error_before_retry():
+    runtime = Runtime(context())
+    runtime.error = "Cambio bloqueado; revisa la sesión y los permisos"
+    runtime.reconnect_now()
+    assert runtime.error is None
+    assert "manual" in runtime._events()
