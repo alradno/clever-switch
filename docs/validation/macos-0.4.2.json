@@ -1,0 +1,52 @@
+{
+  "edition": "0.4.2",
+  "protocol": 2,
+  "base_commit": "83c8bd6dd2d4f5a37aa9b2dcfa4f34b748ec8326",
+  "observed_at": "2026-10-16T20:11:52.107748+02:00",
+  "os": "26.6.2",
+  "os_build": "25G83",
+  "architecture": "arm64",
+  "tests_passed": 646,
+  "tests_excluded": 0,
+  "coverage_percent": 91.2,
+  "new_tests": 20,
+  "additional_platform_assertions": 2,
+  "regression_cases_observed_failing_before_fix": 17,
+  "real_tls_simulated_handoffs": 12,
+  "deliberately_lost_acknowledgements": 48,
+  "ruff_check_passed": true,
+  "ruff_format_passed": true,
+  "native_build_passed": true,
+  "signature_valid": true,
+  "installed_path": "/Applications/CleverSwitchTray.app",
+  "installed_matches_native_build": true,
+  "bundled_edition": "0.4.2",
+  "executable_sha256": "df831eeaf7096bec09d593dea6b3cd55b348a3369a94da45002a89da667bcf2c",
+  "native_sigterm_exit_seconds": 0.45,
+  "preview_exit_code": 0,
+  "identity_pairing_startup_unchanged": true,
+  "app_relaunched": true,
+  "physical_stability_validated": false,
+  "windows_build_tested": false,
+  "permissions_granted_automatically": false,
+  "permissions_renewal_pending": [
+    "Bluetooth",
+    "Accessibility"
+  ],
+  "changes": [
+    "Cancel unfinished GATT writes; never repeat an ambiguous channel switch through HID",
+    "Require safe inward cursor motion after startup, reconstruction and manual return",
+    "Confirm manual return despite a lost reply, within eight seconds; suppress immediate reverse transfers",
+    "Continue returning the other device if one fails; wake passive checks for manual recovery",
+    "Defer cursor placement while buttons/modifiers are held without renewing the lease",
+    "Attempt configured TLS peer even when UDP announcement fails; close partial UDP listeners",
+    "Discard stale follow/peer state on disconnect and clear errors after a verified commit",
+    "Wake passive discovery and tray on shutdown without periodic polling"
+  ],
+  "limits": [
+    "Device movement and OS input states were simulated in tests",
+    "A cancelled Bluetooth write may already have reached the device; arrival proofs resolve its outcome",
+    "A radio that never responds or an unavailable peer still requires the physical 1/2 buttons",
+    "Native startup, preview and SIGTERM closure checked; live bidirectional peripheral acceptance pending"
+  ]
+}
