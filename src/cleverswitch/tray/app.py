@@ -52,6 +52,15 @@ class Controller:
         self.context.policy.observe_only = True
         self.context.policy.set_background_suspended(True)
 
+        def shutdown_wakeup():
+            # SIGTERM sets shutdown, while passive discovery/menu wait on other
+            # events. Bridge that event without introducing periodic polling.
+            self.context.shutdown.wait()
+            self.context.policy.wake_background()
+            self.refresh_event.set()
+
+        threading.Thread(target=shutdown_wakeup, name="cleverswitch-shutdown", daemon=True).start()
+
         def run_engine():
             try:
                 discover(self.context)
@@ -412,8 +421,8 @@ def run(preview=False, preview_seconds=0):
         controller.refresh_event.set()
 
     def recover(icon, item):
-        if controller.flow and controller.flow.coordinator:
-            controller.flow.coordinator.recover()
+        if controller.flow:
+            controller.flow.recover()
 
     def reconnect(icon, item):
         if controller.flow:

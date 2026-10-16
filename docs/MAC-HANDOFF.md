@@ -13,7 +13,11 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Versión integrada `0.4.1`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Versión actual `0.4.2`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- La revisión posterior está en `validation/macos-0.4.2.json`; conserva la base
+  integrada y corrige envío Bluetooth duplicado, recuperación manual, rearme tras
+  reconexión, botones pulsados al llegar y errores de UDP. Las cifras de 0.4.1
+  que siguen son la validación histórica de la integración inicial.
 - Código, compilador, dependencias fijadas, pruebas e instrucciones en este repositorio.
 - Windows x64 compilado y examinado con Defender, sin detecciones.
 - 615 pruebas y cobertura 91,47 % en Windows; Ruff correcto.
@@ -67,7 +71,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.1 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.2 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir

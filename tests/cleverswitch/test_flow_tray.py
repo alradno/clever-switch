@@ -73,7 +73,7 @@ def test_tray_pairing_menu_and_actions_never_start_hardware(case, tmp_path, mock
         pairing.export_invitation.assert_called_once()
         controller.flow.toggle_edges.assert_called_once()
         menu["Traer ratón y teclado aquí"](icon)
-        controller.flow.coordinator.recover.assert_called_once()
+        controller.flow.recover.assert_called_once()
         next(iter(network))(icon)
         pairing.load.return_value = {"role": "windows"}
         menu["Actualizar la red del enlace"](icon)
@@ -102,3 +102,31 @@ def test_controller_starts_and_stops_flow_independently(mocker):
     controller.stop()
     second.close.assert_called_once()
     controller.context.shutdown.set.assert_called_once()
+
+
+def test_shutdown_signal_wakes_passive_discovery_and_tray(mocker):
+    import threading
+    from types import SimpleNamespace
+
+    from cleverswitch.policy import PairPolicy
+
+    ctx = SimpleNamespace(policy=PairPolicy(), shutdown=threading.Event())
+    entered = threading.Event()
+
+    def discover(context):
+        entered.set()
+        context.policy.wait_background(context.shutdown)
+
+    mocker.patch("cleverswitch.setup.app_setup.setup_context", return_value=ctx)
+    mocker.patch("cleverswitch.discovery.discovery.discover", side_effect=discover)
+    controller = app.Controller()
+    mocker.patch.object(controller, "start_flow")
+    controller.start()
+    try:
+        assert entered.wait(1)
+        ctx.shutdown.set()  # The production SIGTERM handler sets this event.
+        controller.worker.join(1)
+        assert not controller.worker.is_alive()
+        assert controller.refresh_event.wait(1)
+    finally:
+        controller.stop()

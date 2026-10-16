@@ -36,7 +36,7 @@ def test_windows_cursor_reads_position_and_filters_drag_and_secure_desktop(mocke
         cursor.enter("left", 0.5)
     api.GetAsyncKeyState.return_value = 0x8000
     assert not cursor.sample().safe
-    with pytest.raises(OSError):
+    with pytest.raises(BlockingIOError):
         cursor.enter("left", 0.5)
     api.GetAsyncKeyState.return_value = 0
     api.OpenInputDesktop.return_value = 0
@@ -91,7 +91,7 @@ def test_mac_cursor_permissions_lock_drag_and_pointer_placement(mocker):
         cursor.enter("left", 0.5)
     q.CGEventSourceFlagsState.return_value = 1
     assert not cursor.sample().safe
-    with pytest.raises(OSError):
+    with pytest.raises(BlockingIOError):
         cursor.enter("left", 0.5)
     q.CGEventSourceFlagsState.return_value = 0
     accessibility.AXIsProcessTrusted.return_value = False

@@ -103,6 +103,35 @@ def test_retry_budget_is_finite_and_passive_after_a_day():
     assert budget.wait() is None
 
 
+def test_udp_send_failure_still_attempts_configured_tls_peer(tmp_path, mocker):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker)
+    discovery.announce.side_effect = OSError("UDP unavailable")
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True, "protocol": 2}
+    runtime.wake("startup")
+    runtime._step()
+    link.call.assert_called_once_with("ready", timeout=2)
+    assert runtime.peer_ready and runtime.mode == "online"
+
+
+def test_edge_dwell_is_not_consumed_during_transfer_quiet_period(tmp_path, mocker):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker)
+    runtime._connect()
+    runtime.peer_ready = True
+    runtime.enabled = True
+    runtime.budget.authenticated()
+    runtime.edge = Mock()
+    runtime.edge.poll.return_value = 0.5
+    hardware.device.return_value = object()
+    runtime.coordinator.can_start.return_value = False
+    runtime._step()
+    runtime.edge.poll.assert_not_called()
+    runtime.coordinator.request.assert_not_called()
+    runtime.coordinator.can_start.return_value = True
+    runtime._step()
+    runtime.coordinator.request.assert_called_once_with("edge", 0.5)
+
+
 @pytest.mark.parametrize("role", ["windows", "mac"])
 def test_absent_peer_stops_all_active_work_in_both_directions(tmp_path, mocker, role):
     runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)

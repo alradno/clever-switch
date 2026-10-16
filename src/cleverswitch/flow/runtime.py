@@ -89,6 +89,7 @@ class Runtime:
             self.hardware = Hardware(self.context)
             host = 0 if config["role"] == "windows" else 1
             self.edge = Edge("right" if host == 0 else "left")
+            self.edge.cooldown()  # A parked cursor after startup/resume is not a new crossing.
             self.destination = Destination(self.hardware, self.cursor, host, self.pairing.directory / "return.json")
             self.destination.arrived = self.edge.cooldown
             self.link = Link(self.pairing, self._handle)
@@ -102,6 +103,8 @@ class Runtime:
             try:
                 self.discovery.start()
             except OSError:
+                self.discovery.close()
+                self.discovery = None
                 log.debug("LAN announcements unavailable; configured address and manual reconnect remain usable")
             self.error = None
 
@@ -228,6 +231,9 @@ class Runtime:
                         log.debug("Local component cleanup failed")
             self.coordinator = self.destination = self.link = self.discovery = self.hardware = None
             self.peer_ready = False
+            self.peer_info = {}
+            self.follow_candidate = None
+            self.next_follow = 0
 
     def _attempt(self):
         self._evaluate()
@@ -237,7 +243,10 @@ class Runtime:
             if self.link is None:
                 self._connect()
             if self.seek_allowed and self.discovery:
-                self.discovery.announce()
+                try:
+                    self.discovery.announce()
+                except OSError:
+                    log.debug("LAN announcement failed; trying the configured TLS peer")
             self.peer_info = self.link.call("ready", timeout=2)
             self.budget.authenticated()
             self.peer_ready = True
@@ -297,7 +306,7 @@ class Runtime:
                 wait = local_wait if wait is None else min(wait, local_wait)
             return wait  # None -> no timer, waits only for an event.
         mouse_here = self.hardware.device("mouse", connected=True) is not None
-        if self.enabled and mouse_here and not self.coordinator.busy.locked() and self.hardware.allowed():
+        if self.enabled and mouse_here and self.coordinator.can_start() and self.hardware.allowed():
             y = self.edge.poll(self.cursor.sample())
             if y is not None:
                 self.coordinator.request("edge", y)
@@ -391,6 +400,12 @@ class Runtime:
     def reconnect_now(self):
         self.error = None
         self.wake("manual")
+
+    def recover(self):
+        if self.coordinator and self.coordinator.recover():
+            self.wake("recovery")  # Resume presence checks even from passive standby.
+            return True
+        return False
 
     def close(self):
         self.stop_event.set()

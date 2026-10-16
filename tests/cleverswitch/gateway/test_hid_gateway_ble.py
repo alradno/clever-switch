@@ -656,3 +656,66 @@ def test_do_write_logs_gatt_transport_on_success(caplog):
 
     assert any("Wrote via GATT" in r.message for r in caplog.records)
     client.write_gatt_char.assert_called_once()
+
+
+def test_timed_out_gatt_switch_is_cancelled_and_never_resent_via_hid():
+    gw, _ = _ble_write_gateway()
+    transport = MagicMock()
+    msg = bytes.fromhex("11ff041f01000000000000000000000000000000")
+    with patch("cleverswitch.gateway.hid_gateway_ble.asyncio.run_coroutine_threadsafe") as submit:
+        future = submit.return_value
+        future.result.side_effect = TimeoutError("ATT acknowledgement lost")
+        gw._do_write(transport, msg)
+    future.cancel.assert_called_once()
+    transport.write_output_report.assert_not_called()
+
+
+def test_failed_gatt_switch_is_not_repeated_after_remote_disconnect():
+    gw, _ = _ble_write_gateway()
+    transport = MagicMock()
+    with patch("cleverswitch.gateway.hid_gateway_ble.asyncio.run_coroutine_threadsafe") as submit:
+        submit.return_value.result.side_effect = OSError("channel changed before ATT reply")
+        gw._do_write(transport, bytes.fromhex("11ff041f01000000000000000000000000000000"))
+    transport.write_output_report.assert_not_called()
+
+
+def test_timed_out_gatt_query_cancels_pending_write_before_hid_fallback():
+    gw, _ = _ble_write_gateway()
+    transport = MagicMock()
+    msg = bytes.fromhex("11ff001800004200000000000000000000000000")
+    with patch("cleverswitch.gateway.hid_gateway_ble.asyncio.run_coroutine_threadsafe") as submit:
+        future = submit.return_value
+        future.result.side_effect = TimeoutError("ATT delayed")
+        transport.write_output_report.side_effect = lambda data: future.cancel.assert_called_once()
+        gw._do_write(transport, msg)
+    transport.write_output_report.assert_called_once_with(msg)
+
+
+def test_pending_gatt_coroutine_cannot_issue_switch_after_timeout():
+    gw, _ = _make_gw()
+    transport = MagicMock()
+    issued = []
+
+    async def scenario():
+        release = asyncio.Event()
+        cancelled = asyncio.Event()
+
+        async def write(*args, **kwargs):
+            try:
+                await release.wait()
+                issued.append(args)
+            except asyncio.CancelledError:
+                cancelled.set()
+                raise
+
+        gw._ble_loop = asyncio.get_running_loop()
+        gw._ble_client = MagicMock()
+        gw._ble_client.write_gatt_char = write
+        await asyncio.to_thread(gw._do_write, transport, bytes.fromhex("11ff041f01000000000000000000000000000000"))
+        await asyncio.wait_for(cancelled.wait(), 1)
+        release.set()
+        await asyncio.sleep(0)
+
+    asyncio.run(scenario())
+    assert not issued
+    transport.write_output_report.assert_not_called()

@@ -357,3 +357,67 @@ def test_manual_reconnect_clears_stale_error_before_retry():
     runtime.reconnect_now()
     assert runtime.error is None
     assert "manual" in runtime._events()
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_reconnect_requires_inward_motion_before_edge_can_fire(role, tmp_path, mocker):
+    from cleverswitch.flow.cursor import Sample
+
+    now = [0.0]
+    mocker.patch("cleverswitch.flow.cursor.time.monotonic", side_effect=lambda: now[0])
+    pairing = Mock(directory=tmp_path)
+    pairing.load.return_value = {"role": role}
+    runtime = Runtime(context(), pairing)
+    mocker.patch("cleverswitch.flow.runtime.native_cursor")
+    mocker.patch("cleverswitch.flow.runtime.Hardware")
+    mocker.patch("cleverswitch.flow.runtime.Link")
+    mocker.patch("cleverswitch.flow.runtime.Discovery")
+    for _ in range(2):  # Startup and reconstruction after sleep/network changes.
+        runtime._connect()
+        runtime.edge.clock = lambda: now[0]
+        edge_sample = Sample(999 if role == "windows" else 0, 400, 0, 0, 1000, 800)
+        now[0] += 10
+        assert runtime.edge.poll(edge_sample) is None
+        now[0] += 1
+        assert runtime.edge.poll(edge_sample) is None
+        runtime._disconnect()
+
+
+def test_failed_discovery_start_closes_partial_listener(tmp_path, mocker):
+    pairing = Mock(directory=tmp_path)
+    pairing.load.return_value = {"role": "mac"}
+    runtime = Runtime(context(), pairing)
+    mocker.patch("cleverswitch.flow.runtime.native_cursor")
+    mocker.patch("cleverswitch.flow.runtime.Hardware")
+    mocker.patch("cleverswitch.flow.runtime.Link")
+    discovery = mocker.patch("cleverswitch.flow.runtime.Discovery").return_value
+    discovery.start.side_effect = OSError("UDP port already occupied")
+    runtime._connect()
+    discovery.close.assert_called_once()
+    assert runtime.discovery is None
+    runtime._disconnect()
+
+
+def test_disconnect_discards_old_follow_evidence_and_peer_status():
+    runtime = Runtime(context())
+    runtime.follow_candidate = 1
+    runtime.next_follow = 20
+    runtime.peer_info = {"ready": False, "protocol": 1}
+    runtime._disconnect()
+    assert runtime.follow_candidate is None
+    assert runtime.next_follow == 0
+    assert runtime.peer_info == {}
+
+
+def test_manual_recovery_wakes_presence_checks_from_standby():
+    runtime = Runtime(context())
+    runtime.mode = "standby"
+    runtime.context.policy.set_background_suspended(True)
+    assert not runtime.recover()
+    runtime.coordinator = Mock()
+    runtime.coordinator.recover.return_value = True
+    assert runtime.recover()
+    assert runtime.wake_event.is_set() and "recovery" in runtime._events()
+    runtime.coordinator.recover.return_value = False
+    assert not runtime.recover()
+    assert not runtime.wake_event.is_set()

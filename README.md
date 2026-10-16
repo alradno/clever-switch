@@ -3,12 +3,21 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión de esta edición: **0.4.1**, protocolo **2**. Ambos equipos deben ejecutar
+Versión de esta edición: **0.4.2**, protocolo **2**. Ambos equipos deben ejecutar
 protocolo 2 para utilizar el traslado coordinado; para la protección del borde,
-actualiza ambos a 0.4.1. Actualizar la app conserva
+actualiza ambos a 0.4.2. Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
+
+La revisión 0.4.2 corrige fallos reproducidos en la recuperación: evita repetir
+órdenes de canal tras perder una respuesta Bluetooth, protege el borde también
+al reiniciar y al regresar manualmente, y espera a soltar botones/modificadores
+durante la llegada antes de colocar el cursor. La recuperación manual comprueba
+la llegada incluso si se pierde su respuesta y permite hasta 8 segundos para
+Bluetooth. Un fallo de UDP ya no impide intentar el enlace TLS configurado.
+El cierre por señal despierta también los componentes en espera pasiva.
+La evidencia y las limitaciones están en [validación 0.4.2](docs/validation/macos-0.4.2.json).
 
 La versión anterior consiguió traslados físicos en ambos sentidos, pero el usuario
 observó dispositivos separados, devoluciones inesperadas y fallos intermitentes.
@@ -24,7 +33,10 @@ alternos con TLS real y 48 respuestas perdidas deliberadamente, tres arranques y
 cierres de la vista previa compilada, Defender sin detecciones. Los dispositivos
 de esas pruebas están simulados. La app ARM64 no se ha compilado desde Windows.
 
-- [Validación nativa de Mac 0.4.1](docs/validation/macos-0.4.1.json): 626 pruebas
+- [Validación nativa de Mac 0.4.2](docs/validation/macos-0.4.2.json): 646 pruebas,
+  cobertura 91,20 %, compilación, firma, vista previa y cierre nativo correctos.
+  Instalada y arrancada; permisos y aceptación física pendientes.
+- [Validación histórica de Mac 0.4.1](docs/validation/macos-0.4.1.json): 626 pruebas
   sin exclusiones, cobertura 90,66 %, compilación ARM64 y vista previa correctas.
   Instalada en Aplicaciones; permisos de la nueva firma y prueba física pendientes.
 - [Continuar en Windows](docs/WINDOWS-HANDOFF.md): actualizar desde este mismo repositorio.

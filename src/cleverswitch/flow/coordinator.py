@@ -84,16 +84,22 @@ class Destination:
 
     def _settled(self):
         self.quiet_until = self.clock() + 3
-        if self.owns_gate:
-            self.owns_gate = False
-            self.gate.release()
-        self.arrived()
+        try:
+            self.arrived()
+        finally:
+            if self.owns_gate:
+                self.owns_gate = False
+                self.gate.release()
 
     def _return(self):
         # Cleanup is permitted even if paused/locked: do not strand a half-switch.
         for role in ("keyboard", "mouse"):
-            if self.hardware.probe(role):
-                self.hardware.switch(role, 1 - self.host)
+            try:
+                if self.hardware.probe(role):
+                    self.hardware.switch(role, 1 - self.host)
+            except (OSError, RuntimeError):
+                # A disconnect between probe and write must not skip the other device.
+                log.warning("Could not return %s; continuing cleanup of the other device", role)
 
     def _abort(self):
         log.warning("Returning incomplete transfer host=%s tx=%s", self.host + 1, self.state["tx"])
@@ -137,8 +143,10 @@ class Destination:
                     try:
                         self._return()
                     finally:
-                        self.quiet_until = self.clock() + 3
-                        self.gate.release()
+                        try:
+                            self._settled()
+                        finally:
+                            self.gate.release()
                 return {"returned": True}  # Command attempted; source still must prove arrival.
             if op == "prepare":
                 if "protocol" not in args or args["protocol"] != PROTOCOL:
@@ -219,6 +227,10 @@ class Destination:
                 if self.state["kind"] == "edge":
                     try:
                         self.cursor.enter("left" if self.host == 1 else "right", self.state["y"])
+                    except BlockingIOError:
+                        # Do not warp during a drag or undo an arrival for a brief
+                        # button/modifier press. Retry within the unchanged lease.
+                        return {"phase": "keyboard", "pending": True}
                     except OSError:
                         self._abort()
                         return {"phase": "aborted"}
@@ -386,6 +398,7 @@ class Coordinator:
                 except (OSError, ValueError):
                     pass  # The destination's independent lease attempts return.
             if committed:
+                self.last_error = None
                 self.status = "Cambio confirmado en el otro equipo"
                 self._note("committed")
             elif sent_mouse:
@@ -402,7 +415,10 @@ class Coordinator:
                 self.status = "Cambio bloqueado: " + self.last_error
         finally:
             self.suppressed_until = self.clock() + 3
-            self.busy.release()
+            try:
+                self.destination.arrived()
+            finally:
+                self.busy.release()
 
     def keyboard_event(self, event):
         if not self.hardware.allowed() or self.clock() < self.suppressed_until or self.busy.locked():
@@ -427,23 +443,36 @@ class Coordinator:
         return True
 
     def recover(self):
-        if not self.busy.acquire(blocking=False):
+        if self.stop_event.is_set() or not self.busy.acquire(blocking=False):
             return False
 
         def run():
             try:
-                self.link.call("return")
-                deadline = self.clock() + 5
+                self.status = "Comprobando el regreso del ratón y teclado…"
+                try:
+                    result = self.link.call("return")
+                    if result.get("returned") is False:
+                        self.status = "Regreso bloqueado: hay otro traslado en curso"
+                        return
+                except (OSError, ValueError):
+                    # The return may have happened before its ACK was lost. Do not
+                    # repeat it: fresh local proofs settle the result either way.
+                    pass
+                deadline = self.clock() + 8
                 while self.clock() < deadline and not self.stop_event.is_set():
                     if self.hardware.probe("mouse") and self.hardware.probe("keyboard"):
                         self.status = "Ratón y teclado confirmados aquí"
                         return
                     self.stop_event.wait(0.2)
                 self.status = "Regreso sin confirmar; usa los botones físicos 1/2"
-            except (OSError, ValueError):
-                self.status = "Otro equipo no disponible; usa los botones físicos 1/2"
+            except (OSError, ValueError, RuntimeError):
+                self.status = "Regreso sin confirmar; usa los botones físicos 1/2"
             finally:
-                self.busy.release()
+                self.suppressed_until = self.clock() + 3
+                try:
+                    self.destination.arrived()
+                finally:
+                    self.busy.release()
 
         self.worker = threading.Thread(target=run, name="flow-return", daemon=True)
         self.worker.start()

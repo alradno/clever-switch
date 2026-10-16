@@ -122,7 +122,7 @@ class WindowsCursor:
     def enter(self, side, y):
         sample = self.sample()
         if not sample.safe:
-            raise OSError("La sesión no permite colocar el cursor")
+            raise BlockingIOError("Espera a soltar los botones y modificadores para colocar el cursor")
         x = 24 if side == "left" else sample.width - 25
         if not self.api.SetCursorPos(int(x), int(max(40, min(sample.height - 41, y * sample.height)))):
             raise OSError("No se pudo colocar el cursor")
@@ -179,7 +179,7 @@ class MacCursor:
     def enter(self, side, y):
         sample = self.sample()
         if not sample.safe:
-            raise OSError("La sesión no permite colocar el cursor")
+            raise BlockingIOError("Espera a soltar los botones y modificadores para colocar el cursor")
         x = sample.left + (24 if side == "left" else sample.width - 25)
         result = self.api.CGWarpMouseCursorPosition(
             (x, sample.top + max(40, min(sample.height - 41, y * sample.height)))

@@ -453,6 +453,85 @@ def test_manual_recovery_freshly_confirms_return(tmp_path):
     assert not ca.request()
 
 
+def test_manual_recovery_confirms_arrival_even_when_return_ack_is_lost(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    owners.update(mouse=1, keyboard=1)
+    base = LocalLink(db)
+
+    class LostReturnAck:
+        def call(self, op, args=None, timeout=3):
+            base.call(op, args, timeout)
+            raise OSError("return processed but acknowledgement lost")
+
+    ca = Coordinator(a, c, LostReturnAck(), da)
+    assert ca.recover()
+    ca.worker.join(2)
+    assert owners == {"mouse": 0, "keyboard": 0}
+    assert "confirmados aquí" in ca.status
+    assert base.calls == ["return"]  # Never duplicate a radio command on an ambiguous ACK.
+
+
+def test_manual_recovery_allows_bluetooth_arrival_after_five_seconds(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    owners.update(mouse=1, keyboard=1)
+    now = [0.0]
+    ca = Coordinator(a, c, LocalLink(db), da, clock=lambda: now[0])
+    probe = a.probe
+    a.probe = lambda role: now[0] >= 6 and probe(role)
+    ca.stop_event = Mock()
+    ca.stop_event.is_set.return_value = False
+    ca.stop_event.wait.side_effect = lambda dt: now.__setitem__(0, now[0] + dt) or False
+    assert ca.recover()
+    ca.worker.join(2)
+    assert "confirmados aquí" in ca.status
+    assert 6 <= now[0] < 8
+
+
+def test_manual_recovery_latches_both_edges_and_enforces_quiet_period(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    owners.update(mouse=1, keyboard=1)
+    now = [0.0]
+    ca = Coordinator(a, c, LocalLink(db), da, clock=lambda: now[0])
+    ea, eb = Edge("right", clock=lambda: now[0]), Edge("left", clock=lambda: now[0])
+    da.arrived, db.arrived = ea.cooldown, eb.cooldown
+    assert ca.recover()
+    ca.worker.join(2)
+    assert not ca.can_start()
+    now[0] = 10
+    for edge, x in ((ea, 999), (eb, 0)):
+        sample = Sample(x, 400, 0, 0, 1000, 800)
+        assert edge.poll(sample) is None
+        now[0] += 1
+        assert edge.poll(sample) is None
+        assert edge.latched
+
+
+def test_closed_coordinator_refuses_manual_recovery(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    link = LocalLink(db)
+    ca = Coordinator(a, c, link, da)
+    ca.close()
+    assert not ca.recover()
+    assert not link.calls
+
+
+@pytest.mark.parametrize("failed_operation", ["probe", "switch"])
+def test_one_device_error_does_not_prevent_returning_the_other(tmp_path, failed_operation):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    owners.update(mouse=1, keyboard=1)
+    original = getattr(b, failed_operation)
+
+    def fail_keyboard(role, *args, **kwargs):
+        if role == "keyboard":
+            raise OSError("keyboard disconnected during cleanup")
+        return original(role, *args, **kwargs)
+
+    setattr(b, failed_operation, fail_keyboard)
+    assert db.handle("return", {}) == {"returned": True}
+    assert owners["mouse"] == 0
+    assert not db.gate.locked()
+
+
 def test_hardware_nonce_probe_cannot_be_satisfied_by_cache_or_wrong_reply():
     from cleverswitch.event.hidpp_response_event import HidppResponseEvent
     from cleverswitch.model.logi_device import LogiDevice
@@ -548,6 +627,42 @@ def test_transient_commit_ping_does_not_send_successfully_arrived_devices_back(t
     assert db.state["phase"] == "committed"
     assert owners == {"mouse": 1, "keyboard": 1}
     assert not any(e[1] == "switch" and e[-1] == 0 for e in events)
+
+
+def test_held_button_during_arrival_defers_placement_without_returning_devices(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    enter = d.enter
+    attempts = []
+
+    def held_once(side, y):
+        attempts.append((side, y))
+        if len(attempts) == 1:
+            raise BlockingIOError("mouse button held during Bluetooth arrival")
+        enter(side, y)
+
+    d.enter = held_once
+    ca = Coordinator(a, c, LocalLink(db), da)
+    run(ca)
+    assert db.state["phase"] == "committed"
+    assert owners == {"mouse": 1, "keyboard": 1}
+    assert len(attempts) == 2 and len(d.placements) == 1
+    assert not any(e[1] == "switch" and e[-1] == 0 for e in events)
+
+
+def test_confirmed_commit_clears_error_after_all_commit_replies_were_lost(tmp_path):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    link = LocalLink(db)
+    ca = Coordinator(a, c, link, da)
+
+    def uncertain_commit(tx):
+        assert link.call("commit", {"tx": tx})["phase"] == "committed"
+        return False  # Commit and status ACKs remained unavailable for the source deadline.
+
+    ca._commit = uncertain_commit
+    run(ca)
+    assert owners == {"mouse": 1, "keyboard": 1}
+    assert ca.phase == "committed" and ca.last_error is None
+    assert read_file(da.journal.with_name("last-transfer.json"))["reason"] is None
 
 
 def test_incoming_lease_and_outgoing_coordinator_share_one_gate(tmp_path):
