@@ -1,10 +1,21 @@
-CLEVERSWITCH FLOW — prototipo local 0.4.1, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — prototipo local 0.4.2, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.4.2: mantiene protocolo 2 y el enlace existente. Una orden de canal
+enviada por Bluetooth no se repite por HID si su resultado queda incierto; se
+cancela el trabajo pendiente y se comprueba la llegada. El borde también exige
+entrar hacia el centro después de reiniciar/reconectar o usar Traer aquí.
+Una pulsación breve durante la llegada aplaza la colocación del cursor dentro
+del mismo plazo, sin devolver inmediatamente los dispositivos. Traer aquí espera
+hasta 8 s, comprueba la llegada aunque se pierda la respuesta y aplica la pausa
+de 3 s. Un error de un dispositivo no impide intentar devolver el otro.
+Si falla un anuncio UDP, se sigue intentando la conexión TLS configurada.
+El cierre por señal despierta también el menú y los lectores en espera pasiva.
+
 INTEGRACIÓN 0.4.1: conserva la coordinación y protocolo 2 de Windows, añade la
 protección del borde del Mac, registro local rotativo de fases y recuperación
 del aviso al reconectar. El registro flow.log tiene límite de 256 KiB más una
