@@ -4,6 +4,7 @@ import threading
 import time
 from threading import Thread
 
+from ..hidpp.constants import CHANGE_HOST_FN_SET, SW_ID_HOST_CHANGE
 from .hid_gateway import HidGateway
 from .hid_gateway_bt import HidGatewayBT
 
@@ -159,15 +160,24 @@ class HidGatewayBLE(HidGatewayBT):
         if client is None or loop is None:
             log.debug(f"BLE client not ready for pid=0x{self._device_info.pid:04X}, writing via HID instead")
         else:
+            future = None
+            write = client.write_gatt_char(LOGI_HIDPP_CHAR, msg[2:], response=True)
             try:
-                future = asyncio.run_coroutine_threadsafe(
-                    client.write_gatt_char(LOGI_HIDPP_CHAR, msg[2:], response=True),
-                    loop,
-                )
+                future = asyncio.run_coroutine_threadsafe(write, loop)
                 future.result(timeout=2.0)
                 log.debug(f"Wrote via GATT to pid=0x{self._device_info.pid:04X}")
                 return
             except Exception as e:
+                if future is None:
+                    write.close()  # Scheduling failed; do not leave an unawaited coroutine.
+                else:
+                    future.cancel()
+                    if len(msg) > 3 and msg[3] == (CHANGE_HOST_FN_SET | SW_ID_HOST_CHANGE):
+                        # SetCurrentHost has no HID++ reply. A lost ATT acknowledgement
+                        # may mean the channel already changed; never send it twice.
+                        # Arrival proofs and the finite lease resolve that uncertainty.
+                        log.debug("GATT host switch outcome uncertain; waiting for arrival proof")
+                        return
                 log.debug(f"BLE write failed pid=0x{self._device_info.pid:04X}, falling back to HID: {e}")
         super()._do_write(transport, msg)
 
