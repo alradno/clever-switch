@@ -215,11 +215,11 @@ class Discovery:
 
     def start(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket = sock  # close() also owns a socket whose bind/start failed.
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         # Broadcast reception requires wildcard UDP binding. Packets cannot issue
         # commands and must pass HMAC + subnet checks; control uses private-IP TLS.
         sock.bind(("0.0.0.0", PORT + 1))
-        self.socket = sock
         self.wake_reader, self.wake_writer = socket.socketpair()
         self.worker = threading.Thread(target=self._run, name="flow-discovery", daemon=True)
         self.worker.start()
