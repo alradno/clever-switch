@@ -7,12 +7,24 @@ import pathlib
 import sys
 import threading
 from contextlib import contextmanager
+from logging.handlers import RotatingFileHandler
 
+from ..flow.version import EDITION
 from . import startup
 from .actions import Actions
 from .icon import create_icon
 
 log = logging.getLogger(__name__)
+
+
+def configure_flow_logging():
+    directory = pathlib.Path.home() / ".config/cleverswitch-tray"
+    directory.mkdir(parents=True, exist_ok=True)
+    handler = RotatingFileHandler(directory / "flow.log", maxBytes=262144, backupCount=1, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logger = logging.getLogger("cleverswitch.flow")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
 
 
 class Controller:
@@ -419,7 +431,7 @@ def run(preview=False, preview_seconds=0):
             )
 
     items = [
-        pystray.MenuItem("CleverSwitch 0.4.0 · MX Keys + MX Master 3", noop, enabled=False),
+        pystray.MenuItem(f"CleverSwitch {EDITION} · MX Keys + MX Master 3", noop, enabled=False),
         pystray.MenuItem(lambda item: controller.status(), noop, enabled=False),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(lambda item: controller.device_status("keyboard"), noop, enabled=False),
@@ -535,4 +547,8 @@ def main():
     else:
         with single_instance() as acquired:
             if acquired:
+                try:
+                    configure_flow_logging()
+                except OSError:
+                    log.warning("Cannot open the local switch diagnostic log")
                 run()

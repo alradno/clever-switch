@@ -5,6 +5,7 @@ Before commit, a destination lease and restart journal attempt a physical return
 After commit, a lost acknowledgement is resolved by querying transaction state.
 """
 
+import logging
 import math
 import secrets
 import threading
@@ -12,6 +13,8 @@ import time
 
 from .identity import canonical, read_file, write_private
 from .version import EDITION, PROTOCOL
+
+log = logging.getLogger(__name__)
 
 LEASE_SECONDS = 30.0
 TERMINAL = frozenset(("committed", "aborted"))
@@ -61,6 +64,7 @@ class Destination:
         if self.journal:
             write_private(self.journal, canonical(updated))
         self.state = updated
+        log.info("Destination host=%s tx=%s phase=%s", self.host + 1, updated["tx"], phase)
 
     def ready(self):
         return self.blocker() is None
@@ -92,6 +96,7 @@ class Destination:
                 self.hardware.switch(role, 1 - self.host)
 
     def _abort(self):
+        log.warning("Returning incomplete transfer host=%s tx=%s", self.host + 1, self.state["tx"])
         try:
             self._return()
         finally:
@@ -314,6 +319,7 @@ class Coordinator:
 
     def _run(self, kind, y):
         tx = secrets.token_hex(16)
+        log.info("Source host=%s tx=%s kind=%s target=%s", self.host + 1, tx, kind, 2 - self.host)
         prepared = False
         sent_mouse = False
         committed = False
@@ -350,6 +356,7 @@ class Coordinator:
             sent_mouse = True
             if not self._confirmed("mouse", tx):
                 raise RuntimeError("El ratón no ha confirmado su llegada")
+            log.info("Source host=%s tx=%s mouse confirmed at target", self.host + 1, tx)
             if kind == "edge":
                 # Recheck after the asynchronous arrival, before giving up the last local input.
                 if not self.hardware.allowed() or not self.cursor.session_ready() or not self._present("keyboard"):
@@ -359,15 +366,18 @@ class Coordinator:
             self._note("keyboard")
             if not self._confirmed("keyboard", tx):
                 raise RuntimeError("El teclado no ha confirmado su llegada")
+            log.info("Source host=%s tx=%s keyboard confirmed at target", self.host + 1, tx)
             committed = self._commit(tx)
             if not committed:
                 raise RuntimeError("Cambio no confirmado")
             self.status = "Ratón y teclado confirmados en " + ("Mac 2" if self.host == 0 else "Windows 1")
             self._note("committed")
+            log.info("Source host=%s tx=%s committed", self.host + 1, tx)
         except Exception as error:
             self.last_error = (
                 str(error) if isinstance(error, RuntimeError) else "La comunicación local se ha interrumpido"
             )
+            log.warning("Source host=%s tx=%s failed at %s: %s", self.host + 1, tx, self.phase, self.last_error)
             self._note("failed")
             if attempted:
                 try:

@@ -4,6 +4,7 @@ import sys
 import threading
 from unittest.mock import Mock
 
+import pystray
 import pytest
 
 from cleverswitch.tray import app
@@ -58,7 +59,7 @@ def test_mac_setup_stays_on_caller_thread_and_releases_gate_on_error(mocker):
 def test_sta_init_balances_success_and_does_not_uninitialize_failed_apartment(initial, mocker):
     api = Mock()
     api.CoInitializeEx.return_value = initial
-    mocker.patch("ctypes.WinDLL", return_value=api)
+    mocker.patch("ctypes.WinDLL", return_value=api, create=True)
     if initial < 0:
         with pytest.raises(OSError):
             with wd.apartment():
@@ -118,7 +119,7 @@ def test_result_path_releases_shell_item_and_task_memory(mocker):
     item.call.side_effect = call
     dialog.call.return_value = 0
     mocker.patch.object(wd, "Interface", return_value=item)
-    assert wd.result_path(api, dialog).name == "enlace.json"
+    assert wd.result_path(api, dialog) == pathlib.Path(memory.value)
     item.release.assert_called_once()
     api.CoTaskMemFree.assert_called_once()
 
@@ -158,7 +159,7 @@ def test_quitting_while_picker_is_open_cannot_write_link_or_restart_flow(cancel,
         menu.update({item.text: item for item in args[3]})
         return icon
 
-    mocker.patch("pystray.Icon", side_effect=create)
+    mocker.patch.object(pystray, "Icon", side_effect=create)
 
     def exercise(**kwargs):
         menu["Vincular Windows 1 y Mac 2…"](icon)
@@ -214,7 +215,7 @@ def test_export_downloads_bypasses_picker_and_preserves_pending_identity(state, 
         menu.update({item.text: item for item in args[3]})
         return icon
 
-    mocker.patch("pystray.Icon", side_effect=create)
+    mocker.patch.object(pystray, "Icon", side_effect=create)
     icon.run.side_effect = lambda **kwargs: menu["Guardar enlace en Descargas (sin selector)"](icon)
     app.run()
     picker.assert_not_called()
@@ -242,6 +243,6 @@ def test_downloads_resolves_known_folder_and_frees_memory(mocker):
         return 0
 
     api.SHGetKnownFolderPath.side_effect = resolve
-    mocker.patch("ctypes.WinDLL", side_effect=lambda name: api if name == "shell32" else ole)
+    mocker.patch("ctypes.WinDLL", side_effect=lambda name: api if name == "shell32" else ole, create=True)
     assert wd.downloads_directory() == pathlib.Path(text.value)
     ole.CoTaskMemFree.assert_called_once()

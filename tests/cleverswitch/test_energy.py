@@ -341,7 +341,7 @@ def test_windows_router_reads_tables_without_arp_probe(mocker):
             return 0
 
         getattr(api, name).side_effect = call
-    mocker.patch("ctypes.WinDLL", return_value=api)
+    mocker.patch("ctypes.WinDLL", return_value=api, create=True)
     assert windows_router("192.168.1.2") == ("192.168.1.1", "01:02:03:04:05:06")
     assert windows_router("192.168.1.20") == (None, None)
     api.GetIpNetTable.side_effect = lambda buffer, size, sorted_: 50
@@ -350,7 +350,7 @@ def test_windows_router_reads_tables_without_arp_probe(mocker):
 
 def test_native_windows_notification_registration_callbacks_and_cleanup(mocker):
     api, power = Mock(), Mock()
-    mocker.patch("ctypes.WinDLL", side_effect=lambda name, **kw: power if name == "powrprof" else api)
+    mocker.patch("ctypes.WinDLL", side_effect=lambda name, **kw: power if name == "powrprof" else api, create=True)
 
     def register(*args):
         args[-1]._obj.value = 42
@@ -359,6 +359,8 @@ def test_native_windows_notification_registration_callbacks_and_cleanup(mocker):
     api.NotifyIpInterfaceChange.side_effect = register
     api.NotifyRouteChange2.side_effect = register
     power.PowerRegisterSuspendResumeNotification.side_effect = register
+    if not hasattr(ctypes, "WINFUNCTYPE"):
+        mocker.patch("ctypes.WINFUNCTYPE", ctypes.CFUNCTYPE, create=True)
     events = []
     monitor = WindowsMonitor(events.append)
     monitor.start()

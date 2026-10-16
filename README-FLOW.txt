@@ -1,10 +1,15 @@
-CLEVERSWITCH FLOW — prototipo local 0.4.0, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — prototipo local 0.4.1, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+INTEGRACIÓN 0.4.1: conserva la coordinación y protocolo 2 de Windows, añade la
+protección del borde del Mac, registro local rotativo de fases y recuperación
+del aviso al reconectar. El registro flow.log tiene límite de 256 KiB más una
+copia, sin pulsaciones, secretos ni historial continuo del cursor.
+
 ACTUALIZACIÓN 0.4.0 DE ESTABILIDAD: requiere esta versión en AMBOS equipos.
 Conserva el enlace/certificados; no vuelvas a intercambiar archivos de vinculación.
 El menú muestra la versión y avisa si el compañero utiliza el protocolo anterior.
@@ -42,7 +47,11 @@ Inicio al entrar en sesión, pausa, estado y opción de traer ambos dispositivos
 Borde derecho de la pantalla principal de Windows -> Mac; izquierdo de Mac -> Windows.
 Mantén el cursor 400 ms en el borde. Esquinas (40 px), arrastre, modificadores y sesión
 bloqueada inhiben el inicio por borde. El cursor entra a la misma altura relativa,
-24 px dentro de la pantalla de destino. Se evita el rebote tras la llegada.
+24 px dentro de la pantalla de destino. Después de un cruce o llegada, el borde
+no se rearma hasta entrar al menos 80 px en pantalla con una muestra segura,
+sin botones ni modificadores pulsados. Un pequeño movimiento, salir de pantalla
+o esperar sin entrar hacia el centro no lo rearman. Instala esta protección en
+ambos equipos. Se conservan la pausa de llegada y los plazos de coordinación.
 No incluye portapapeles, archivos compartidos ni envío de pulsaciones o movimiento continuo.
 
 Al usar 1/2 del teclado, observa su notificación cuando el firmware la ofrece.
@@ -179,7 +188,10 @@ hayas terminado las pruebas. Uninstall-CleverSwitch.ps1 conserva la configuraci�
 No se desactiva Defender ni se eliminan marcas de seguridad del sistema.
 
 MAC M4 PRO
-La .app ARM64 todavía NO está compilada ni probada aquí: el entorno disponible es Windows.
+La .app 0.4.1 se ha compilado en macOS 26.6.2 ARM64 y su vista previa arranca y
+cierra correctamente. Está instalada en /Applications/CleverSwitchTray.app;
+la firma nueva requiere renovar manualmente Bluetooth y Accesibilidad. La
+estabilidad con los periféricos físicos y ambos equipos actualizados sigue pendiente.
 Para compilar en el Mac, usa Python ARM64 3.12 o superior, sin Rosetta, y HIDAPI:
   brew install hidapi
 Desde la carpeta source descomprimida:

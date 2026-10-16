@@ -197,6 +197,7 @@ class Runtime:
                 return
             self.follow_candidate = None
             self.next_follow = now + 10
+            log.info("Keyboard arrived without mouse; requesting companion follow")
             try:
                 self.link.call("follow")
             except (OSError, ValueError):
@@ -311,6 +312,7 @@ class Runtime:
                 try:
                     wait = self._step()
                 except Exception:
+                    log.exception("Local switch monitor failed")
                     self.error = "Cambio bloqueado; revisa la sesión y los permisos"
                     self.peer_ready = False
                     self.budget.suspend()
@@ -387,6 +389,7 @@ class Runtime:
         }
 
     def reconnect_now(self):
+        self.error = None
         self.wake("manual")
 
     def close(self):
