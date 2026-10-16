@@ -13,7 +13,7 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Versión `0.4.0`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Versión integrada `0.4.1`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
 - Código, compilador, dependencias fijadas, pruebas e instrucciones en este repositorio.
 - Windows x64 compilado y examinado con Defender, sin detecciones.
 - 615 pruebas y cobertura 91,47 % en Windows; Ruff correcto.
@@ -21,11 +21,21 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   ACK deliberadamente, uno por fase de traslado en cada prueba.
 - Tres arranques/cierres de la vista previa compilada, código de salida 0.
 - Conservación de hashes de claves/enlace/caché durante la preparación en Windows.
-- Script de compilación Mac validado con `bash -n`; aún sin ejecución/compilación ARM64.
-- El binario `.app`, permisos, reposo y estabilidad física necesitan evidencia del Mac.
+- Integración del Mac: 626 pruebas sin exclusiones, cobertura 90,66 %, Ruff correcto.
+- Script Mac ejecutado en macOS 26.6.2 ARM64; compilación, firma y vista previa correctas.
+- App instalada y arrancada en Aplicaciones; identidad, enlace e Inicio conservados.
+- Los permisos guardados no aceptan la firma nueva; renovación manual pendiente.
+- Reposo y estabilidad física con ambos equipos actualizados siguen sin aceptación.
 
 Los resultados concretos y hashes del paquete preparado en Windows están en
 `validation/windows-0.4.0.json`. Los binarios y el estado privado local no se versionan.
+
+La evidencia del Mac está en `validation/macos-0.4.1.json`; la continuación en
+Windows, en [WINDOWS-HANDOFF.md](WINDOWS-HANDOFF.md). La integración conserva
+las siete correcciones de coordinación de Windows que se detallan debajo. Añade
+el rearme del borde a 80 px, registro rotativo y borrado de error al reconectar.
+El módulo fuente `flow/identity.py`, omitido por `identity.*` en `.gitignore`,
+se recupera desde los fuentes locales del Mac y queda versionado.
 
 ## Fallos encontrados y correcciones incluidas
 
@@ -57,7 +67,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.0 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.1 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir
