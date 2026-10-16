@@ -1,0 +1,40 @@
+{
+  "edition": "CleverSwitch Flow local 0.4.0 stability, protocol 2",
+  "upstream": "de0a4f4f4b996a63bbdf2e368c93eb3843eb2732",
+  "tests_passed": 615,
+  "coverage_percent": 91.47,
+  "windows_gui_subsystem": 2,
+  "installed": false,
+  "mac_binary_built": false,
+  "physical_switch_tested": false,
+  "native_dialog_creation_and_configuration_tested": false,
+  "native_dialog_interaction_tested": false,
+  "files": {
+    "CleverSwitchTray.exe": {
+      "bytes": 22098862,
+      "sha256": "2164d9059310e0d49d5fb755344dfafea9d21fad5647697bf97fe008ac039c0a"
+    },
+    "CleverSwitchFlow-Windows.zip": {
+      "bytes": 21958234,
+      "sha256": "dff326329341dbd15200ff7f3fbdb5d0a8c413e5717fc752ad614c6ebfa8e159"
+    },
+    "CleverSwitchFlow-source.zip": {
+      "bytes": 621159,
+      "sha256": "0a6e1ba1e12bdcf3a1c18aa5171ab6536fb463029212c53d7945a1545d1aa1b0"
+    }
+  },
+  "zip_integrity_passed": true,
+  "packaged_binary_matches": true,
+  "source_contains_no_pairing_credentials": true,
+  "preview_runs": 3,
+  "preview_all_exit_zero": true,
+  "preview_startup_unchanged": true,
+  "existing_pairing_and_device_cache_unchanged": true,
+  "defender_no_threats": true,
+  "repeated_tls_handoffs_with_fake_devices": 12,
+  "lost_acknowledgements_in_tls_stress": 48,
+  "mac_build_script_syntax_checked": true,
+  "mac_build_script_executed": false,
+  "requires_protocol_2_on_both": true,
+  "physical_stability_validated": false
+}

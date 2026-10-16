@@ -1,0 +1,98 @@
+# Traspaso para Codex en el Mac
+
+## Objetivo y configuración
+
+Continuar este mismo prototipo y publicar los cambios en `alradno/clever-switch`.
+Equipo de destino: MacBook M4 Pro, macOS indicado por el usuario como 26.6.2
+(confirmar versión real). Windows delante/a la izquierda, Mac a la derecha; teclado
+MX Keys original y ratón MX Master 3, canales Windows=1 y Mac=2. Misma LAN doméstica.
+
+El usuario consiguió traslados físicos con la versión anterior, pero informó de
+traslados de un solo dispositivo, devoluciones automáticas a los pocos segundos y
+fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipos.
+
+## Estado disponible
+
+- Versión `0.4.0`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Código, compilador, dependencias fijadas, pruebas e instrucciones en este repositorio.
+- Windows x64 compilado y examinado con Defender, sin detecciones.
+- 615 pruebas y cobertura 91,47 % en Windows; Ruff correcto.
+- 12 traslados alternos con TLS real local y dispositivos simulados. Se pierden 48
+  ACK deliberadamente, uno por fase de traslado en cada prueba.
+- Tres arranques/cierres de la vista previa compilada, código de salida 0.
+- Conservación de hashes de claves/enlace/caché durante la preparación en Windows.
+- Script de compilación Mac validado con `bash -n`; aún sin ejecución/compilación ARM64.
+- El binario `.app`, permisos, reposo y estabilidad física necesitan evidencia del Mac.
+
+Los resultados concretos y hashes del paquete preparado en Windows están en
+`validation/windows-0.4.0.json`. Los binarios y el estado privado local no se versionan.
+
+## Fallos encontrados y correcciones incluidas
+
+1. El nombre HID++ real era `MX Keys Wireless Keyboard` y `Wireless Mouse MX Master 3`.
+   El filtro abreviado rechazaba ambos. Se admiten esas variantes exactas y las cortas.
+2. Una excepción de RPC cancelaba inmediatamente la espera de llegada. Ahora se
+   reintenta dentro del plazo existente, sin repetir las órdenes de cambio de canal.
+3. Un ping fallido en `commit` devolvía ambos dispositivos enseguida. Ahora queda
+   pendiente para obtener pruebas nuevas; la recuperación sigue teniendo plazo finito.
+4. El traslado de salida y la recepción no compartían bloqueo. Ahora usan el mismo
+   gate durante toda la transacción. Repetir `prepare` con el mismo ID es idempotente.
+5. Se reescribían canales ante eventos nativos o un fallo de seguimiento de teclado.
+   Se han quitado esas órdenes redundantes. Los botones físicos siguen en firmware.
+6. El seguimiento del teclado necesita dos observaciones separadas y una pausa de
+   3 s tras terminar. Un solo ping perdido no inicia el seguimiento.
+7. Un heartbeat vencido durante una transferencia podía producir una espera de cero
+   segundos. El trabajo en curso espera 200 ms y conserva los plazos de recuperación.
+
+El protocolo nuevo rechaza traslados del antiguo. Actualizar ambos equipos antes de
+medir estabilidad. No cambiar la vinculación para actualizar el código.
+
+## Compilar y probar en el Mac
+
+1. Clonar este repositorio o integrar `main` conservando cualquier trabajo local.
+2. Revisar `git status`, `README.md`, `AGENTS.md` y la versión actual.
+3. Tener Python ARM64 3.12+ e HIDAPI. Ejecutar `bash Compilar-Mac.command` en la raíz.
+4. Comprobar que `dist/CleverSwitchTray.app` se ha generado y registrar diagnósticos.
+5. Cerrar la app anterior antes de sustituirla en su misma ruta estable. Mantener
+   las carpetas `.config` existentes y cualquier vinculación ya completada.
+6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
+   que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.0 en ambos equipos.
+8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
+
+No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir
+protecciones del sistema para facilitar la prueba.
+
+## Validación física pendiente
+
+Documentar la conexión real de cada periférico (Bluetooth/USB), versión/commit,
+permisos, secuencia temporal y resultados sin incluir claves o archivos de enlace.
+
+- Con los dos periféricos en Windows, traslado por borde derecho al Mac; comprobar
+  llegada de ambos y cursor situado dentro del borde izquierdo del Mac.
+- Regreso por borde izquierdo del Mac, con ambos confirmados en Windows.
+- Repetir ambos sentidos, incluyendo llegadas lentas y el límite de pausa de 3 s.
+- Botones físicos 1/2 del teclado: comprobar que el ratón sigue; el canal 3 queda manual.
+- Inactividad/sueño del ratón, reposo/despertar del Mac y cambios de red.
+- Corte del enlace durante un traslado, recuperación y ausencia de ping-pong.
+- Mac fuera de casa: búsqueda finita y espera pasiva, sin sondeos continuos.
+- Cerrar la app y actualizarla: configuración, vínculo y botones físicos conservados.
+
+Si falla un traslado, conservar el texto de `Ver diagnóstico…` y el contenido
+sanitizado de `~/.config/cleverswitch-flow/last-transfer.json`. No publicar las
+carpetas privadas completas. Registrar el fallo antes de modificar tiempos a ciegas.
+
+## Archivos principales
+
+- `flow/coordinator.py`: gate, leases, fases, ACK, recuperación y motivos de fallo.
+- `flow/hardware.py`: presencia HID++ con nonce y órdenes de canal.
+- `flow/runtime.py`: red/energía, cursor, seguimiento de teclado y diagnóstico.
+- `flow/environment.py`: avisos nativos de Windows y SystemConfiguration/NSWorkspace.
+- `flow/cursor.py`: sesión/Accesibilidad, borde, esquinas y colocación de cursor.
+- `gateway/hid_gateway_ble.py`: ruta CoreBluetooth del Mac.
+- `tray/app.py`, `tray/startup.py`: menú y arranque por usuario.
+- `tests/cleverswitch/test_flow.py`: pérdidas de ACK, exclusión y estrés TLS.
+- `tests/cleverswitch/test_energy.py`: reconexión finita y trabajo en espera.
+
+Las rutas anteriores son relativas a `src/cleverswitch/`, salvo las pruebas.
+No hay servicio de control/depuración remoto: el estado del Mac debe observarse allí.
