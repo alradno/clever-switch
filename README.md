@@ -3,15 +3,20 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión de esta edición: **0.4.0**, protocolo **2**. Ambos equipos deben ejecutar
-esta versión para utilizar el traslado coordinado. Actualizar la app conserva
+Versión de esta edición: **0.4.1**, protocolo **2**. Ambos equipos deben ejecutar
+protocolo 2 para utilizar el traslado coordinado; para la protección del borde,
+actualiza ambos a 0.4.1. Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
 
 La versión anterior consiguió traslados físicos en ambos sentidos, pero el usuario
 observó dispositivos separados, devoluciones inesperadas y fallos intermitentes.
-La versión 0.4.0 corrige rutas concretas de coordinación y recuperación. **Su
+La base 0.4.0 corrige rutas concretas de coordinación y recuperación. La integración
+0.4.1 añade las correcciones del Mac: el borde se rearma sólo después de entrar
+al menos 80 px en pantalla, diagnóstico rotativo local y limpieza del error al
+reconectar. Se restaura también el módulo de vinculación que `.gitignore` había
+excluido del primer commit. **Su
 estabilidad física con ambos equipos actualizados sigue pendiente de validar.**
 
 En Windows: 615 pruebas, cobertura 91,47 %, Ruff correcto, 12 traslados simulados
@@ -19,6 +24,10 @@ alternos con TLS real y 48 respuestas perdidas deliberadamente, tres arranques y
 cierres de la vista previa compilada, Defender sin detecciones. Los dispositivos
 de esas pruebas están simulados. La app ARM64 no se ha compilado desde Windows.
 
+- [Validación nativa de Mac 0.4.1](docs/validation/macos-0.4.1.json): 626 pruebas
+  sin exclusiones, cobertura 90,66 %, compilación ARM64 y vista previa correctas.
+  Instalada en Aplicaciones; permisos de la nueva firma y prueba física pendientes.
+- [Continuar en Windows](docs/WINDOWS-HANDOFF.md): actualizar desde este mismo repositorio.
 - [Traspaso para Codex en el Mac](docs/MAC-HANDOFF.md): contexto, compilación,
   comprobaciones físicas y límites de la evidencia.
 - [Instrucciones de trabajo](AGENTS.md): conservación de datos y límites del diseño.
@@ -45,9 +54,10 @@ y no activa el inicio de sesión. Cierra la app anterior, sustituye la de
 y los permisos de acceso a HID que solicite macOS. No se eluden las protecciones
 del sistema. La firma es ad-hoc; no hay notarización ni Developer ID.
 
-El script se ha comprobado con `bash -n`; su ejecución y el binario resultante
-deben verificarse en el Mac. El usuario indicó macOS 26.6.2: confirmar allí la
-versión real y el comportamiento de permisos/reposo.
+El script se ha ejecutado en macOS 26.6.2 ARM64 y el binario compilado ha superado
+una vista previa de arranque/cierre, con firma ad-hoc válida y sin cambiar los
+datos de vinculación ni el inicio de sesión. La firma nueva requiere renovar
+los permisos guardados. La prueba con periféricos, reposo y permisos queda pendiente.
 
 ## Windows x64
 

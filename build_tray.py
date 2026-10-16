@@ -2,10 +2,12 @@
 
 import pathlib
 import platform
+import runpy
 import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
+EDITION = runpy.run_path(str(ROOT / "src/cleverswitch/flow/version.py"))["EDITION"]
 platform_name = platform.system()
 if platform_name not in ("Windows", "Darwin"):
     raise SystemExit("Compila en Windows o macOS.")
@@ -68,6 +70,8 @@ if platform_name == "Darwin":
     info.update(
         LSUIElement=True,
         CFBundleDisplayName="CleverSwitch",
+        CFBundleShortVersionString=EDITION,
+        CFBundleVersion=EDITION,
         NSBluetoothAlwaysUsageDescription="Sincroniza únicamente el cambio de dispositivo del teclado y ratón.",
         NSLocalNetworkUsageDescription="Confirma el cambio de ratón y teclado con tu Windows en el mismo router.",
     )

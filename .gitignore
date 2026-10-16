@@ -176,6 +176,7 @@ hidpp20 public/
 *.p12
 *.pfx
 identity.*
+!src/cleverswitch/flow/identity.py
 link.json
 return.json
 last-transfer.json
