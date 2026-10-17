@@ -1,24 +1,28 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.0, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.1, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
-REVISIÓN 0.5.0 EXPERIMENTAL: entrada continua por LAN, con los periféricos
-conectados físicamente a un equipo. No transmite el escritorio. Ambos equipos
-deben activar expresamente Ratón y teclado por red (experimental). Conserva el
-enlace, el protocolo de control 2 y los puertos; la entrada usa un protocolo
-binario 1 dentro del TLS autenticado existente. El modo físico permanece como
-opción independiente y Easy-Switch sigue funcionando en el propio dispositivo.
-Código y validación: docs/INPUT-LAN.txt. Candidata compilada e instalada en Mac;
-captura, escritura y restauración comprobadas nativamente desde desarrollo.
-Permisos de la app instalada comprobados. Pasan 936 pruebas en cada plataforma;
-Windows está compilado y su ejecutable comprobado. El 18 de octubre, el equipo
-doméstico responde como 0.5.0 con entrada por red activada y disponible. Pasan seis
-consultas TLS y se mantiene la conexión persistente sin reiniciar el Mac.
-Falta comprobar movimiento y escritura reales, reposo y recuperación conjunta.
-Evidencia y alcance: docs/validation/joint-0.5.0-link.json.
+Entrada continua por LAN con los periféricos conectados físicamente a un equipo.
+No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
+de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
+activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.1: las consultas de permisos ya no bloquean el movimiento en Mac ni
+Windows. Los avisos nativos de teclado permiten recuperarlo al cambiar de canal y
+volver, liberando teclas pendientes sin perder el ratón. Windows renueva su hook
+de teclado y deja de consultar geometría por cada movimiento.
+Pasan 954 pruebas en ambas plataformas, Ruff y compilaciones nativas. La simulación
+con consultas de permisos lentas baja el p99 de 23–24 ms a menos de 0,7 ms; no mide
+Wi-Fi, Bluetooth, pantalla ni aplicaciones. Repetir con benchmarks/input_pacing.py.
+
+Mac 0.5.1 instalada y arrancada; Accesibilidad y Monitorización de entrada pendientes
+para su nueva firma ad-hoc. Windows 0.5.1 preparada y comprobada; el equipo doméstico
+aún responde como 0.5.0. La prueba física de 0.5.0 reportó microcortes y pérdida de
+teclado; la aceptación física de esta corrección en ambos sentidos sigue pendiente.
+Evidencia actual: docs/validation/input-0.5.1-reliability.json.
 Comprobar permisos de entrada muestra los requisitos pendientes sin capturar nada.
 
 HISTORIAL DEL MODO FÍSICO

@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.0 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.1 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,22 +19,28 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.0 está compilada e instalada en el Mac. Pasan 936 pruebas (91,43 %) y Ruff.
-Las pruebas nativas desde el entorno de desarrollo confirman captura, envío de
-movimiento, escritura en una ventana propia, liberación de Mayús y restauración
-del cursor. La app instalada confirma todos sus permisos. Windows pasa también
-936 pruebas, Ruff, compilación nativa y comprobación del ejecutable empaquetado.
-El 18 de octubre se confirma Windows 0.5.0 ejecutándose en la red doméstica,
-con entrada por red activada y disponible. Seis consultas autenticadas responden
-y la conexión persistente se mantiene, con el Mac ya abierto y sus permisos
-comprobados. Falta validar movimiento y escritura reales entre las pantallas;
-la ruta y el hash del ejecutable instalado en Windows no se han inspeccionado.
-Véase [la comprobación del enlace real](docs/validation/joint-0.5.0-link.json).
-El paquete comprobado está en [la ejecución de Windows](https://github.com/alradno/clever-switch/actions/runs/39069359804).
-La latencia medida en loopback excluye las radios,
-las APIs nativas, las aplicaciones y la pantalla.
-El menú «Comprobar permisos de entrada…» comprueba los permisos sin capturar nada.
-Detalles, límites y reproducción: [entrada por red](docs/INPUT-LAN.txt).
+La 0.5.1 corrige las pausas periódicas de las consultas de permisos y añade
+recuperación del teclado al desconectarlo/reconectarlo con Easy-Switch. La lectura
+de permisos sale del hilo que entrega la entrada en ambos sistemas. Windows
+renueva su capturador de teclado tras el aviso del sistema y prepara la geometría
+antes de recibir movimientos. La recuperación libera teclas pendientes y conserva
+el foco del ratón; no cambia canales Bluetooth.
+
+Pasan 954 pruebas en Mac y Windows, Ruff y ambas compilaciones. La simulación con
+consultas de permisos de 18 ms baja el p99 de entrega de 23–24 ms a menos de 0,7 ms
+en ambos sentidos. Usa TLS local real y APIs de entrada simuladas; no mide las
+radios, la pantalla ni las aplicaciones. Reproducción: `benchmarks/input_pacing.py`.
+
+Mac 0.5.1 está instalada y arrancada en Aplicaciones, con configuración conservada.
+La nueva firma ad-hoc tiene pendientes los permisos de Accesibilidad y
+Monitorización de entrada. Windows 0.5.1 está compilada y su paquete verificado,
+pero el equipo doméstico aún responde como 0.5.0. Esa versión ya tuvo una prueba
+física con microcortes y pérdida de teclado comunicados por el usuario. La
+aceptación física de 0.5.1 queda pendiente de permisos y actualización de ambos.
+Véanse [evidencia y límites](docs/validation/input-0.5.1-reliability.json) y
+[compilación Windows](https://github.com/alradno/clever-switch/actions/runs/39076287821).
+El menú «Comprobar permisos de entrada…» revisa los requisitos sin capturar nada.
+Detalles de uso: [entrada por red](docs/INPUT-LAN.txt).
 
 ### Historial del modo Bluetooth
 
