@@ -49,9 +49,16 @@ jobs:
           }
           if ($process.ExitCode -ne 0) { throw 'The packaged check failed' }
           $report = Get-Content $reportPath -Raw | ConvertFrom-Json
-          if ($report.platform -ne 'win32' -or -not $report.edition) {
+          $manifest = Get-Content .\dist\cleverswitch-package.json -Raw | ConvertFrom-Json
+          if ($report.platform -ne 'win32' -or $report.edition -ne $manifest.edition) {
             throw 'The packaged executable did not produce its Windows report'
           }
+          if ($report.PSObject.Properties.Name -contains 'error' -or
+              $report.ready -isnot [bool] -or $report.checks.interactive_session -isnot [bool] -or
+              $report.ready -ne $report.checks.interactive_session) {
+            throw 'The packaged executable could not load and check the native input backend'
+          }
+          $report | ConvertTo-Json -Depth 3
           "Commit: $env:GITHUB_SHA. Native build and read-only packaged check; physical input acceptance remains separate." >> $env:GITHUB_STEP_SUMMARY
       - name: Upload candidate with matching installer and manifest
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
