@@ -1,0 +1,86 @@
+{
+  "observed_at": "2026-10-17T20:45:38.393401+00:00",
+  "edition": "0.5.0",
+  "control_protocol": 2,
+  "input_protocol": 1,
+  "source_parent_commit": "7cd190f1e41f0b065df70e36fab76ec4b9446059",
+  "tests": {
+    "passed": 932,
+    "coverage_percent": 91.43,
+    "seconds": 27.67,
+    "ruff": "passed",
+    "format": "passed"
+  },
+  "installed": {
+    "edition": "0.5.0",
+    "installed_path": "/Applications/CleverSwitchTray.app",
+    "signature_valid": true,
+    "installed_matches_sources": true,
+    "verified_module_count": 20,
+    "preview_exit_code": 0,
+    "previous_exit_seconds": 0.32,
+    "network_input_enabled": true,
+    "identity_pairing_cache_startup_preserved": true,
+    "permissions_granted_automatically": false,
+    "security_policy_changes": false,
+    "readiness": {
+      "edition": "0.5.0",
+      "platform": "darwin",
+      "ready": false,
+      "checks": {
+        "listen_permission": false,
+        "post_permission": false,
+        "session_and_accessibility": false,
+        "secure_input_inactive": true
+      }
+    },
+    "app_running": true,
+    "executable_sha256": "30fb1c9a9351db27857ffc470e7701d9928edf52d46f05c94814ee9766bc7235"
+  },
+  "native_pointer": {
+    "native": true,
+    "source": "development_interpreter",
+    "test": "tagged_stationary_pointer_and_capture_restore",
+    "tap_started": true,
+    "own_event_observed": true,
+    "capture_active": true,
+    "capture_restored": true,
+    "closed": true,
+    "callback_failures": 0
+  },
+  "native_keyboard": {
+    "native": true,
+    "scope": "owned_mac_text_field",
+    "source": "development_interpreter",
+    "plain_keys_delivered": true,
+    "shift_and_release_delivered": true,
+    "input_released": true,
+    "tap_closed": true
+  },
+  "windows": {
+    "native_build": "pending",
+    "physical_acceptance": "pending",
+    "last_peer_check": "timeout"
+  },
+  "limits": [
+    "Native Mac input probes ran in the development interpreter, not the installed bundle",
+    "Installed-bundle permissions need renewal",
+    "No real Mac-Windows crossing or physical latency measurement",
+    "No conclusion about EDR alerts or policy acceptance"
+  ],
+  "source_hashes": {
+    "src/cleverswitch/flow/input_check.py": "dba939d0574f1a6ae4ef5759ad4fe7b468ee1c372694ada8535106b7de8816a5",
+    "src/cleverswitch/flow/input_macos.py": "8ea97016e4e1a2c5d27ef911913175df678da022557f18a81b8163b833951be3",
+    "src/cleverswitch/flow/input_geometry.py": "b1425b838c7137e69568bfcae1a4633584a8a37a46c6493dd5dc7a29b3fb2107",
+    "src/cleverswitch/flow/input_windows.py": "caaa9158cc67bbc18b855d1153c679c83e4be5613ef01540e16a0bcf0b578e0e",
+    "src/cleverswitch/flow/input_keys.py": "be2f4614b1fbbcf8d5d2c75782fa8501639bfb8f00996c4144431dfbb01d4dc3",
+    "src/cleverswitch/flow/input_stream.py": "c6111f89ef6b986e816fbf1000e6d134ac3903a953e69110641ec88e8f467e8b",
+    "src/cleverswitch/flow/input_session.py": "d92ed4cf02cc59fc667e1b336bf356a8034457421a00754c18e715f79e6ed03d",
+    "src/cleverswitch/flow/input_dispatch.py": "29b4399403d570595a4da310ead6f3320174693b6f5e342279dc6a4b51f2271b",
+    "src/cleverswitch/flow/input_protocol.py": "ca3924a3c30502c644d45149231b0963f666b21ad707229b26fc18777e55e966",
+    "src/cleverswitch/flow/input_service.py": "b66fb803932c0fef7bf5a9e6877f572598aef18faf5c2bbd7a10959731134792",
+    "src/cleverswitch/flow/runtime.py": "23a677aa8a8c0259d5f43627bfc6ddaec0336e5e3182aad5071a2f23461bde22",
+    "src/cleverswitch/tray/app.py": "67d70fd00db75e08392dbe649c5a10370a53f39b0a10f9a9f487fac4376a796f",
+    "build_tray.py": "87fc9aa848a80d5dcc0632ec366a8b5f175af7d25d29645273dfcf6cc1e2b460"
+  }
+}

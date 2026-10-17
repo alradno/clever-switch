@@ -1,0 +1,334 @@
+{
+  "observed_at": "2026-10-17T19:18:45.416932+00:00",
+  "edition": "0.5.0",
+  "status": "experimental_source_and_simulation_only",
+  "control_protocol": 2,
+  "input_protocol": 1,
+  "source_base_commit": "e1c621a802d9348d9f0e0374f19834f19188d7eb",
+  "branch": "feature/lan-input",
+  "source_sha256": {
+    "src/cleverswitch/flow/input_dispatch.py": "29b4399403d570595a4da310ead6f3320174693b6f5e342279dc6a4b51f2271b",
+    "src/cleverswitch/flow/input_geometry.py": "b1425b838c7137e69568bfcae1a4633584a8a37a46c6493dd5dc7a29b3fb2107",
+    "src/cleverswitch/flow/input_keys.py": "be2f4614b1fbbcf8d5d2c75782fa8501639bfb8f00996c4144431dfbb01d4dc3",
+    "src/cleverswitch/flow/input_macos.py": "8ea97016e4e1a2c5d27ef911913175df678da022557f18a81b8163b833951be3",
+    "src/cleverswitch/flow/input_protocol.py": "ca3924a3c30502c644d45149231b0963f666b21ad707229b26fc18777e55e966",
+    "src/cleverswitch/flow/input_service.py": "b66fb803932c0fef7bf5a9e6877f572598aef18faf5c2bbd7a10959731134792",
+    "src/cleverswitch/flow/input_session.py": "d92ed4cf02cc59fc667e1b336bf356a8034457421a00754c18e715f79e6ed03d",
+    "src/cleverswitch/flow/input_stream.py": "c6111f89ef6b986e816fbf1000e6d134ac3903a953e69110641ec88e8f467e8b",
+    "src/cleverswitch/flow/input_windows.py": "caaa9158cc67bbc18b855d1153c679c83e4be5613ef01540e16a0bcf0b578e0e",
+    "src/cleverswitch/flow/network.py": "14b129368c1fd5835f390dc4ffc3b72701c7ce3d8288be0a24cafeb7d657fa4a",
+    "src/cleverswitch/flow/runtime.py": "cdedcf5d3af20df6beca9fc20f324270b7fae354aa7f0aa4871aaf888dbbf791",
+    "src/cleverswitch/flow/version.py": "b47c64625752690860ed207dac430a50dc7c0a756f973c76577f187a385a744c",
+    "src/cleverswitch/tray/app.py": "d35e9f9bd17a7fcbeee87336669b04c78c49fc196668239de2e54bd3212ae355"
+  },
+  "host": {
+    "os": "macOS 26.6.2",
+    "build": "25G83",
+    "architecture": "arm64"
+  },
+  "tests": {
+    "passed": 922,
+    "seconds": 27.25,
+    "coverage_percent": 91.33,
+    "ruff": "passed",
+    "format": "passed",
+    "diff_check": "passed",
+    "native_apis": "doubles_only",
+    "tls": "real_mutual_tls_loopback",
+    "end_to_end": "public_API_adapters_and_mutual_TLS_with_OS_doubles_only",
+    "local_tcp_relay_cases": 12
+  },
+  "performance": {
+    "scope": "synthetic_input_mutual_tls_loopback_no_native_input",
+    "excludes": [
+      "Bluetooth",
+      "Wi-Fi",
+      "native_injection",
+      "display",
+      "application"
+    ],
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 375,
+        "delivered": 375,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.313,
+        "delivery_ms": {
+          "p50": 0.337,
+          "p95": 0.452,
+          "p99": 0.559,
+          "max": 5.463,
+          "mean": 0.354
+        },
+        "process_cpu_percent_one_core": 3.89,
+        "duration_seconds": 2.998
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 375,
+        "delivered": 375,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.324,
+        "delivery_ms": {
+          "p50": 0.298,
+          "p95": 0.429,
+          "p99": 0.503,
+          "max": 0.659,
+          "mean": 0.305
+        },
+        "process_cpu_percent_one_core": 3.59,
+        "duration_seconds": 2.998
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 3000,
+        "delivered": 3000,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.301,
+        "delivery_ms": {
+          "p50": 0.169,
+          "p95": 0.259,
+          "p99": 0.318,
+          "max": 0.688,
+          "mean": 0.173
+        },
+        "process_cpu_percent_one_core": 13.55,
+        "duration_seconds": 3.003
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 3000,
+        "delivered": 3000,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.311,
+        "delivery_ms": {
+          "p50": 0.168,
+          "p95": 0.257,
+          "p99": 0.309,
+          "max": 0.463,
+          "mean": 0.17
+        },
+        "process_cpu_percent_one_core": 12.91,
+        "duration_seconds": 3.003
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 3000,
+        "delivered": 1185,
+        "coalesced": 0,
+        "received_coalesced": 1815,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 3.853,
+        "delivery_ms": {
+          "p50": 3.097,
+          "p95": 3.712,
+          "p99": 5.557,
+          "max": 7.832,
+          "mean": 3.226
+        },
+        "process_cpu_percent_one_core": 11.85,
+        "duration_seconds": 3.013
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 3000,
+        "delivered": 1183,
+        "coalesced": 0,
+        "received_coalesced": 1817,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 3.815,
+        "delivery_ms": {
+          "p50": 3.071,
+          "p95": 3.67,
+          "p99": 5.355,
+          "max": 6.681,
+          "mean": 3.19
+        },
+        "process_cpu_percent_one_core": 12.46,
+        "duration_seconds": 3.012
+      }
+    ],
+    "observed_at": "2026-10-17T19:18:45.416932+00:00"
+  },
+  "local_network_observation": {
+    "destination_route": "direct_local_interface_en0",
+    "vpn_default_route": "does_not_replace_the_specific_local_route",
+    "configured_peer_tcp": "timeout",
+    "router_icmp_samples": 3,
+    "router_rtt_ms": {
+      "min": 5.117,
+      "max": 75.422,
+      "average": 28.574
+    },
+    "configuration_changes": false,
+    "interpretation": "Insufficient to identify an optimization or distinguish peer sleep/app/firewall.",
+    "recorded_at": "2026-10-17T18:55:34.593490+00:00"
+  },
+  "installed_mac": {
+    "edition": "0.4.6",
+    "path": "/Applications/CleverSwitchTray.app",
+    "network_input_enabled": false,
+    "replaced": false,
+    "observed_at": "2026-10-17T19:07:42.839475+00:00"
+  },
+  "executed_native_capture": false,
+  "executed_native_injection": false,
+  "native_build_050": false,
+  "security_configuration_changes": false,
+  "published": false,
+  "verified_cases": [
+    "both directions with persistent TLS",
+    "fragmentation/replay/version rejection",
+    "explicit opt-in on both peers",
+    "bounded queues and adjacent motion coalescing",
+    "callback/injector contention without blocking native callbacks",
+    "lock-key synchronization and finite partial-release recovery",
+    "async Mac move followed by click",
+    "cursor restoration failure retained",
+    "mutual exclusion with physical transfers",
+    "finite retries, permission/session recovery and offline suspension",
+    "late native capture rolled back on its owner thread after timeout",
+    "release waits for in-flight capture even before captured flags are set",
+    "simultaneous handoff rejected while previous capture restoration is pending",
+    "deferred callback ownership checked after acquiring the session lock",
+    "dispatch close and failed wakeup race against completed work",
+    "full public-API adapter path over mutual TLS in both directions with OS doubles",
+    "simulated Secure Input releases modifier and restores source cursor",
+    "simulated SendInput denial restores source without elevation or retry loops",
+    "failed handoff shown in status independently of healthy transport",
+    "delayed ordered input and return, both sources",
+    "first pointer motion delivered while acceptance reply is held, both sources",
+    "unconfirmed actions remain ordered behind acceptance",
+    "lost acceptance retires early pointer without delivering keys, both sources",
+    "delayed unaccepted ENTER and RESET cannot replay queued clicks, both sources",
+    "one-way outage releases the remote modifier and local capture, four source/direction combinations",
+    "late bytes cannot revive a closed input session",
+    "channel cancellation stops remaining callbacks and unsent input in the current iteration"
+  ],
+  "not_yet_verified": [
+    "physical Mac-Windows latency",
+    "native Windows build and APIs",
+    "native Mac capture/injection in an authorized environment",
+    "Spanish layouts/dead keys and real modifier behavior",
+    "cursor visibility and mixed display scales",
+    "real battery/energy impact",
+    "EDR policy acceptance"
+  ],
+  "known_scope_limits": [
+    "No desktop/window/clipboard transfer",
+    "No crossing during held keys/buttons or drag",
+    "Physical source must remain available; native Easy-Switch is recovery",
+    "Standard keyboard usages; media/Fn and protected desktops are outside support",
+    "Literal zero latency and cable-equivalent timing are not guaranteed"
+  ],
+  "source_parent_commit": "51ebabe4726af09d955ab0aa73b0870f4565a5e0",
+  "regression_tests_sha256": {
+    "tests/cleverswitch/test_input_core.py": "10f92357db974cf889aea68ecb45fa9576e880c7f86e7ab236e9646b551e013f",
+    "tests/cleverswitch/test_input_end_to_end.py": "62b1e956172ff2ff22f7593c0563eb916c4945eb1712c9c59e7c7446f75383df",
+    "tests/cleverswitch/test_input_native.py": "6c60abf29aa3cb13d6499f01237c98aced493258c6ac22fd8e0eaccb13f2dcd9",
+    "tests/cleverswitch/test_input_network.py": "5ae4f20a929f38e335a4518f8cc0ba51cb37b4c5a15ae5f7269374fd161fbccb",
+    "tests/cleverswitch/test_input_runtime.py": "656f188519099b5f90ecae223632c53950c25bdce31681e2e997d6b727afa91c",
+    "tests/cleverswitch/test_input_service.py": "5fcc37d531417d83799223ecce6b5adb817371e92f53edda1789dbebffc816e6",
+    "tests/cleverswitch/test_input_stream.py": "45a2d9480783613e960ded3809610f45008b573dbb3a4a00d462e5f38e8821fc"
+  },
+  "regression_evidence": [
+    {
+      "case": "collision cleanup failure",
+      "test": "test_collision_does_not_accept_new_owner_if_previous_capture_cannot_release",
+      "before": "Mac accepted remote focus while its old capture had not been released",
+      "after": "New focus rejected and cleanup retained",
+      "red_observed": true
+    },
+    {
+      "case": "capture completed after timeout",
+      "test": "test_windows_capture_cannot_hide_cursor_after_handoff_timed_out",
+      "before": "Late native completion left capture active",
+      "after": "Capture undone on the same owner thread",
+      "red_observed": true
+    },
+    {
+      "case": "deferred callback cancelled while waiting for lock",
+      "test": "test_deferred_epoch_is_checked_after_acquiring_the_session_lock",
+      "before": "Callback executed after its focus was retired",
+      "after": "Ownership revalidated under lock and stale motion discarded",
+      "red_observed": true
+    },
+    {
+      "case": "release acknowledged while capture still running",
+      "test": "test_windows_release_cannot_confirm_before_a_late_capture_has_finished",
+      "before": "DID NOT RAISE TimeoutError: capture(False) returned before the worker completed capture(True)",
+      "after": "Release joins owner queue; timeout keeps recovery pending",
+      "red_observed": true
+    },
+    {
+      "case": "cancelled channel still delivered the current receive batch",
+      "test": "test_close_stops_current_receive_batch_and_unsent_input",
+      "source_before": "51ebabe4726af09d955ab0aa73b0870f4565a5e0",
+      "before": "Both tick and packet cancellation delivered remaining input",
+      "after": "Further delivery and queued sends stop at cancellation",
+      "red_observed": true,
+      "before_log": "cancel-stream-before.log"
+    },
+    {
+      "case": "first motion waited for acceptance round trip",
+      "test": "test_ready_destination_receives_first_motion_without_waiting_for_return_trip",
+      "source_before": "51ebabe4726af09d955ab0aa73b0870f4565a5e0",
+      "before": "Destination was ready but first motion waited for the held acceptance reply in both directions",
+      "after": "Initial pointer movement arrives before the reply; actions keep their confirmation gate",
+      "red_observed": true,
+      "before_log": "first-motion-before.log"
+    }
+  ],
+  "network_simulation": {
+    "scope": "local_TCP_relay_forwarding_encrypted_TLS_test_bytes_with_in_memory_input_backends",
+    "delay_per_forwarded_block_ms": 12,
+    "physical_network_claim": false,
+    "cases": [
+      "delayed ordered input and return, both sources",
+      "first pointer motion delivered while acceptance reply is held, both sources",
+      "unconfirmed actions remain ordered behind acceptance",
+      "lost acceptance retires early pointer without delivering keys, both sources",
+      "delayed unaccepted ENTER and RESET cannot replay queued clicks, both sources",
+      "one-way outage releases the remote modifier and local capture, four source/direction combinations",
+      "late bytes cannot revive a closed input session"
+    ],
+    "latency_change": "initial pointer motion no longer waits for the application acceptance reply; actions still require it",
+    "physical_milliseconds_saved": null
+  },
+  "design_constraint_evidence": {
+    "case": "unconfirmed actions must not be sent ahead of acceptance",
+    "scope": "discarded local experiment, never installed or published",
+    "observation": "Sending clicks during requesting replayed a late click after source timeout when ENTER was delayed",
+    "decision": "Only initial motion bypasses the acceptance wait; an action also holds all following motion to preserve order",
+    "test": "test_cancelled_unaccepted_handoff_cannot_apply_a_late_click",
+    "before_log": "early-actions-before.log"
+  },
+  "validation_artifacts_sha256": {
+    "tests-integrated.log": "bcc042c46df39f4b20ebe756cb631c3c677f1bd09d19e1a699179e1e819e2917",
+    "benchmark.json": "644723ec27cae22e309f0424dd75bab619ea98a7b839d90ac4975e0cb1764587",
+    "cancel-stream-before.log": "d600c8fb99a415bede83cb5cb1541f290a842fa153f1c76829a693b83f1a7553",
+    "first-motion-before.log": "7c20cb0bb287d7c74a8429f797ea601926b743aec1087dfaab577e2d75aad67c",
+    "early-actions-before.log": "fe857b3e746ae9bba876b7f93b8bf204a760806370e9ed573d07050ec222be39"
+  }
+}
