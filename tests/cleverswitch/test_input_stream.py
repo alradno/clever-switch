@@ -261,7 +261,7 @@ def test_queued_actions_share_bounded_writes_without_a_batching_delay():
             channel.send(packet)
         receiver.start()
         channel.start()
-        until(lambda: len(received) == len(actions))
+        until(lambda: len(received) == len(actions) and channel.sent == len(actions))
         assert received == actions
         assert len(writes) == 4  # At most 64 already queued frames per write.
         assert channel.sent == len(actions)
@@ -311,7 +311,7 @@ def test_short_writes_and_tls_retry_preserve_every_batched_action():
             channel.send(packet)
         channel.start()
         receiver.start()
-        until(lambda: received == packets)
+        until(lambda: received == packets and channel.sent == len(packets))
         assert attempts[0] == attempts[1]  # OpenSSL gets identical bytes after WANT_WRITE.
         assert channel.sent == len(packets)
         assert not channel.stop.is_set()
