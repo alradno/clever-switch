@@ -245,6 +245,15 @@ def test_receiver_coalesces_available_motion_but_keeps_click_position_and_epoch(
 def test_close_stops_current_receive_batch_and_unsent_input(closing_at):
     a, b = socket.socketpair()
     received = []
+    send_attempts = []
+
+    class ObservedSocket:
+        def __getattr__(self, name):
+            return getattr(a, name)
+
+        def send(self, data):
+            send_attempts.append(len(data))
+            return a.send(data)
 
     def on_packet(packet):
         received.append(packet)
@@ -255,7 +264,7 @@ def test_close_stops_current_receive_batch_and_unsent_input(closing_at):
         if closing_at == "tick":
             channel.request_close()
 
-    channel = Channel(a, on_packet, lambda: None, on_tick)
+    channel = Channel(ObservedSocket(), on_packet, lambda: None, on_tick)
     incoming = [Packet(Kind.KEY, 1, (4, down)) for down in (1, 0)]
     try:
         channel.send(Packet(Kind.BUTTON, 1, (0, 1)))
@@ -263,8 +272,13 @@ def test_close_stops_current_receive_batch_and_unsent_input(closing_at):
         channel.start()
         assert channel.finished.wait(1)
         assert received == ([] if closing_at == "tick" else incoming[:1])
+        assert channel.failure is None
+        assert send_attempts == []  # Detect even a partial send after cancellation.
         b.settimeout(0.2)
-        assert b.recv(8192) == b""  # No queued input is sent after cancellation.
+        try:
+            assert b.recv(8192) == b""
+        except ConnectionResetError:
+            pass  # Windows TCP socketpair may reset when incoming bytes remain unread.
     finally:
         channel.close()
         b.close()

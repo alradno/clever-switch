@@ -1,5 +1,6 @@
 """Latency regressions without equating simulated time with real Bluetooth."""
 
+import itertools
 import threading
 import time
 
@@ -166,15 +167,20 @@ def test_transfer_timing_records_only_elapsed_phases(tmp_path):
     from cleverswitch.flow.identity import read_file
 
     a, b, c, d, da, db, owners, events = machines(tmp_path)
-    coordinator = Coordinator(a, c, LocalLink(db), da)
+    # Phase ordering must not depend on the host clock resolution or scheduler.
+    clock = itertools.count(1000.0, 0.01).__next__
+    coordinator = Coordinator(a, c, LocalLink(db), da, clock=clock)
     run(coordinator)
+    assert coordinator.phase == "committed", coordinator.last_error
     times = read_file(da.journal.with_name("last-transfer.json"))["elapsed_ms"]
     assert set(times) == {"preflight", "mouse", "mouse_confirmed", "keyboard", "keyboard_confirmed", "committed"}
-    assert all(isinstance(t, (int, float)) and t >= 0 for t in times.values())
+    # The large clock origin also distinguishes elapsed milliseconds from timestamps.
+    assert all(isinstance(t, (int, float)) and 0 <= t < 1000 for t in times.values())
     assert (
-        times["mouse"]
+        times["preflight"]
+        < times["mouse"]
         < times["mouse_confirmed"]
-        <= times["keyboard"]
+        < times["keyboard"]
         < times["keyboard_confirmed"]
         < times["committed"]
     )

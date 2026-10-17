@@ -50,7 +50,7 @@ def test_mac_requested_signing_identity_is_preserved_or_build_stops(build_source
     mocker.patch.object(
         pathlib.Path,
         "is_file",
-        lambda path: str(path) == "/opt/homebrew/lib/libhidapi.dylib" or real_is_file(path),
+        lambda path: path == pathlib.Path("/opt/homebrew/lib/libhidapi.dylib") or real_is_file(path),
     )
     identity = "A" * 40
     mocker.patch.dict("os.environ", {"CLEVERSWITCH_CODESIGN_IDENTITY": identity})
