@@ -207,3 +207,41 @@ def test_input_status_reports_failed_handoff_even_when_transport_is_healthy(tmp_
     assert expected in runtime.status()
     runtime.input_service.session.failure = None
     assert "Entrada por red lista" in runtime.status()
+
+
+def test_repeated_local_display_changes_get_a_fresh_bounded_retry_window(tmp_path, mocker):
+    runtime = online(tmp_path)
+    now = [0.0]
+    mocker.patch("cleverswitch.flow.runtime.time.monotonic", side_effect=lambda: now[0])
+    runtime.input_budget = Reconnect(clock=lambda: now[0], jitter=lambda delay: delay)
+    service = runtime.input_service
+
+    def open_stream():
+        service.channel = Mock(finished=threading.Event(), failure=None)
+        return True
+
+    service.connect.side_effect = open_stream
+    runtime._input_step()
+    for attempt in range(10):
+        assert service.connect.call_count == attempt + 1
+        now[0] += 0.1
+        service.channel.failure = "display"
+        service.channel.finished.set()
+        wait = runtime._input_step()
+        assert wait == 1 and runtime.input_budget.attempts == 1
+        # A duplicated observation of this retired channel grants no extra retry.
+        runtime._input_step()
+        assert runtime.input_budget.attempts == 1
+        assert service.connect.call_count == attempt + 1
+        now[0] += 1
+        runtime._input_step()
+    assert service.connect.call_count == 11
+    # A subsequent real connection failure still exhausts its finite budget.
+    service.channel.failure = "connection"
+    service.channel.finished.set()
+    service.connect.side_effect = ConnectionError
+    for _ in range(10):
+        now[0] += 30
+        runtime._input_step()
+    assert runtime.input_budget.next is None
+    assert service.connect.call_count <= 17
