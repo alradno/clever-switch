@@ -1,16 +1,44 @@
-CLEVERSWITCH 0.5.1 — ENTRADA POR LAN EXPERIMENTAL
-Estado a 2026-10-18: candidata corregida y compilada en ambas plataformas, 954 pruebas
-por plataforma. Mac instalada y arrancada, pero macOS rechaza los permisos de su
-nueva firma. Windows doméstico aún responde como 0.5.0; paquete 0.5.1 preparado.
-La prueba física de 0.5.0 reportó microcortes y pérdida de teclado tras Easy-Switch.
-La aceptación física de 0.5.1 sigue pendiente. Evidencia: validation/input-0.5.1-reliability.json.
+CLEVERSWITCH 0.5.2 — ENTRADA POR LAN EXPERIMENTAL
+Candidata del 18 de octubre de 2026 preparada para la prueba conjunta al volver
+el usuario. Pasan 970 pruebas en cada plataforma, Ruff y ambas compilaciones.
+Mac verifica firma y vista previa; Windows comprueba el ejecutable empaquetado.
+No instalada: Mac conserva 0.5.1; el
+último estado comprobado del Windows doméstico es 0.5.0. La aceptación física
+sigue pendiente. Evidencia: validation/input-0.5.2-efficiency.json.
+
+MEJORAS 0.5.2
+Con foco local, el trabajador de permisos consulta cada 400 ms; durante un foco
+remoto vuelve a 100 ms. Una petición puede despertarlo antes y el resultado
+caduca igualmente a los 500 ms. El resultado lento se fecha antes de la consulta,
+por lo que un sistema bloqueado no prolonga la autorización. Sin compañero,
+el trabajador se detiene. La simulación local reduce las consultas un 75 %;
+no es una medida de ahorro de batería físico.
+
+El transporte envía hasta 64 eventos que ya estén en cola en una escritura TLS,
+sin temporizador para reunirlos. Conserva la secuencia, posiciones de clic y
+barreras de teclado, rueda y foco. Mantiene el mismo bloque ante un reintento
+TLS y continúa correctamente tras una escritura parcial. Sólo despierta al
+trabajador cuando la cola pasa de vacía a tener trabajo. La prueba de 200 acciones
+necesita 4 escrituras frente a 200; no cambia el tiempo de radio del router.
+
+El destino rechaza un cruce mientras tenga teclas o botones físicos pulsados.
+Así un portátil no recibe atajos con un modificador local mantenido ni pierde
+un arrastre que estaba haciendo con el trackpad. Al soltar, se puede cruzar de nuevo.
+
+Ver diagnóstico añade round_trip: última, mínima, media, máxima, variación media
+y edad de las medidas de ida y vuelta. Usa los PING/PONG ya existentes; no añade
+sondeos. Incluye cola local, transporte TLS y planificación del compañero, no
+mide Bluetooth, refresco de pantalla o respuesta de aplicaciones. Antes de la
+primera respuesta aparece null y se reinicia al renovar la conexión. write_calls
+cuenta escrituras aceptadas por el socket. No se guardan muestras de entrada.
 
 CORRECCIONES 0.5.1
 Las consultas de permisos se ejecutan en un trabajador separado, compartido por
 ambos backends. El movimiento y los callbacks nativos leen un resultado acotado:
 una consulta bloqueada deja de autorizar entrada a los 500 ms. El trabajador sólo
-existe con el backend conectado y habilitado; consulta a 100 ms y termina al
-suspender la entrada. Secure Input sigue comprobándose directamente en Mac.
+existe con el backend conectado y habilitado y termina al suspender la entrada.
+Desde 0.5.2 adapta su ritmo al foco local/remoto como se describe arriba.
+Secure Input sigue comprobándose directamente en Mac.
 
 Los avisos de llegada/salida de teclados liberan las teclas que pudieron perder
 su key-up al cambiar el canal físico. Conservan ratón y enlace TLS. Windows
@@ -133,6 +161,7 @@ PRUEBAS REPRODUCIBLES
 .venv/bin/python -m pytest
 .venv/bin/ruff check src tests benchmarks build_tray.py tray_main.py
 PYTHONPATH=src .venv/bin/python benchmarks/input_stream.py --seconds 3
+PYTHONPATH=src .venv/bin/python benchmarks/input_efficiency.py
 
 El benchmark genera dos identidades temporales de prueba y TLS mutuo real en
 loopback. Usa sólo entrada sintética y receptores en memoria; elimina el material

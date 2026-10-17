@@ -1,33 +1,36 @@
-# Continuación en Windows — candidata conjunta 0.5.1 experimental
+# Continuación en Windows — candidata conjunta 0.5.2 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-Fuentes de los binarios 0.5.1: `5241be90f146df0529eaba137b05d8209c19fbe7`.
-Pasan 954 pruebas en cada plataforma. Windows está compilado y su ejecutable
-empaquetado pasa la comprobación nativa; se ha registrado/cerrado también el
-observador nativo del teclado sin capturar entrada. Paquete y manifiesto verificados:
-[Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39076287821).
+Fuentes de la candidata: `29e9256f29722a5d70ee600821b3dd6b1345acbe`.
+Pasan 970 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica firma
+y vista previa; Windows comprueba el ejecutable empaquetado.
+CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39078250742).
+Evidencia: `validation/input-0.5.2-efficiency.json`.
 
-La corrección saca las consultas de permisos del hilo de entrada en ambas
-plataformas y recupera teclas pendientes al cambiar de canal físico y volver.
-Windows recibe avisos de interfaz de teclado mediante CM_Register_Notification
-y renueva el hook en su hilo original. La geometría se prepara antes de recibir
-movimiento y SendInput usa MOVE_NOCOALESCE. Mac tiene la misma recuperación por
-avisos IOKit, sin abrir ni leer dispositivos desde ese observador.
+La 0.5.2 reduce consultas de permisos en foco local (400 ms frente a 100 ms
+remoto, con caducidad de 500 ms), envía hasta 64 eventos ya encolados por escritura
+TLS y evita despertares repetidos cuando ya hay trabajo pendiente. No añade
+espera a un evento aislado. Conserva orden de teclas, rueda y posiciones de clic,
+escrituras parciales y recuperación. Se rechaza un cruce mientras el destino
+mantenga una tecla o un botón físico pulsado. El diagnóstico añade medidas
+agregadas de ida y vuelta usando mensajes existentes, sin historial de entrada.
 
-El Windows doméstico aún responde como 0.5.0. No hay vía de administración remota
-para instalar 0.5.1. El Mac 0.5.1 ya está instalado en Aplicaciones, pero faltan
-los permisos de su nueva firma ad-hoc. No modificar TCC ni controles de seguridad.
-El usuario ya probó 0.5.0 y comunicó microcortes y fallo de teclado; la aceptación
-física de 0.5.1 no está comprobada. Validar ambos orígenes, teclas mantenidas al
-cambiar Easy-Switch, reconexión, arrastre local en destino y salida segura.
+La simulación reduce consultas de 600 a 150 por minuto local y escrituras de
+200 a 4 por ráfaga, con entrega ordenada en ambos sentidos. Son medidas de trabajo
+evitado, no de Wi-Fi, pantalla o batería. Repetición: benchmarks/input_efficiency.py.
 
-La simulación compara el p99 de entrega con consultas de permisos de 18 ms:
-23–24 ms antes y menos de 0,7 ms después. No mide Wi-Fi, pantalla ni aplicaciones.
-Reproducción: `PYTHONPATH=src .venv/bin/python benchmarks/input_pacing.py`.
-Evidencia: `validation/input-0.5.1-reliability.json`. No se cambian vinculación,
-protocolo, puertos, instalador o firewall. Detalles: [INPUT-LAN.txt](INPUT-LAN.txt).
+Se mantienen las correcciones 0.5.1: permisos fuera del hilo de entrada, recuperación
+de teclas al recibir avisos nativos del teclado, renovación del hook Windows y
+geometría preparada con MOVE_NOCOALESCE. Los observadores no leen informes HID.
+
+El usuario ha pedido seguir desarrollando y probar las versiones juntas al volver.
+No pedirle ahora instalar o renovar permisos. La 0.5.2 no se instala en esta revisión;
+Aplicaciones conserva 0.5.1 y su permiso pendiente. El último estado comprobado del
+Windows doméstico es 0.5.0. La aceptación física aún no está verificada. Validar
+fluidez en ambos sentidos, Easy-Switch del teclado, teclas/arrastre locales en el
+destino, reposo/despertar y reconexión. Conservar configuración y ruta del instalador.
 
 «Comprobar permisos de entrada…» revisa la sesión sin registrar hooks ni enviar
 eventos. El ejecutable admite `--input-check archivo.json` para guardar esa misma
