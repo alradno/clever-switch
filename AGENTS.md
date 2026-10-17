@@ -32,6 +32,10 @@
 - Protocolo 2 en ambos equipos; no permitir traslados automáticos con el protocolo antiguo.
 - TLS mutuo/pinning en LAN privada. No añadir control remoto arbitrario, nube o cuentas.
 - Reconexión finita y espera pasiva; no introducir sondeos indefinidos fuera de casa.
+- Disponibilidad por eventos en ambas plataformas: al arrancar, despertar o volver
+  a casa, anunciar y confirmar por TLS; al salir o dormir, avisar cuando sea posible.
+  Los avisos tardíos, duplicados o de conexiones cerradas no deben reactivar trabajo.
+  Sin compañero: sin búsquedas periódicas ni consultas de cursor, HID o BLE.
 - Icono sin ventana permanente y arranque de sesión por usuario; Salir debe cerrar la app.
 - No registrar caracteres, contenido de entrada, certificados, secretos o historial del cursor.
 

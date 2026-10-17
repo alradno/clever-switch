@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.4.3**, protocolo **2**. Mac y Windows se compilan
+Versión candidata conjunta: **0.4.4**, protocolo **2**. Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
 Actualizar la app conserva
@@ -11,7 +11,34 @@ el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
 
-La revisión 0.4.3 cancela el traslado si se pausa, cierra o bloquea la sesión,
+La revisión 0.4.4 refuerza la reconexión automática por eventos en ambos equipos.
+Al arrancar, despertar o volver a casa, el equipo anuncia que está disponible y
+el otro responde una vez, permitiendo recuperar también direcciones DHCP distintas.
+La conexión se confirma por TLS antes de reanudar el trabajo. Al pausar, dormir o
+cerrar se envía un aviso breve cuando la red y el sistema lo permiten; el compañero
+pasa a espera pasiva. Un apagado brusco sigue teniendo intentos limitados.
+
+Durante la ausencia no hay búsquedas periódicas, consultas al cursor ni sondeos
+HID/BLE. Una conexión sana ya no emite anuncios periódicos de descubrimiento.
+Los avisos duplicados o antiguos y los callbacks de conexiones cerradas se descartan.
+Windows observa también cambios de dirección IP; Mac observa cambios del servicio
+DHCP. El diagnóstico indica si hay búsqueda activa o espera y lectores suspendidos.
+
+Pasan 690 pruebas en Mac, con 91,98 % de cobertura. Incluyen UDP y TLS reales en
+loopback, salida/regreso a casa, cambio de IP, aviso de reposo, apagado brusco y
+espera simulada durante un día sin trabajo activo. Las APIs Windows y periféricos
+están simulados. [Evidencia y límites de 0.4.4](docs/validation/macos-0.4.4.json).
+Ambas apps deben incorporar esta candidata para disponer de todos los avisos.
+La app debe estar abierta: para reconectar después de encender el ordenador,
+activa una vez «Iniciar al entrar en la sesión» en ambos equipos. No hay servicio
+previo al inicio de sesión ni se despierta un equipo apagado.
+
+La 0.4.4 está compilada, instalada y arrancada en Aplicaciones. Tras 130 segundos
+sin intervención, el cierre nativo terminó en 0.32 s; el ejecutable
+coincide con los cuatro módulos de producción probados. La vinculación, caché
+y configuración de Inicio se conservaron. La aceptación física sigue pendiente.
+
+La revisión anterior 0.4.3 cancela el traslado si se pausa, cierra o bloquea la sesión,
 o se empieza a arrastrar, mientras se espera la preparación del compañero. Una
 reconexión que conserva los listeners también exige volver hacia el interior de
 la pantalla y descarta observaciones antiguas del teclado. Los mensajes TLS
@@ -25,7 +52,7 @@ no había cubierto. Se conserva el manejo habitual de señales en Windows y el C
 Pasan 665 pruebas en Mac, incluidas las rutas Windows simuladas y los dos sentidos
 del traslado, con 91,36 % de cobertura. Se reprodujeron 16 casos de fallo antes de
 corregirlos. [Evidencia y límites de 0.4.3](docs/validation/macos-0.4.3.json).
-Compilada e instalada en Aplicaciones; tras 130 s sin intervención, el cierre
+En la validación de 0.4.3, compilada e instalada en Aplicaciones; tras 130 s sin intervención, el cierre
 por SIGTERM terminó en 0,33 s. Se comprobó el contenido del ejecutable instalado
 contra los fuentes probados. Identidad, enlace, caché e Inicio se conservaron.
 La aceptación física conjunta y la compilación nativa Windows siguen pendientes;
@@ -87,7 +114,7 @@ y no activa el inicio de sesión. Cierra la app anterior, sustituye la de
 y los permisos de acceso a HID que solicite macOS. No se eluden las protecciones
 del sistema. La firma es ad-hoc; no hay notarización ni Developer ID.
 
-La 0.4.3 se ha compilado en macOS 26.6.2 ARM64 y ha superado la vista previa y el
+La validación histórica de 0.4.3 se hizo en macOS 26.6.2 ARM64 y ha superado la vista previa y el
 cierre nativo tras 130 s de espera, con firma ad-hoc válida y sin cambiar los datos
 de vinculación ni el inicio de sesión. La firma nueva requiere renovar los permisos
 guardados. La prueba con periféricos, reposo y permisos queda pendiente.
