@@ -13,7 +13,17 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Versión actual `0.4.2`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Candidata conjunta actual `0.4.3`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- La nueva revisión se documenta en `validation/macos-0.4.3.json`: 665 pruebas,
+  91,36 % de cobertura y 16 casos observados fallando antes de corregirlos. Se
+  comprueban ambos sentidos, cancelación durante preparación, reconexión con el
+  mismo listener, plazos TLS totales y cierre seguro del lector HID de Windows.
+  Mac y Windows deben incorporar el mismo commit. Consolidar las mejoras antes
+  de pedir instalaciones al usuario en Windows; aún no hay aceptación física conjunta.
+- La 0.4.3 está compilada, instalada y arrancada. El cierre nativo tras 130 s
+  sin intervención terminó en 0,33 s. La 0.4.2 anterior no respondió a SIGTERM
+  tras una espera prolongada: se conservó la muestra de hilos y se corrigió el
+  despertar del bucle nativo con MachSignals. Windows y el CLI no cambian esa ruta.
 - La revisión posterior está en `validation/macos-0.4.2.json`; conserva la base
   integrada y corrige envío Bluetooth duplicado, recuperación manual, rearme tras
   reconexión, botones pulsados al llegar y errores de UDP. Las cifras de 0.4.1
@@ -71,7 +81,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.2 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.3 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir
