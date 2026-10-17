@@ -11,6 +11,12 @@
 - Antes de integrar trabajo de otro equipo: inspeccionar `git status`, obtener los
   cambios remotos y conservar las modificaciones locales. No sobrescribir trabajo
   del otro Codex ni hacer push forzado. Usar commits claros y publicar la evidencia.
+- Mac y Windows comparten una edición y un commit: mantener las mejoras sincronizadas
+  y probar la lógica de traslado en ambos sentidos. No mantener correcciones sólo
+  en una copia local de una plataforma.
+- Consolidar una candidata conjunta antes de pedir instalaciones o pruebas al usuario
+  en Windows. Las pruebas de sus APIs simuladas en Mac no sustituyen una compilación
+  y aceptación nativas de Windows.
 
 ## Requisitos que deben conservarse
 

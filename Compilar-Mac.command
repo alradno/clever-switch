@@ -31,5 +31,6 @@ fi
 echo ""
 echo "Compilacion terminada: $task_source/dist/CleverSwitchTray.app"
 echo "Cierra CleverSwitch en ambos equipos. Sustituye la app del Mac por esta version."
-echo "Abre la version 0.4.2 en ambos. La vinculacion guardada se conserva."
+task_edition="$(.venv/bin/python -c 'import runpy; print(runpy.run_path("src/cleverswitch/flow/version.py")["EDITION"])')"
+echo "Abre la version $task_edition en ambos. La vinculacion guardada se conserva."
 echo "Revisa Accesibilidad si macOS vuelve a pedir permiso para la nueva compilacion."

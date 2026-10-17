@@ -359,6 +359,19 @@ def test_manual_reconnect_clears_stale_error_before_retry():
     assert "manual" in runtime._events()
 
 
+def test_menu_and_diagnostic_remain_readable_during_listener_replacement():
+    runtime = Runtime(context())
+    runtime.mode = "online"
+    runtime.hardware = Mock()
+    runtime.coordinator = Mock()
+    runtime.context.device_registry.all_entries.return_value = []
+    runtime._disconnect()
+    # The runtime updates its mode after closing/replacing its components; the
+    # native menu can request status concurrently in this transition window.
+    assert "Reiniciando" in runtime.status()
+    assert runtime.diagnostic()["peer_reachable"] is False
+
+
 @pytest.mark.parametrize("role", ["windows", "mac"])
 def test_reconnect_requires_inward_motion_before_edge_can_fire(role, tmp_path, mocker):
     from cleverswitch.flow.cursor import Sample

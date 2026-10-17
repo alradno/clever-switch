@@ -58,6 +58,13 @@ class Runtime:
 
     def _mode(self, value):
         if self.mode != value:
+            if self.mode == "online" or value == "online":
+                # A normal reconnect retains its listeners and device objects.
+                # Neither a parked edge nor old presence evidence is a new intent.
+                if self.edge:
+                    self.edge.cooldown()
+                self.follow_candidate = None
+                self.next_follow = 0
             self.mode = value
             self.on_change()
 
@@ -215,8 +222,9 @@ class Runtime:
             self.wake("failure")
 
     def _keyboard_event(self, event):
-        if self.coordinator and self.peer_ready:
-            return self.coordinator.keyboard_event(event)
+        coordinator = self.coordinator
+        if coordinator and self.peer_ready:
+            return coordinator.keyboard_event(event)
         # Buttons are never diverted; offline presses keep their native behavior.
         return True
 
@@ -352,16 +360,21 @@ class Runtime:
             )
         if self.mode == "searching":
             return f"Buscando compañero · intento {min(self.budget.attempts + 1, 7)}/7"
-        if not self.hardware.known():
+        # Menu callbacks run concurrently with listener replacement. Snapshot
+        # references instead of blocking the native UI on the transition lock.
+        hardware, cursor, coordinator = self.hardware, self.cursor, self.coordinator
+        if hardware is None or cursor is None or coordinator is None:
+            return "Reiniciando el enlace local…"
+        if not hardware.known():
             return "Conecta ambos dispositivos aquí una vez para reconocerlos"
-        if not self.cursor.session_ready():
+        if not cursor.session_ready():
             return "Cambio bloqueado: sesión o Accesibilidad no disponibles"
         if self.peer_info and self.peer_info.get("protocol") != PROTOCOL:
             return "Actualiza CleverSwitch en ambos equipos para usar el traslado seguro"
-        if self.coordinator.busy.locked():
-            return self.coordinator.status
-        if self.coordinator.status != "Enlace local listo; cambio por bordes desactivado":
-            return self.coordinator.status
+        if coordinator.busy.locked():
+            return coordinator.status
+        if coordinator.status != "Enlace local listo; cambio por bordes desactivado":
+            return coordinator.status
         if self.peer_info.get("ready") is False:
             return "Destino no preparado: " + REASONS.get(
                 self.peer_info.get("reason"), "revisa el menú del otro equipo"
@@ -380,6 +393,7 @@ class Runtime:
         self.wake("options")
 
     def diagnostic(self):
+        coordinator = self.coordinator
         devices = [
             {"role": d.role, "name": d.name, "recognized": self.context.policy.allows(d), "connected": d.connected}
             for d in self.context.device_registry.all_entries()
@@ -393,8 +407,8 @@ class Runtime:
             "peer": self.peer_info,
             "devices": devices,
             "status": self.status(),
-            "last_failure": self.coordinator.last_error if self.coordinator else None,
-            "phase": self.coordinator.phase if self.coordinator else None,
+            "last_failure": coordinator.last_error if coordinator else None,
+            "phase": coordinator.phase if coordinator else None,
         }
 
     def reconnect_now(self):
@@ -402,7 +416,8 @@ class Runtime:
         self.wake("manual")
 
     def recover(self):
-        if self.coordinator and self.coordinator.recover():
+        coordinator = self.coordinator
+        if coordinator and coordinator.recover():
             self.wake("recovery")  # Resume presence checks even from passive standby.
             return True
         return False

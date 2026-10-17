@@ -3,12 +3,33 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión de esta edición: **0.4.2**, protocolo **2**. Ambos equipos deben ejecutar
-protocolo 2 para utilizar el traslado coordinado; para la protección del borde,
-actualiza ambos a 0.4.2. Actualizar la app conserva
+Versión candidata conjunta: **0.4.3**, protocolo **2**. Mac y Windows se compilan
+desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
+Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
+Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
+
+La revisión 0.4.3 cancela el traslado si se pausa, cierra o bloquea la sesión,
+o se empieza a arrastrar, mientras se espera la preparación del compañero. Una
+reconexión que conserva los listeners también exige volver hacia el interior de
+la pantalla y descarta observaciones antiguas del teclado. Los mensajes TLS
+tienen un plazo total, incluso si llegan fragmentados. El cierre conserva el
+recurso HID en su hilo lector mientras termina una lectura nativa, y descarta
+escrituras pendientes tras cerrar. El menú tolera la sustitución del enlace.
+En Mac, las señales de cierre despiertan el bucle nativo: la prueba de una app
+que llevaba horas en espera detectó un bloqueo que la prueba corta de 0.4.2
+no había cubierto. Se conserva el manejo habitual de señales en Windows y el CLI.
+
+Pasan 665 pruebas en Mac, incluidas las rutas Windows simuladas y los dos sentidos
+del traslado, con 91,36 % de cobertura. Se reprodujeron 16 casos de fallo antes de
+corregirlos. [Evidencia y límites de 0.4.3](docs/validation/macos-0.4.3.json).
+Compilada e instalada en Aplicaciones; tras 130 s sin intervención, el cierre
+por SIGTERM terminó en 0,33 s. Se comprobó el contenido del ejecutable instalado
+contra los fuentes probados. Identidad, enlace, caché e Inicio se conservaron.
+La aceptación física conjunta y la compilación nativa Windows siguen pendientes;
+no se considera una versión final para uso diario hasta completarlas.
 
 La revisión 0.4.2 corrige fallos reproducidos en la recuperación: evita repetir
 órdenes de canal tras perder una respuesta Bluetooth, protege el borde también
@@ -33,7 +54,7 @@ alternos con TLS real y 48 respuestas perdidas deliberadamente, tres arranques y
 cierres de la vista previa compilada, Defender sin detecciones. Los dispositivos
 de esas pruebas están simulados. La app ARM64 no se ha compilado desde Windows.
 
-- [Validación nativa de Mac 0.4.2](docs/validation/macos-0.4.2.json): 646 pruebas,
+- [Validación histórica de Mac 0.4.2](docs/validation/macos-0.4.2.json): 646 pruebas,
   cobertura 91,20 %, compilación, firma, vista previa y cierre nativo correctos.
   Instalada y arrancada; permisos y aceptación física pendientes.
 - [Validación histórica de Mac 0.4.1](docs/validation/macos-0.4.1.json): 626 pruebas
@@ -66,10 +87,10 @@ y no activa el inicio de sesión. Cierra la app anterior, sustituye la de
 y los permisos de acceso a HID que solicite macOS. No se eluden las protecciones
 del sistema. La firma es ad-hoc; no hay notarización ni Developer ID.
 
-El script se ha ejecutado en macOS 26.6.2 ARM64 y el binario compilado ha superado
-una vista previa de arranque/cierre, con firma ad-hoc válida y sin cambiar los
-datos de vinculación ni el inicio de sesión. La firma nueva requiere renovar
-los permisos guardados. La prueba con periféricos, reposo y permisos queda pendiente.
+La 0.4.3 se ha compilado en macOS 26.6.2 ARM64 y ha superado la vista previa y el
+cierre nativo tras 130 s de espera, con firma ad-hoc válida y sin cambiar los datos
+de vinculación ni el inicio de sesión. La firma nueva requiere renovar los permisos
+guardados. La prueba con periféricos, reposo y permisos queda pendiente.
 
 ## Windows x64
 

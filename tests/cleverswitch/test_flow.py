@@ -4,6 +4,7 @@ import socket
 import ssl
 import struct
 import threading
+import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -74,9 +75,13 @@ class Cursor:
         self.ready = True
         self.placements = []
         self.failure = False
+        self.safe = True
 
     def session_ready(self):
         return self.ready
+
+    def sample(self):
+        return Sample(100, 200, 0, 0, 1920, 1080, self.ready and self.safe)
 
     def enter(self, side, y):
         if self.failure:
@@ -113,6 +118,65 @@ class LocalLink:
 def run(coordinator, kind="edge", y=0.5):
     coordinator.busy.acquire()
     coordinator._run(kind, y)
+
+
+@pytest.mark.parametrize("host", [0, 1], ids=["windows", "mac"])
+@pytest.mark.parametrize("change", ["pause", "close", "lock", "drag"])
+def test_preparation_cannot_move_devices_after_local_conditions_change(tmp_path, host, change):
+    a, b, c, d, da, db, owners, events = machines(tmp_path)
+    owners.update(mouse=host, keyboard=host)
+    source, target = (da, db) if host == 0 else (db, da)
+    link = LocalLink(target)
+    coordinator = Coordinator(source.hardware, source.cursor, link, source)
+    original = link.call
+
+    def delayed_reply(op, args=None, timeout=3):
+        result = original(op, args, timeout)
+        if op == "prepare":
+            if change == "pause":
+                source.hardware.enabled = False
+            elif change == "close":
+                coordinator.stop_event.set()
+            elif change == "lock":
+                source.cursor.ready = False
+            else:
+                source.cursor.safe = False
+        return result
+
+    link.call = delayed_reply
+    run(coordinator)
+    assert not any(event[1] == "switch" for event in events)
+    assert owners == {"mouse": host, "keyboard": host}
+    assert target.state["phase"] == "aborted"
+    assert not source.gate.locked() and not target.gate.locked()
+
+
+def test_rpc_deadline_includes_fragmented_tls_response(paired_tls, mocker):
+    # Every fragment arrives within the socket timeout, but the whole response
+    # exceeds the RPC budget. Per-read timeouts alone cannot enforce that budget.
+    client = Link(paired_tls[0], lambda op, args: {})
+    server = Link(paired_tls[1], lambda op, args: {"ready": True}, 0)
+    original_send = send
+
+    def fragmented_reply(connection, value):
+        if "result" not in value:
+            return original_send(connection, value)
+        raw = canonical(value)
+        packet = struct.pack("!I", len(raw)) + raw
+        for byte in packet[:10]:
+            time.sleep(0.04)
+            connection.sendall(bytes([byte]))
+        connection.sendall(packet[10:])
+
+    mocker.patch("cleverswitch.flow.network.send", side_effect=fragmented_reply)
+    server.start()
+    client.port = server.port
+    try:
+        with pytest.raises(TimeoutError):
+            client.call("ready", timeout=0.2)
+    finally:
+        client.close()
+        server.close()
 
 
 def test_pairing_keys_stay_local_and_tls_is_mutual(paired, tmp_path):

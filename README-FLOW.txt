@@ -1,10 +1,23 @@
-CLEVERSWITCH FLOW — prototipo local 0.4.2, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata conjunta 0.4.3, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.4.3: Mac y Windows comparten las mismas correcciones y versión.
+Antes de enviar el ratón se vuelve a comprobar que no se ha pausado/cerrado la
+app, bloqueado la sesión ni empezado un arrastre durante la preparación remota.
+Una reconexión que conserva el enlace exige también moverse hacia dentro antes
+de rearmar el borde y obtiene nuevas comprobaciones del teclado. Los plazos TLS
+son totales, no se reinician por cada fragmento recibido. Al cerrar, el lector
+conserva el recurso HID hasta terminar; no se ejecutan nuevas escrituras después
+del cierre. El menú sigue disponible mientras se reemplaza el enlace.
+En Mac, las señales despiertan el bucle nativo incluso en espera pasiva; la prueba
+corta de cierre de 0.4.2 no había detectado ese bloqueo tras una espera prolongada.
+665 pruebas pasan en Mac (91,36 %); las APIs Windows y dispositivos se simulan.
+La compilación Windows y la aceptación física conjunta siguen pendientes.
+
 REVISIÓN 0.4.2: mantiene protocolo 2 y el enlace existente. Una orden de canal
 enviada por Bluetooth no se repite por HID si su resultado queda incierto; se
 cancela el trabajo pendiente y se comprueba la llegada. El borde también exige
@@ -199,8 +212,9 @@ hayas terminado las pruebas. Uninstall-CleverSwitch.ps1 conserva la configuraci�
 No se desactiva Defender ni se eliminan marcas de seguridad del sistema.
 
 MAC M4 PRO
-La .app 0.4.1 se ha compilado en macOS 26.6.2 ARM64 y su vista previa arranca y
-cierra correctamente. Está instalada en /Applications/CleverSwitchTray.app;
+La .app 0.4.3 se ha compilado en macOS 26.6.2 ARM64; su vista previa funciona y
+el cierre nativo tras 130 s de espera terminó en 0,33 s. Está instalada y arrancada
+en /Applications/CleverSwitchTray.app;
 la firma nueva requiere renovar manualmente Bluetooth y Accesibilidad. La
 estabilidad con los periféricos físicos y ambos equipos actualizados sigue pendiente.
 Para compilar en el Mac, usa Python ARM64 3.12 o superior, sin Rosetta, y HIDAPI:
