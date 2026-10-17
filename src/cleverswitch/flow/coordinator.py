@@ -46,6 +46,7 @@ class Destination:
         self.state = None
         self.deadline = 0
         self.arrived = lambda: None
+        self.cursor_placed = False
         self.recovering = False
         if journal and journal.exists():
             saved = read_file(journal)
@@ -58,6 +59,7 @@ class Destination:
                 self.owns_gate = True
                 self.recovering = True
                 self.deadline = clock() + 8  # Allow fresh HID discovery after waking/restarting.
+                self.hardware.expect_arrival(8)
 
     def _record(self, phase):
         updated = {**self.state, "phase": phase}
@@ -83,6 +85,7 @@ class Destination:
         return None
 
     def _settled(self):
+        self.hardware.expect_arrival(0)
         self.quiet_until = self.clock() + 3
         try:
             self.arrived()
@@ -90,6 +93,19 @@ class Destination:
             if self.owns_gate:
                 self.owns_gate = False
                 self.gate.release()
+
+    def _place_cursor(self):
+        if self.state["kind"] != "edge" or self.cursor_placed:
+            return True
+        try:
+            self.cursor.enter("left" if self.host == 1 else "right", self.state["y"])
+        except BlockingIOError:
+            return False  # Retry within the same lease, with the keyboard still at source.
+        except OSError:
+            self._abort()
+            return False
+        self.cursor_placed = True  # Lost ACKs must not snap an already moving pointer back.
+        return True
 
     def _return(self):
         # Cleanup is permitted even if paused/locked: do not strand a half-switch.
@@ -174,6 +190,7 @@ class Destination:
                 if not self.gate.acquire(blocking=False):
                     return {"accepted": False, "reason": "busy"}
                 self.owns_gate = True
+                self.cursor_placed = False
                 old = self.state
                 try:
                     self.state = {"tx": tx, "phase": "prepared", "kind": args["kind"], "y": y}
@@ -183,6 +200,7 @@ class Destination:
                     self._settled()
                     raise
                 self.deadline = self.clock() + LEASE_SECONDS
+                self.hardware.expect_arrival(LEASE_SECONDS)
                 return {"accepted": True}
             if set(args) != {"tx"}:
                 raise ValueError("Parámetros inesperados")
@@ -205,6 +223,8 @@ class Destination:
                     return {"present": False}
                 present = self.hardware.probe("mouse", timeout=1)
                 if present:
+                    if not self._place_cursor():
+                        return {"present": False, "phase": self.state["phase"]}
                     self._record("mouse")
                     self.deadline = self.clock() + LEASE_SECONDS
                 return {"present": present}
@@ -223,17 +243,10 @@ class Destination:
                     # A sleeping radio or one missed ping is not proof of departure.
                     # Keep the same finite lease; the source retries commit freshly.
                     return {"phase": "keyboard", "pending": True}
-                # Cursor placement is part of readiness and can still fail on a locked desktop.
-                if self.state["kind"] == "edge":
-                    try:
-                        self.cursor.enter("left" if self.host == 1 else "right", self.state["y"])
-                    except BlockingIOError:
-                        # Do not warp during a drag or undo an arrival for a brief
-                        # button/modifier press. Retry within the unchanged lease.
-                        return {"phase": "keyboard", "pending": True}
-                    except OSError:
-                        self._abort()
-                        return {"phase": "aborted"}
+                # Placement already happened after the first fresh mouse proof.
+                # Never warp it again after the user has started moving there.
+                if not self._place_cursor():
+                    return {"phase": self.state["phase"], "pending": True}
                 self._record("committed")
                 self._settled()
                 return {"phase": "committed"}
@@ -256,6 +269,8 @@ class Coordinator:
         self.worker = None
         self.last_error = None
         self.phase = "idle"
+        self.timings = {}
+        self.started = 0.0
 
     def can_start(self):
         return (
@@ -266,14 +281,20 @@ class Coordinator:
 
     def _note(self, phase):
         self.phase = phase
+        self._mark(phase)
         if self.destination.journal:
             try:
                 write_private(
                     self.destination.journal.with_name("last-transfer.json"),
-                    canonical({"edition": EDITION, "phase": phase, "reason": self.last_error}),
+                    canonical(
+                        {"edition": EDITION, "phase": phase, "reason": self.last_error, "elapsed_ms": self.timings}
+                    ),
                 )
             except OSError:
                 pass  # Diagnostics must never affect transfer or recovery.
+
+    def _mark(self, name):
+        self.timings = {**self.timings, name: round((self.clock() - self.started) * 1000, 2)}
 
     def request(self, kind="edge", y=0.5):
         if not self.can_start() or not self.busy.acquire(blocking=False):
@@ -285,6 +306,7 @@ class Coordinator:
     def _confirmed(self, op, tx):
         deadline = self.clock() + 8
         while self.clock() < deadline and not self.stop_event.is_set() and self.hardware.allowed():
+            delay = 0.04  # Fast only during the finite arrival window, never while idle.
             try:
                 result = self.link.call(op, {"tx": tx}, timeout=min(2, max(0.1, deadline - self.clock())))
                 if result.get("present") is True:
@@ -292,8 +314,8 @@ class Coordinator:
                 if result.get("phase") in TERMINAL | {"unknown"}:
                     return False
             except (OSError, ValueError):
-                pass  # Retry within the existing deadline, never an unbounded round.
-            self.stop_event.wait(0.15)
+                delay = 0.15  # Communication faults must not create a rapid retry storm.
+            self.stop_event.wait(min(delay, max(0, deadline - self.clock())))
         return False
 
     def _present(self, role):
@@ -330,6 +352,8 @@ class Coordinator:
         return False
 
     def _run(self, kind, y):
+        self.started = self.clock()
+        self.timings = {}
         tx = secrets.token_hex(16)
         log.info("Source host=%s tx=%s kind=%s target=%s", self.host + 1, tx, kind, 2 - self.host)
         prepared = False
@@ -378,6 +402,7 @@ class Coordinator:
             if not self._confirmed("mouse", tx):
                 raise RuntimeError("El ratón no ha confirmado su llegada")
             log.info("Source host=%s tx=%s mouse confirmed at target", self.host + 1, tx)
+            self._mark("mouse_confirmed")
             if kind == "edge":
                 # Recheck after the asynchronous arrival, before giving up the last local input.
                 if not self.hardware.allowed() or not self.cursor.session_ready() or not self._present("keyboard"):
@@ -388,6 +413,7 @@ class Coordinator:
             if not self._confirmed("keyboard", tx):
                 raise RuntimeError("El teclado no ha confirmado su llegada")
             log.info("Source host=%s tx=%s keyboard confirmed at target", self.host + 1, tx)
+            self._mark("keyboard_confirmed")
             committed = self._commit(tx)
             if not committed:
                 raise RuntimeError("Cambio no confirmado")

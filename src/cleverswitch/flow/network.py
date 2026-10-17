@@ -108,6 +108,7 @@ class Link:
                 return
             with raw:
                 try:
+                    raw.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     private_ip(remote[0], self.pairing.testing)
                     if remote[0] != self.peer:
                         continue
@@ -142,6 +143,8 @@ class Link:
             raise
 
     def _call(self, op, args=None, timeout=3.0):
+        if self.stop_event.is_set():
+            raise ConnectionError("Enlace cerrado")
         if op not in OPS:
             raise ValueError("Operación inválida")
         # One budget spans TCP, TLS, writes and every received fragment. Socket
@@ -150,6 +153,7 @@ class Link:
         nonce = secrets.token_hex(16)
         peer = private_ip(self.peer, self.pairing.testing)
         with socket.create_connection((peer, self.port), timeout=timeout, source_address=(self.address, 0)) as raw:
+            raw.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             remaining_timeout(raw, deadline)
             with self.client_context.wrap_socket(raw) as connection:
                 self.pairing.verify_pin(connection)
