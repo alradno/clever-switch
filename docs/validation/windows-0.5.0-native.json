@@ -1,0 +1,54 @@
+{
+  "observed_at": "2026-10-17T21:08:48.975257+00:00",
+  "edition": "0.5.0",
+  "source_commit": "4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+  "environment": "GitHub Actions windows-latest x64, Python 3.12",
+  "workflow_url": "https://github.com/alradno/clever-switch/actions/runs/39069359804",
+  "workflow_run": 39069359804,
+  "job_id": 117503548774,
+  "tests": {
+    "passed": 936,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds_junit": 50.502,
+    "ruff": "passed"
+  },
+  "native_build": "passed",
+  "packaged_check": "passed",
+  "readiness": {
+    "edition": "0.5.0",
+    "platform": "win32",
+    "ready": true,
+    "checks": {
+      "interactive_session": true
+    }
+  },
+  "artifacts": [
+    {
+      "id": 12115010391,
+      "name": "CleverSwitch-Windows-4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+      "sha256": "0e4466028a342f1ee15494e2cd3118b457b07ef47608ac18edceae6b5a24559c",
+      "digest_matches_github": true
+    },
+    {
+      "id": 12114119657,
+      "name": "Windows-validation-4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+      "sha256": "f97ec4975668585b8dabc3066fbd06f8c758ed985d870b06d99e46acb3b9a715",
+      "digest_matches_github": true
+    }
+  ],
+  "manifest": {
+    "edition": "0.5.0",
+    "protocol": 2,
+    "files": {
+      "CleverSwitchTray.exe": "830ac5268b83161cda9c27bae0fd6ee7cb07ff87115d4b7cea57b159f027382f",
+      "Install-CleverSwitch.ps1": "06dd4a02d6338b746408687376d1af6490d2e1791b69b092730ca43e284fd4bf",
+      "Configure-CleverSwitchFirewall.ps1": "3a3d0571dde1e0a12da3a35457b848a8634fe0700873aac58811119cef2f1a1b"
+    }
+  },
+  "manifest_hashes_verified": true,
+  "native_input_capture_or_injection": false,
+  "installed_on_user_windows": false,
+  "physical_acceptance": "pending"
+}

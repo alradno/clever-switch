@@ -1,13 +1,12 @@
 {
-  "observed_at": "2026-10-17T20:45:38.393401+00:00",
+  "observed_at": "2026-10-17T21:12:16.769746+00:00",
   "edition": "0.5.0",
   "control_protocol": 2,
   "input_protocol": 1,
-  "source_parent_commit": "7cd190f1e41f0b065df70e36fab76ec4b9446059",
   "tests": {
-    "passed": 932,
+    "passed": 936,
     "coverage_percent": 91.43,
-    "seconds": 27.67,
+    "seconds": 28.21,
     "ruff": "passed",
     "format": "passed"
   },
@@ -15,10 +14,11 @@
     "edition": "0.5.0",
     "installed_path": "/Applications/CleverSwitchTray.app",
     "signature_valid": true,
+    "observed_at": "2026-10-17T21:04:27.459396+00:00",
     "installed_matches_sources": true,
     "verified_module_count": 20,
     "preview_exit_code": 0,
-    "previous_exit_seconds": 0.32,
+    "previous_exit_seconds": 0.325,
     "network_input_enabled": true,
     "identity_pairing_cache_startup_preserved": true,
     "permissions_granted_automatically": false,
@@ -26,16 +26,17 @@
     "readiness": {
       "edition": "0.5.0",
       "platform": "darwin",
-      "ready": false,
+      "ready": true,
       "checks": {
-        "listen_permission": false,
-        "post_permission": false,
-        "session_and_accessibility": false,
+        "listen_permission": true,
+        "post_permission": true,
+        "session_and_accessibility": true,
         "secure_input_inactive": true
       }
     },
     "app_running": true,
-    "executable_sha256": "30fb1c9a9351db27857ffc470e7701d9928edf52d46f05c94814ee9766bc7235"
+    "executable_sha256": "376a68a47a2f7ea09f418d23f58be04be5a405b7e2345dee2034b7dbefcc21b9",
+    "readiness_checked_at": "2026-10-17T21:10:36.370805+00:00"
   },
   "native_pointer": {
     "native": true,
@@ -58,13 +59,61 @@
     "tap_closed": true
   },
   "windows": {
-    "native_build": "pending",
-    "physical_acceptance": "pending",
-    "last_peer_check": "timeout"
+    "observed_at": "2026-10-17T21:08:48.975257+00:00",
+    "edition": "0.5.0",
+    "source_commit": "4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+    "environment": "GitHub Actions windows-latest x64, Python 3.12",
+    "workflow_url": "https://github.com/alradno/clever-switch/actions/runs/39069359804",
+    "workflow_run": 39069359804,
+    "job_id": 117503548774,
+    "tests": {
+      "passed": 936,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds_junit": 50.502,
+      "ruff": "passed"
+    },
+    "native_build": "passed",
+    "packaged_check": "passed",
+    "readiness": {
+      "edition": "0.5.0",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12115010391,
+        "name": "CleverSwitch-Windows-4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+        "sha256": "0e4466028a342f1ee15494e2cd3118b457b07ef47608ac18edceae6b5a24559c",
+        "digest_matches_github": true
+      },
+      {
+        "id": 12114119657,
+        "name": "Windows-validation-4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+        "sha256": "f97ec4975668585b8dabc3066fbd06f8c758ed985d870b06d99e46acb3b9a715",
+        "digest_matches_github": true
+      }
+    ],
+    "manifest": {
+      "edition": "0.5.0",
+      "protocol": 2,
+      "files": {
+        "CleverSwitchTray.exe": "830ac5268b83161cda9c27bae0fd6ee7cb07ff87115d4b7cea57b159f027382f",
+        "Install-CleverSwitch.ps1": "06dd4a02d6338b746408687376d1af6490d2e1791b69b092730ca43e284fd4bf",
+        "Configure-CleverSwitchFirewall.ps1": "3a3d0571dde1e0a12da3a35457b848a8634fe0700873aac58811119cef2f1a1b"
+      }
+    },
+    "manifest_hashes_verified": true,
+    "native_input_capture_or_injection": false,
+    "installed_on_user_windows": false,
+    "physical_acceptance": "pending"
   },
   "limits": [
     "Native Mac input probes ran in the development interpreter, not the installed bundle",
-    "Installed-bundle permissions need renewal",
     "No real Mac-Windows crossing or physical latency measurement",
     "No conclusion about EDR alerts or policy acceptance"
   ],
@@ -81,6 +130,72 @@
     "src/cleverswitch/flow/input_service.py": "b66fb803932c0fef7bf5a9e6877f572598aef18faf5c2bbd7a10959731134792",
     "src/cleverswitch/flow/runtime.py": "23a677aa8a8c0259d5f43627bfc6ddaec0336e5e3182aad5071a2f23461bde22",
     "src/cleverswitch/tray/app.py": "67d70fd00db75e08392dbe649c5a10370a53f39b0a10f9a9f487fac4376a796f",
-    "build_tray.py": "87fc9aa848a80d5dcc0632ec366a8b5f175af7d25d29645273dfcf6cc1e2b460"
-  }
+    "build_tray.py": "87fc9aa848a80d5dcc0632ec366a8b5f175af7d25d29645273dfcf6cc1e2b460",
+    "src/cleverswitch/flow/network.py": "2d3b8ffdd03edb32ddd8d03738a29798b7e18aa17902645a8725ab1aa39a4f88"
+  },
+  "native_probe_observed_at": "2026-10-17T20:45:38.393401+00:00",
+  "source_commit": "4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+  "native_idle": {
+    "observed_at": "2026-10-17T21:04:58.653256+00:00",
+    "elapsed_seconds": 10.004,
+    "cpu_percent_one_core": 0.5,
+    "scope": "installed_app_with_permissions_pending",
+    "rss_mib": 113.3,
+    "threads": 22,
+    "battery_claim": false,
+    "executable_sha256": "376a68a47a2f7ea09f418d23f58be04be5a405b7e2345dee2034b7dbefcc21b9"
+  },
+  "native_lifecycle": {
+    "observed_at": "2026-10-17T21:10:36.370805+00:00",
+    "sigterm_exit_seconds": 0.167,
+    "process_lifetime_seconds": 300.9,
+    "relaunch_requested": true
+  },
+  "peer_check": {
+    "observed_at": "2026-10-17T21:00:16.172226+00:00",
+    "scope": "one_ready_rpc_existing_pairing",
+    "timeout_seconds": 2,
+    "tls_authenticated": false,
+    "error": "TimeoutError",
+    "elapsed_seconds": 2.023
+  },
+  "windows_access": {
+    "observed_at": "2026-10-17T21:09:28.674019+00:00",
+    "ports": [
+      {
+        "port": 22,
+        "state": "TimeoutError"
+      },
+      {
+        "port": 3389,
+        "state": "TimeoutError"
+      },
+      {
+        "port": 5985,
+        "state": "TimeoutError"
+      },
+      {
+        "port": 5986,
+        "state": "TimeoutError"
+      },
+      {
+        "port": 445,
+        "state": "TimeoutError"
+      },
+      {
+        "port": 47654,
+        "state": "TimeoutError"
+      }
+    ]
+  },
+  "discovery_regression": {
+    "scope": "same-process link reconstruction in both roles",
+    "before": "4 cases failed with repeated or decreasing wall-clock values",
+    "after": "4 cases passed; fresh arrival accepted and delayed prior departure rejected",
+    "cross_process_clock_rollback": "Existing packet-lifetime recovery remains unchanged"
+  },
+  "published": true,
+  "remote_tree_matches_tested_tree": true,
+  "completion": false,
+  "publication_url": "https://github.com/alradno/clever-switch/tree/feature/lan-input"
 }
