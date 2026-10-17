@@ -264,7 +264,8 @@ def test_tls_real_two_peer_switch_and_reverse(paired_tls, tmp_path):
 
 
 def test_tls_rejects_unknown_client_and_replay(paired_tls, tmp_path):
-    server = Link(paired_tls[0], lambda op, args: {"ready": True}, 0)
+    handler = Mock(return_value={"ready": True})
+    server = Link(paired_tls[0], handler, 0)
     client = Link(paired_tls[1], lambda op, args: {}, 0)
     server.start()
     client.port = server.port
@@ -272,12 +273,16 @@ def test_tls_rejects_unknown_client_and_replay(paired_tls, tmp_path):
         unknown = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         unknown.check_hostname = False
         unknown.verify_mode = ssl.CERT_NONE
-        with socket.create_connection(("127.0.0.1", server.port), source_address=(client.address, 0)) as raw:
-            with unknown.wrap_socket(raw) as secure:
-                send(secure, {"link": server.config["link"], "id": "a" * 32, "op": "ready", "args": {}})
-                with pytest.raises((OSError, ConnectionError)):
+        with socket.create_connection(("127.0.0.1", server.port), timeout=2, source_address=(client.address, 0)) as raw:
+            # TLS rejection can surface during handshake, write or read, depending
+            # on when the peer's alert is received. A timeout is not a rejection.
+            with pytest.raises((ssl.SSLError, ConnectionError)):
+                with unknown.wrap_socket(raw) as secure:
+                    send(secure, {"link": server.config["link"], "id": "a" * 32, "op": "ready", "args": {}})
                     receive(secure)
+        handler.assert_not_called()
         assert client.call("ready") == {"ready": True}
+        handler.assert_called_once_with("ready", {})
         request = {"link": server.config["link"], "id": "a" * 32, "op": "ready", "args": {}}
         for index in range(2):
             with socket.create_connection(("127.0.0.1", server.port), source_address=(client.address, 0)) as raw:
@@ -305,6 +310,7 @@ def test_tls_rejects_unknown_client_and_replay(paired_tls, tmp_path):
             attacker.call("ready")
         with pytest.raises(ValueError):
             client.call("shell")
+        assert handler.call_count == 2  # Only the two fresh, paired requests reached the app.
     finally:
         server.close()
 
@@ -367,6 +373,21 @@ def test_discovery_orders_departure_and_restarted_peer_notices(paired):
     assert not fresh_receiver.accept(db.packet("departing"), lb.address)
     assert la.on_announcement.call_count == 2
     la.on_departure.assert_called_once()
+
+
+@pytest.mark.parametrize("clock_change", [0, -1_000_000_000], ids=["same_tick", "clock_rollback"])
+@pytest.mark.parametrize("source", [0, 1], ids=["windows", "mac"])
+def test_discovery_restart_survives_coarse_or_adjusted_clock(paired, mocker, clock_change, source):
+    clock = mocker.patch("cleverswitch.flow.network.time.time_ns", return_value=time.time_ns())
+    receiver = Discovery(Link(paired[1 - source], lambda *args: {}, 0))
+    sender = Discovery(Link(paired[source], lambda *args: {}, 0))
+    assert receiver.accept(sender.packet(), sender.link.address)
+    late_departure = sender.packet("departing")
+    clock.return_value += clock_change
+    restarted = Discovery(sender.link)
+    assert receiver.accept(restarted.packet(), sender.link.address)
+    assert restarted.epoch > sender.epoch
+    assert not receiver.accept(late_departure, sender.link.address)
 
 
 def test_discovery_transmits_same_notice_to_both_targets_and_replies_once(paired, mocker):
