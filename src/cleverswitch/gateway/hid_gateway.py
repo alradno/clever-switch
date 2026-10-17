@@ -150,7 +150,7 @@ class HidGateway(Thread, Subscriber):
 
         if event.pid != self._device_info.pid:
             return
-        if self._background_suspended():
+        if self._stop_event.is_set() or self._background_suspended():
             return
 
         if not self._connected:
@@ -158,6 +158,9 @@ class HidGateway(Thread, Subscriber):
             if self._ever_connected or not self._connected_signal.wait(grace):
                 log.debug(f"Dropping write to pid=0x{self._device_info.pid:04X}: device disconnected")
                 return
+
+        if self._stop_event.is_set() or self._background_suspended():
+            return  # Closing or suspending during the connection wait cancels this write.
 
         if _IS_WINDOWS:
             expected = _USAGE_TO_REPORT_ID.get(self._device_info.usage)
@@ -193,5 +196,7 @@ class HidGateway(Thread, Subscriber):
             self.join(timeout=_CLOSE_JOIN_TIMEOUT)
             if not self.is_alive():
                 return
-            log.warning(f"Gateway pid=0x{self._device_info.pid:04X} did not stop in time; closing handle externally")
-        self._close_transport()
+            log.warning(f"Gateway pid=0x{self._device_info.pid:04X} still stopping; reader retains its handle")
+            return
+        if self.ident is None:
+            self._close_transport()  # Never started; no reader owns this handle.
