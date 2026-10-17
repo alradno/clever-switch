@@ -1,0 +1,271 @@
+{
+  "edition": "0.5.2",
+  "source_commit": "29e9256f29722a5d70ee600821b3dd6b1345acbe",
+  "observed_at": "2026-10-17T23:20:33.532143+00:00",
+  "changes": [
+    "Permission checks every 400 ms with local focus and 100 ms during remote focus, explicit demand can refresh earlier; same 500 ms maximum trust",
+    "Up to 64 already queued frames per TLS write; no wait to collect new input; preserves sequence, action barriers, partial writes and TLS retries",
+    "Wake transport only when its queue becomes nonempty, instead of once per coalesced move",
+    "Refuse incoming focus while destination has a physical key or button held, preserving local modifiers and drags",
+    "Round-trip and variation aggregates from existing PING/PONG, without input history or added probes"
+  ],
+  "tests": {
+    "mac": {
+      "tests": 970,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "windows": {
+      "tests": 970,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "mac_coverage_percent": 91.52,
+  "ruff": "passed",
+  "regressions_observed_before_fix": {
+    "burst_writes": 200,
+    "coalesced_queue_wakeups": 1001,
+    "destination_held_input_accepted_instead_of_rejected": 4
+  },
+  "efficiency": {
+    "scope": "synthetic_idle_time_and_queued_bursts_over_real_loopback_TLS",
+    "baseline": "f1f93841382c8e53064943e70e2338afb82ced2f",
+    "not_measured": [
+      "physical_input",
+      "WiFi",
+      "screen",
+      "applications",
+      "battery"
+    ],
+    "cases": [
+      {
+        "revision": "baseline_0.5.1",
+        "idle": {
+          "simulated_seconds": 60,
+          "permission_checks": 600,
+          "maximum_trust_ms": 500.0
+        },
+        "bursts": [
+          {
+            "direction": "windows_to_mac",
+            "events": 200,
+            "ordered_delivery": true,
+            "write_calls": 200,
+            "simulated_write_cost_ms": 1,
+            "drain_ms": 263.436
+          },
+          {
+            "direction": "mac_to_windows",
+            "events": 200,
+            "ordered_delivery": true,
+            "write_calls": 200,
+            "simulated_write_cost_ms": 1,
+            "drain_ms": 260.51
+          }
+        ]
+      },
+      {
+        "revision": "candidate",
+        "idle": {
+          "simulated_seconds": 60,
+          "permission_checks": 150,
+          "maximum_trust_ms": 500.0
+        },
+        "bursts": [
+          {
+            "direction": "windows_to_mac",
+            "events": 200,
+            "ordered_delivery": true,
+            "write_calls": 4,
+            "simulated_write_cost_ms": 1,
+            "drain_ms": 6.521
+          },
+          {
+            "direction": "mac_to_windows",
+            "events": 200,
+            "ordered_delivery": true,
+            "write_calls": 4,
+            "simulated_write_cost_ms": 1,
+            "drain_ms": 6.527
+          }
+        ]
+      }
+    ]
+  },
+  "stream": {
+    "scope": "synthetic_input_mutual_tls_loopback_no_native_input",
+    "excludes": [
+      "Bluetooth",
+      "Wi-Fi",
+      "native_injection",
+      "display",
+      "application"
+    ],
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.317,
+        "delivery_ms": {
+          "p50": 0.368,
+          "p95": 0.464,
+          "p99": 0.494,
+          "max": 0.549,
+          "mean": 0.369
+        },
+        "process_cpu_percent_one_core": 3.9,
+        "duration_seconds": 1.998
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.294,
+        "delivery_ms": {
+          "p50": 0.367,
+          "p95": 0.487,
+          "p99": 0.579,
+          "max": 0.637,
+          "mean": 0.377
+        },
+        "process_cpu_percent_one_core": 4.04,
+        "duration_seconds": 1.998
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 2000,
+        "delivered": 1991,
+        "coalesced": 6,
+        "received_coalesced": 3,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.314,
+        "delivery_ms": {
+          "p50": 0.217,
+          "p95": 0.336,
+          "p99": 0.493,
+          "max": 2.333,
+          "mean": 0.231
+        },
+        "process_cpu_percent_one_core": 15.33,
+        "duration_seconds": 2.003
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 2000,
+        "delivered": 1999,
+        "coalesced": 1,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.288,
+        "delivery_ms": {
+          "p50": 0.216,
+          "p95": 0.342,
+          "p99": 0.404,
+          "max": 2.14,
+          "mean": 0.225
+        },
+        "process_cpu_percent_one_core": 14.47,
+        "duration_seconds": 2.003
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 2000,
+        "delivered": 784,
+        "coalesced": 0,
+        "received_coalesced": 1216,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 3.806,
+        "delivery_ms": {
+          "p50": 3.152,
+          "p95": 3.807,
+          "p99": 5.639,
+          "max": 5.889,
+          "mean": 3.261
+        },
+        "process_cpu_percent_one_core": 13.84,
+        "duration_seconds": 2.009
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 2000,
+        "delivered": 789,
+        "coalesced": 1,
+        "received_coalesced": 1210,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 3.808,
+        "delivery_ms": {
+          "p50": 3.14,
+          "p95": 4.553,
+          "p99": 5.568,
+          "max": 6.158,
+          "mean": 3.277
+        },
+        "process_cpu_percent_one_core": 13.42,
+        "duration_seconds": 2.009
+      }
+    ]
+  },
+  "mac": {
+    "edition": "0.5.2",
+    "built_at": "2026-10-17T23:09:06.317475+00:00",
+    "signature_valid": true,
+    "modules_match_sources": 22,
+    "preview_exit_code": 0,
+    "installed": false,
+    "installed_edition": "0.5.1",
+    "executable_sha256": "427337616e13577a0b41d9e162316e279af0bfec66aaae0cceec9487f4fa71c5",
+    "os_version": "26.6.2",
+    "architecture": "arm64"
+  },
+  "windows": {
+    "ci_url": "https://github.com/alradno/clever-switch/actions/runs/39078250742",
+    "native_build": "passed",
+    "packaged_check": {
+      "edition": "0.5.2",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "package_sha256": "403d0887e4d005e7347b49d11163c4d22bc5e0087cf285e4d6e8b7bf0e4a705e",
+    "manifest_files_verified": true,
+    "installed_on_home_pc": false
+  },
+  "installation": "Candidate packages prepared; no intermediate installation. Mac installed edition verified as 0.5.1; last home Windows observation was 0.5.0 in the previous validation.",
+  "physical_acceptance": "Deferred by user until return; no 0.5.2 physical smoothness, battery or Easy-Switch acceptance claimed",
+  "remaining": [
+    "Joint activation/update and physical testing when user returns",
+    "Check effective macOS permissions for final installed signature",
+    "Observe Wi-Fi jitter, repeated keyboard channel changes, sleep/wake and DHCP in both directions"
+  ],
+  "unchanged": [
+    "pairing and identity",
+    "startup preference",
+    "ports and firewall",
+    "security software and permission databases",
+    "control protocol 2 and input protocol 1"
+  ]
+}
