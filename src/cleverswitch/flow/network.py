@@ -18,7 +18,7 @@ from .identity import PORT, canonical, local_addresses, private_ip
 
 log = logging.getLogger(__name__)
 MAX_MESSAGE = 2048
-OPS = frozenset(("ready", "prepare", "mouse", "keyboard", "commit", "status", "abort", "return", "follow"))
+OPS = frozenset(("ready", "prepare", "mouse", "keyboard", "commit", "status", "abort", "return", "follow", "input"))
 
 
 def remaining_timeout(connection, deadline):
@@ -77,6 +77,11 @@ class Link:
         self.on_departure = lambda: None
         self.on_failure = lambda: None
         self.wake_reader = self.wake_writer = None
+        # Explicitly installed by the opted-in input service, never by pairing.
+        self.input_accept = None
+        self.input_channel = None
+        self.input_lock = threading.Lock()
+        self.input_opening = False
 
     def start(self):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,7 +100,8 @@ class Link:
         self.worker.start()
 
     def _serve(self):
-        # One worker bounds resource use. Each connection handles exactly one request.
+        # One handshake worker bounds resource use. Input may upgrade a verified
+        # connection to one separately owned stream; RPC remains responsive.
         while not self.stop_event.is_set():
             try:
                 readable, _, _ = select.select([self.listener, self.wake_reader], [], [])
@@ -107,6 +113,8 @@ class Link:
             except OSError:
                 return
             with raw:
+                connection = None
+                handed_off = False
                 try:
                     raw.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     private_ip(remote[0], self.pairing.testing)
@@ -114,26 +122,50 @@ class Link:
                         continue
                     deadline = time.monotonic() + 2.5
                     remaining_timeout(raw, deadline)
-                    with self.server_context.wrap_socket(raw, server_side=True) as connection:
-                        self.pairing.verify_pin(connection)
-                        self.on_authenticated()
-                        request = receive(connection, deadline)
-                        if set(request) != {"link", "id", "op", "args"}:
-                            raise ValueError("Formato inválido")
-                        if request["link"] != self.config["link"] or request["op"] not in OPS:
-                            raise ValueError("Operación inválida")
-                        nonce = request["id"]
-                        if not isinstance(nonce, str) or len(nonce) != 32 or nonce in self.replays:
-                            raise ValueError("Solicitud repetida")
-                        if not isinstance(request["args"], dict):
-                            raise ValueError("Parámetros inválidos")
-                        self.replays.append(nonce)
+                    connection = self.server_context.wrap_socket(raw, server_side=True)
+                    self.pairing.verify_pin(connection)
+                    self.on_authenticated()
+                    request = receive(connection, deadline)
+                    if set(request) != {"link", "id", "op", "args"}:
+                        raise ValueError("Formato inválido")
+                    if request["link"] != self.config["link"] or request["op"] not in OPS:
+                        raise ValueError("Operación inválida")
+                    nonce = request["id"]
+                    if not isinstance(nonce, str) or len(nonce) != 32 or nonce in self.replays:
+                        raise ValueError("Solicitud repetida")
+                    if not isinstance(request["args"], dict):
+                        raise ValueError("Parámetros inválidos")
+                    self.replays.append(nonce)
+                    if request["op"] == "input":
+                        with self.input_lock:
+                            if (
+                                self.stop_event.is_set()
+                                or self.input_accept is None
+                                or self.input_opening
+                                or (self.input_channel is not None and not self.input_channel.finished.is_set())
+                            ):
+                                raise ValueError("Entrada por red no disponible")
+                            result, factory = self.input_accept(request["args"])
+                            remaining_timeout(connection, deadline)
+                            send(connection, {"id": nonce, "result": result})
+                            channel = factory(connection)
+                            try:
+                                channel.start()
+                            except Exception:
+                                channel.close()
+                                raise
+                            self.input_channel = channel
+                            handed_off = True
+                    else:
                         result = self.handler(request["op"], request["args"])
                         remaining_timeout(connection, deadline)
                         send(connection, {"id": nonce, "result": result})
                 except Exception:
                     # No peer payload, certificates or pairing secrets in logs.
                     log.debug("Rejected or interrupted local peer request")
+                finally:
+                    if connection is not None and not handed_off:
+                        connection.close()
 
     def call(self, op, args=None, timeout=3.0):
         try:
@@ -145,7 +177,7 @@ class Link:
     def _call(self, op, args=None, timeout=3.0):
         if self.stop_event.is_set():
             raise ConnectionError("Enlace cerrado")
-        if op not in OPS:
+        if op not in OPS or op == "input":
             raise ValueError("Operación inválida")
         # One budget spans TCP, TLS, writes and every received fragment. Socket
         # timeouts alone restart on each read and can outlive transfer recovery.
@@ -165,8 +197,67 @@ class Link:
                 self.on_authenticated()
                 return reply["result"]
 
+    def open_input(self, args, factory, timeout=2):
+        """Upgrade once; ownership of the pinned connection goes to Channel.
+
+        Only one endpoint (Windows) initiates in production. Physical source and
+        input destination can subsequently change independently of that role.
+        """
+        with self.input_lock:
+            if (
+                self.stop_event.is_set()
+                or self.input_accept is None
+                or self.input_opening
+                or (self.input_channel is not None and not self.input_channel.finished.is_set())
+            ):
+                raise ConnectionError("Entrada por red no disponible")
+            self.input_opening = True
+        raw = connection = None
+        channel = None
+        try:
+            deadline = time.monotonic() + timeout
+            peer = private_ip(self.peer, self.pairing.testing)
+            raw = socket.create_connection((peer, self.port), timeout=timeout, source_address=(self.address, 0))
+            raw.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            remaining_timeout(raw, deadline)
+            connection = self.client_context.wrap_socket(raw)
+            self.pairing.verify_pin(connection)
+            nonce = secrets.token_hex(16)
+            remaining_timeout(connection, deadline)
+            send(connection, {"link": self.config["link"], "id": nonce, "op": "input", "args": args})
+            reply = receive(connection, deadline)
+            if set(reply) != {"id", "result"} or reply["id"] != nonce or not isinstance(reply["result"], dict):
+                raise ValueError("Respuesta inválida")
+            with self.input_lock:
+                if self.stop_event.is_set() or self.input_accept is None:
+                    raise ConnectionError("Entrada por red cancelada")
+                channel = factory(connection, reply["result"])
+                channel.start()
+                self.input_channel = channel
+            return channel
+        except Exception:
+            if channel is not None:
+                channel.close()
+            elif connection is not None:
+                connection.close()
+            raise
+        finally:
+            if raw is not None:
+                raw.close()
+            with self.input_lock:
+                self.input_opening = False
+
     def close(self):
         self.stop_event.set()
+        with self.input_lock:
+            channel = self.input_channel
+            self.input_accept = None
+        input_error = None
+        if channel is not None:
+            try:
+                channel.close()
+            except Exception as error:
+                input_error = error
         if self.wake_writer:
             try:
                 self.wake_writer.send(b"x")
@@ -179,6 +270,8 @@ class Link:
         for sock in (self.wake_reader, self.wake_writer):
             if sock:
                 sock.close()
+        if input_error is not None:
+            raise RuntimeError("El canal de entrada no ha terminado") from None
 
 
 class Discovery:

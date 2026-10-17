@@ -9,6 +9,9 @@ from .cursor import Edge, native_cursor
 from .environment import home_state, native_monitor, snapshot
 from .hardware import Hardware
 from .identity import Pairing
+from .input_protocol import VERSION as INPUT_VERSION
+from .input_service import Service as InputService
+from .input_service import native_input
 from .network import Discovery, Link
 from .reconnect import Reconnect
 from .version import EDITION, PROTOCOL
@@ -18,7 +21,7 @@ LINK_EVENTS = frozenset(("authenticated", "announcement", "departure", "failure"
 
 
 class Runtime:
-    def __init__(self, context, pairing=None, on_change=None):
+    def __init__(self, context, pairing=None, on_change=None, input_factory=None):
         self.context = context
         self.context.policy.observe_only = True
         self.pairing = pairing or Pairing()
@@ -31,6 +34,17 @@ class Runtime:
         self.events = set()
         self.transition = threading.Lock()
         self.enabled = False
+        self.input_enabled = False
+        self.input_factory = input_factory or native_input
+        self.input_service = None
+        self.input_budget = Reconnect()
+        self.input_seen_channel = None
+        self.input_peer = None
+        self.input_error = None
+        self.input_recovery = []
+        self.input_online_since = 0
+        self.input_requested = None
+        self.input_last_ready = None
         self.peer_ready = False  # Authenticated reachability; prepare checks readiness afresh.
         self.peer_departed = False
         self.peer_checked = 0
@@ -87,6 +101,7 @@ class Runtime:
                 self.last_status = "Enlace creado; falta importar la respuesta del Mac"
             return
         self.enabled = config.get("edges", False) is True
+        self.input_enabled = config.get("network_input", False) is True
         try:
             self.monitor = native_monitor(self.wake)
             self.monitor.start()
@@ -112,6 +127,18 @@ class Runtime:
             self.destination.arrived = self.edge.cooldown
             self.link = Link(self.pairing, self._handle)
             link = self.link
+            if self.input_enabled:
+                self.input_service = InputService(
+                    link,
+                    self.input_factory(),
+                    enabled=True,
+                    on_change=lambda: self.wake("input", source=link),
+                    can_start=lambda: not self.input_recovery and not self._safety_pending(),
+                )
+                self.input_budget.restart()
+                self.input_seen_channel = self.input_peer = None
+                self.input_last_ready = None
+                self.input_error = None
             link.on_authenticated = lambda: self.wake("authenticated", source=link)
             link.on_announcement = lambda: self.wake("announcement", source=link)
             link.on_departure = lambda: self.wake("departure", source=link)
@@ -184,6 +211,23 @@ class Runtime:
         )
 
     def _handle(self, op, args):
+        if self.input_enabled:
+            if op == "ready":
+                if args:
+                    raise ValueError("Parámetros inesperados")
+                return {
+                    "edition": EDITION,
+                    "protocol": PROTOCOL,
+                    "ready": False,
+                    "reason": "input",
+                    "input": {
+                        "version": INPUT_VERSION,
+                        "enabled": True,
+                        "available": bool(self.input_service and self.input_service.backend.ready()),
+                    },
+                }
+            if op in ("follow", "prepare"):
+                return {"accepted": False, "reason": "input"}
         if op != "follow":
             return self.destination.handle(op, args)
         if args:
@@ -200,6 +244,8 @@ class Runtime:
         return {"accepted": False}
 
     def _schedule_follow(self):
+        if self.input_enabled:
+            return
         if time.monotonic() < self.next_follow or (self.follow_worker and self.follow_worker.is_alive()):
             return
         if not self.coordinator.can_start() or not self.hardware.allowed():
@@ -210,6 +256,8 @@ class Runtime:
         self.follow_worker.start()
 
     def _follow_keyboard(self, generation=None):
+        if self.input_enabled:
+            return
         # Snapshot this incarnation. A slow probe must not apply to a replacement
         # link or an offline/reconnected session, nor block the cursor monitor.
         hardware, coordinator, cursor, link, destination = (
@@ -280,6 +328,10 @@ class Runtime:
             self.wake("failure", source=source)
 
     def _keyboard_event(self, event):
+        if self.input_enabled:
+            # Easy-Switch remains firmware-owned. Local physical input on the
+            # destination ends remote focus; no radio follow command is sent.
+            return True
         coordinator = self.coordinator
         if coordinator and self.peer_ready:
             return coordinator.keyboard_event(event)
@@ -295,13 +347,32 @@ class Runtime:
                     self.discovery.announce("departing")
                 except OSError:
                     log.debug("Departure notice could not be sent; peer timeout remains bounded")
-            for component in (self.coordinator, self.destination, self.link, self.discovery, self.hardware):
+            for component in (
+                self.input_service,
+                self.coordinator,
+                self.destination,
+                self.link,
+                self.discovery,
+                self.hardware,
+            ):
                 if component:
                     try:
                         component.close()
                     except Exception:
                         self.error = "Cierre incompleto; comprueba los dispositivos con sus botones físicos"
                         log.debug("Local component cleanup failed")
+            if (
+                self.input_service
+                and self.input_service.session
+                and (
+                    self.input_service.session.unreleased
+                    or self.input_service.session.pending_locks is not None
+                    or self.input_service.session.pending_capture
+                )
+            ):
+                self.input_recovery.append(self.input_service.session)
+            self.input_service = None
+            self.input_budget.suspend()
             self.coordinator = self.destination = self.link = self.discovery = self.hardware = None
             self.peer_ready = False
             self.peer_departed = False
@@ -332,6 +403,8 @@ class Runtime:
             self.on_change()
         except Exception:
             self.peer_ready = False
+            if self.input_service:
+                self.input_service.suspend()
             self.budget.failed()
             self._mode("searching" if self.budget.next is not None else "standby")
             # Partial listener initialization must not retain failed sockets/threads.
@@ -341,6 +414,18 @@ class Runtime:
     def _step(self):
         events = self._events()
         previous_link = self.link
+        if "input_options" in events and self.input_requested is not None:
+            if self._safety_pending():
+                self.error = "Espera a que termine el traslado antes de cambiar el modo de entrada"
+            else:
+                self._disconnect(notify=True)
+                config = self.pairing.load()
+                config["network_input"] = self.input_requested
+                self.pairing.save(config)
+                self.input_enabled = self.input_requested
+                self.error = None
+                events.add("manual")
+            self.input_requested = None
         if self.local_checks and time.monotonic() >= self.local_checks[0]:
             self.local_checks.pop(0)
             self._evaluate()
@@ -348,6 +433,10 @@ class Runtime:
             self._evaluate(force=bool(events & {"startup", "resume", "manual"}))
         if self.link is not previous_link:
             events.difference_update(LINK_EVENTS)
+        if events & {"manual", "network", "resume"}:
+            self.input_budget.restart()
+        elif "announcement" in events:
+            self.input_budget.hint()
         if self.listen_allowed and self.link is None and self.budget.next is None and not self.seek_allowed:
             # Unknown ARP identity may listen passively, without starting a retry loop.
             try:
@@ -380,7 +469,7 @@ class Runtime:
         if self.budget.due() and not self._safety_pending():
             self._attempt()
         pending = self._safety_pending()
-        self.context.policy.set_background_suspended(not (self.peer_ready or pending))
+        self.context.policy.set_background_suspended(not (pending or (self.peer_ready and not self.input_enabled)))
         if self.destination:
             self.destination.expire()
         if pending:
@@ -388,11 +477,15 @@ class Runtime:
             # delay into a busy loop while the finite transaction owns the link.
             return 0.2
         if not self.peer_ready:
+            if self.input_service:
+                self.input_service.suspend()
             wait = self.budget.wait()
             if self.local_checks:
                 local_wait = max(0, self.local_checks[0] - time.monotonic())
                 wait = local_wait if wait is None else min(wait, local_wait)
             return wait  # None -> no timer, waits only for an event.
+        if self.input_enabled:
+            return self._input_step()
         mouse_here = self.hardware.device("mouse", connected=True) is not None
         if self.enabled and mouse_here and self.coordinator.can_start() and self.hardware.allowed():
             y = self.edge.poll(self.cursor.sample())
@@ -403,6 +496,77 @@ class Runtime:
         if self.enabled and mouse_here and self.edge.since is not None and not self.edge.latched:
             interval = 0.01  # Only while confirming the brief edge gesture.
         return min(interval, self.budget.wait() if self.budget.next is not None else interval)
+
+    def _input_step(self):
+        """No edge/HID polling in LAN mode. Retry streams only with a finite budget."""
+        service = self.input_service
+        wait = self.budget.wait()
+        if service is None:
+            return wait
+        peer = self.peer_info.get("input", {})
+        compatible = (
+            isinstance(peer, dict)
+            and peer.get("enabled") is True
+            and type(peer.get("version")) is int
+            and peer["version"] == INPUT_VERSION
+            and self.peer_info.get("protocol") == PROTOCOL
+        )
+        if compatible != self.input_peer:
+            self.input_peer = compatible
+            self.input_budget.restart() if compatible else self.input_budget.suspend()
+        if not compatible:
+            # An incoming authenticated stream has its own capability handshake;
+            # the ready reply may not yet have arrived on this endpoint.
+            if not service._available():
+                self.input_error = "Activa entrada por red en ambos equipos con la misma versión"
+            return wait
+        local_ready = service.backend.ready()
+        if not local_ready or not peer.get("available", True):
+            service.suspend()
+            self.input_last_ready = False
+            self.input_budget.suspend()
+            where = "este equipo" if not local_ready else "el otro equipo"
+            self.input_error = f"Entrada suspendida en {where}: revisa sesión y permisos"
+            return wait
+        if self.input_last_ready is False:
+            # Reuse the existing online presence check to notice an unlocked
+            # session. No extra offline timer or repeated hook registration.
+            self.input_budget.restart()
+        self.input_last_ready = True
+        if service._available():
+            self.input_error = None
+            if self.input_seen_channel is not service.channel:
+                self.input_online_since = time.monotonic()
+            self.input_seen_channel = service.channel
+            self.input_budget.suspend()
+            return wait
+        if service.channel is not None and not service.channel.finished.is_set():
+            return min(wait, 0.05) if wait is not None else 0.05
+        if service.channel is not None and service.channel is self.input_seen_channel:
+            self.input_seen_channel = None
+            if time.monotonic() - self.input_online_since >= 30:
+                self.input_budget.restart()
+            self.input_budget.failed()
+        # Failed releases survive a DHCP rebind. Do not discard their ownership
+        # ledger or admit a new input stream while any old release is unresolved.
+        self.input_recovery = [old for old in self.input_recovery if not old.retry_releases()]
+        if self.input_recovery:
+            self.input_error = "Entrada pendiente de liberar; usa los controles físicos"
+            return wait
+        if service.role == "windows" and self.input_budget.due():
+            try:
+                if service.connect():
+                    self.input_seen_channel = service.channel
+                    self.input_online_since = time.monotonic()
+                    self.input_budget.suspend()
+                    self.input_error = None
+            except Exception:
+                self.input_budget.failed()
+                self.input_error = "Entrada por red no disponible; revisa sesión y permisos"
+        elif service.role == "mac":
+            self.input_budget.suspend()  # Windows is the sole stream initiator.
+        retry = self.input_budget.wait()
+        return min(wait, retry) if wait is not None and retry is not None else wait if retry is None else retry
 
     def _run(self):
         self.context.policy.host_change_handler = self._keyboard_event
@@ -449,6 +613,25 @@ class Runtime:
         hardware, cursor, coordinator = self.hardware, self.cursor, self.coordinator
         if hardware is None or cursor is None or coordinator is None:
             return "Reiniciando el enlace local…"
+        if self.input_enabled:
+            service = self.input_service
+            if service and service._available():
+                phase = service.session.phase
+                if phase == "local" and service.session.failure in ("timeout", "capture", "peer", "release", "locks"):
+                    return {
+                        "timeout": "El otro equipo no confirmó el cruce a tiempo",
+                        "capture": "No se pudo preparar la entrada local; revisa la sesión y permisos",
+                        "peer": "El otro equipo no está preparado para recibir la entrada",
+                        "release": "Restauración de entrada pendiente; usa los controles físicos",
+                        "locks": "Restauración del teclado pendiente; usa los controles físicos",
+                    }[service.session.failure]
+                return {
+                    "local": "Entrada por red lista · cruza el borde hacia el otro equipo",
+                    "requesting": "Preparando entrada en el otro equipo…",
+                    "sending": "Ratón y teclado controlando el otro equipo por red",
+                    "receiving": "Recibiendo ratón y teclado por red",
+                }[phase]
+            return self.input_error or "Entrada por red · esperando conexión del compañero"
         if not hardware.known():
             return "Conecta ambos dispositivos aquí una vez para reconocerlos"
         if not cursor.session_ready():
@@ -476,6 +659,15 @@ class Runtime:
             self.edge.cooldown()
         self.wake("options")
 
+    def toggle_input(self):
+        config = self.pairing.load()
+        if not config or not config.get("peer"):
+            raise ValueError("Vincula los equipos primero")
+        if self._safety_pending():
+            raise ValueError("Espera a que termine el traslado actual")
+        self.input_requested = not self.input_enabled
+        self.wake("input_options")
+
     def diagnostic(self):
         coordinator = self.coordinator
         devices = [
@@ -487,6 +679,7 @@ class Runtime:
             "protocol": PROTOCOL,
             "mode": self.mode,
             "edges": self.enabled,
+            "network_input": self.input_service.diagnostic() if self.input_service else {"enabled": self.input_enabled},
             "peer_reachable": self.peer_ready,
             "peer": self.peer_info,
             "devices": devices,
@@ -508,6 +701,12 @@ class Runtime:
         self.wake("manual")
 
     def recover(self):
+        if self.input_enabled:
+            if self.input_service and self.input_service.session:
+                self.input_service.session.cancel("manual")
+                self.wake("input")
+                return True
+            return False
         coordinator = self.coordinator
         if coordinator and coordinator.recover():
             self.wake("recovery")  # Resume presence checks even from passive standby.
