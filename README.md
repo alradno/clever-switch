@@ -19,11 +19,14 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.0 está compilada e instalada en el Mac. Pasan 932 pruebas (91,43 %) y Ruff.
+La 0.5.0 está compilada e instalada en el Mac. Pasan 936 pruebas (91,43 %) y Ruff.
 Las pruebas nativas desde el entorno de desarrollo confirman captura, envío de
 movimiento, escritura en una ventana propia, liberación de Mayús y restauración
-del cursor. La app instalada requiere renovar sus permisos; la aceptación conjunta
-con Windows sigue pendiente. La latencia medida en loopback excluye las radios,
+del cursor. La app instalada confirma todos sus permisos. Windows pasa también
+936 pruebas, Ruff, compilación nativa y comprobación del ejecutable empaquetado.
+Su instalación y la aceptación conjunta siguen pendientes; el paquete comprobado
+está en [la ejecución de Windows](https://github.com/alradno/clever-switch/actions/runs/39069359804).
+La latencia medida en loopback excluye las radios,
 las APIs nativas, las aplicaciones y la pantalla.
 El menú «Comprobar permisos de entrada…» comprueba los permisos sin capturar nada.
 Detalles, límites y reproducción: [entrada por red](docs/INPUT-LAN.txt).

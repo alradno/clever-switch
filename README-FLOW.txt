@@ -13,7 +13,9 @@ binario 1 dentro del TLS autenticado existente. El modo físico permanece como
 opción independiente y Easy-Switch sigue funcionando en el propio dispositivo.
 Código y validación: docs/INPUT-LAN.txt. Candidata compilada e instalada en Mac;
 captura, escritura y restauración comprobadas nativamente desde desarrollo.
-Falta renovar permisos de la app instalada y completar la aceptación con Windows.
+Permisos de la app instalada comprobados. Pasan 936 pruebas en cada plataforma;
+Windows está compilado y su ejecutable comprobado. Falta instalarlo en el equipo
+del usuario y completar la aceptación conjunta.
 Comprobar permisos de entrada muestra los requisitos pendientes sin capturar nada.
 
 HISTORIAL DEL MODO FÍSICO
