@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from cleverswitch.flow.cursor import Edge, Sample
 from cleverswitch.flow.environment import (
     MacMonitor,
     Network,
@@ -130,6 +131,57 @@ def test_edge_dwell_is_not_consumed_during_transfer_quiet_period(tmp_path, mocke
     runtime.coordinator.can_start.return_value = True
     runtime._step()
     runtime.coordinator.request.assert_called_once_with("edge", 0.5)
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_retained_listener_reconnection_requires_new_inward_motion(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    runtime._connect()
+    runtime.mode = "online"
+    runtime.peer_ready = runtime.enabled = True
+    runtime.listen_allowed = True
+    runtime.budget.authenticated()
+    side = "right" if role == "windows" else "left"
+    runtime.edge = Edge(side, clock=lambda: clock[0])
+    hardware.device.return_value = object()
+    border = Sample(1919 if role == "windows" else 0, 500, 0, 0, 1920, 1080)
+    cursor.sample.return_value = border
+    runtime._step()  # Start the dwell just before losing the peer.
+    clock[0] = 0.2
+    runtime.wake("failure")
+    runtime._step()
+    assert not runtime.peer_ready and runtime.link is link
+    clock[0] = 0.8
+    runtime.wake("authenticated")  # Normal reconnect reuses the same listener.
+    runtime._step()
+    clock[0] = 5
+    runtime._step()
+    runtime.coordinator.request.assert_not_called()
+    cursor.sample.return_value = Sample(960, 500, 0, 0, 1920, 1080)
+    runtime._step()
+    cursor.sample.return_value = border
+    runtime._step()
+    clock[0] += 0.5
+    runtime._step()
+    runtime.coordinator.request.assert_called_once_with("edge", 500 / 1080)
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_keyboard_follow_discards_absence_observed_before_reconnection(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    runtime._connect()
+    runtime.mode = "searching"
+    runtime.listen_allowed = True
+    runtime.follow_candidate = 1
+    hardware.probe.side_effect = lambda role: role == "keyboard"
+    clock[0] = 10
+    runtime.wake("authenticated")
+    runtime._step()
+    link.call.assert_not_called()
+    assert runtime.follow_candidate == 10
+    clock[0] = 11
+    runtime._step()
+    link.call.assert_called_once_with("follow")
 
 
 @pytest.mark.parametrize("role", ["windows", "mac"])
