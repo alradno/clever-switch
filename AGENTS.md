@@ -43,6 +43,12 @@
 
 - No borrar/regenerar `~/.config/cleverswitch-flow` ni `~/.config/cleverswitch-tray`
   durante una actualización o diagnóstico. No pedir repetir la vinculación por actualizar.
+- El instalador de esta edición es `Install-CleverSwitch.ps1` en la raíz. Windows usa
+  `%LOCALAPPDATA%\Programs\CleverSwitchFlow`; conservar la preferencia de Inicio,
+  elevar sólo el helper del firewall y limitar reglas a app/puertos/subred guardada.
+  No fijar IPs DHCP ni abrir todas las redes. No modificar reglas de bloqueo ajenas.
+- Conservar bundle ID y ruta de Mac. Una firma ad-hoc no garantiza conservar TCC;
+  sólo seleccionar identidades de firma existentes, sin crearlas ni eludir permisos.
 - No subir identidades, claves, archivos de vinculación ni diagnósticos con información privada.
 - No desactivar Gatekeeper/Defender, retirar cuarentena ni conceder permisos automáticamente.
 - Usar la suite `python -m pytest` y Ruff en el entorno apropiado al cambio. En Windows

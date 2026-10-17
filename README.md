@@ -3,13 +3,30 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.4.4**, protocolo **2**. Mac y Windows se compilan
+Versión candidata conjunta: **0.4.5**, protocolo **2**. Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
 Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
+
+La 0.4.5 añade instalación y actualización de Windows en una ruta fija por usuario.
+Conserva la vinculación, los datos de dispositivos y la preferencia de Inicio. Las
+reglas de firewall usan la subred doméstica guardada, con TCP 47654 y UDP 47655,
+para admitir cambios DHCP de ambos equipos incluso si Windows marca la red Pública.
+No abre otras subredes ni elimina reglas de bloqueo. El menú comprueba la instalación
+una vez al arrancar y permite revisarla; no añade sondeos periódicos.
+
+El compilador de Mac admite seleccionar una identidad de firma existente y falla
+si no está disponible. Este Mac no tiene una identidad válida: sigue usando firma
+ad-hoc, que puede exigir renovar permisos aunque los datos se conserven.
+Véase [actualizaciones y firewall](docs/UPDATES.md) y
+[evidencia de 0.4.5](docs/validation/macos-0.4.5.json). La aceptación física y la
+compilación nativa Windows de esta candidata siguen pendientes.
+Pasan 723 pruebas (92,16 %) y Ruff. La app 0.4.5 está instalada y arrancada en
+Aplicaciones; tras 130 s de espera, cierra en 0,33 s. El ejecutable contiene los
+módulos probados y conserva identidad, enlace, caché e Inicio.
 
 La revisión 0.4.4 refuerza la reconexión automática por eventos en ambos equipos.
 Al arrancar, despertar o volver a casa, el equipo anuncia que está disponible y
@@ -133,6 +150,19 @@ Copy-Item .\hidapi.dll .\.venv\Scripts\hidapi.dll
 
 Resultado: `dist/CleverSwitchTray.exe`. El DLL incluido es el artefacto oficial
 x64 revisado de HIDAPI 0.15.0; [procedencia y licencia](docs/HIDAPI.md).
+La compilación incluye también ambos scripts de instalación/firewall y su manifiesto
+de hashes. Distribuir esos cuatro archivos juntos. Con la app cerrada, desde
+PowerShell **sin administrador**, ejecutar:
+
+```powershell
+.\dist\Install-CleverSwitch.ps1
+```
+
+Instala en `%LOCALAPPDATA%\Programs\CleverSwitchFlow` y abre la app como el usuario
+habitual. Sólo el asistente del firewall pide elevación cuando faltan reglas o cambia
+la subred elegida. Una actualización con reglas correctas no la vuelve a pedir.
+Inicio desactivado se conserva desactivado; si estaba activado desde una ruta anterior,
+se actualiza esa referencia. No copiar la configuración desde el paquete descargado.
 
 Vista previa sin red ni HID:
 

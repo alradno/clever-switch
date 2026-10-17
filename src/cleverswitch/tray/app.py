@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 
 from ..flow.version import EDITION
-from . import startup
+from . import firewall, startup
 from .actions import Actions
 from .icon import create_icon
 
@@ -38,6 +38,22 @@ class Controller:
         self.refresh_event = threading.Event()
         self.stopping = threading.Event()
         self.flow_lock = threading.RLock()
+        self.installation = {"state": "unchecked"}
+        self.installation_lock = threading.Lock()
+
+    def check_installation(self, repair=False):
+        if self.preview or sys.platform != "win32":
+            return
+        from ..flow.identity import Pairing
+
+        with self.installation_lock:
+            if self.stopping.is_set():
+                return
+            try:
+                self.installation = firewall.inspect(Pairing().load(), repair=repair)
+            except (OSError, ValueError, KeyError):
+                self.installation = {"state": "unavailable"}
+        self.refresh_event.set()
 
     def start(self):
         if self.preview:
@@ -205,6 +221,9 @@ def run(preview=False, preview_seconds=0):
         controller.error = "No se pudo iniciar la conexión; revisa los permisos"
         log.exception("Device initialization failed")
 
+    if not preview and sys.platform == "win32" and getattr(sys, "frozen", False):
+        threading.Thread(target=controller.check_installation, name="cleverswitch-installation", daemon=True).start()
+
     def pause(icon, item):
         controller.toggle_pause()
         icon.icon = create_icon(controller.paused, sys.platform == "darwin")
@@ -325,6 +344,7 @@ def run(preview=False, preview_seconds=0):
                 )
             if not actions.closed.is_set():
                 controller.start_flow()
+                controller.check_installation(repair=True)
         except (OSError, ValueError, KeyError, TypeError) as error:
             # Known local validation errors only; never display secret JSON content.
             log.debug("Pairing operation failed: %s", type(error).__name__)
@@ -350,6 +370,7 @@ def run(preview=False, preview_seconds=0):
             config.pop("home_router", None)  # Explicitly selecting a new home network; retain peer identity.
             pairing.save(config)
             controller.start_flow()
+            controller.check_installation(repair=True)
         except (OSError, ValueError):
             dialogs.message("Red sin actualizar", "Selecciona primero la red Wi-Fi o Ethernet del router compartido.")
 
@@ -402,6 +423,7 @@ def run(preview=False, preview_seconds=0):
                 pairing.export_invitation(path)
             if not actions.closed.is_set():
                 controller.start_flow()
+                controller.check_installation(repair=True)
                 dialogs.message(
                     "Enlace guardado en Descargas",
                     f"Archivo: {path}\n\nLlévalo al Mac e importa allí el enlace. "
@@ -437,9 +459,19 @@ def run(preview=False, preview_seconds=0):
         from . import dialogs
 
         if controller.flow:
-            dialogs.message(
-                "Diagnóstico de CleverSwitch", json.dumps(controller.flow.diagnostic(), ensure_ascii=False, indent=2)
-            )
+            controller.check_installation()
+            data = controller.flow.diagnostic()
+            if sys.platform == "win32":
+                data["installation"] = controller.installation
+            dialogs.message("Diagnóstico de CleverSwitch", json.dumps(data, ensure_ascii=False, indent=2))
+
+    def repair_firewall(icon, item):
+        from . import dialogs
+
+        controller.check_installation(repair=True)
+        dialogs.message("Firewall de Windows", firewall.message(controller.installation))
+        if controller.installation.get("state") == "ready" and controller.flow:
+            controller.flow.reconnect_now()
 
     items = [
         pystray.MenuItem(f"CleverSwitch {EDITION} · MX Keys + MX Master 3", noop, enabled=False),
@@ -448,6 +480,12 @@ def run(preview=False, preview_seconds=0):
         pystray.MenuItem(lambda item: controller.device_status("keyboard"), noop, enabled=False),
         pystray.MenuItem(lambda item: controller.device_status("mouse"), noop, enabled=False),
         pystray.MenuItem(flow_status, noop, enabled=False),
+        pystray.MenuItem(
+            lambda item: "Firewall · " + firewall.message(controller.installation),
+            noop,
+            enabled=False,
+            visible=sys.platform == "win32" and not preview,
+        ),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(
             "Vincular Windows 1 y Mac 2…", actions.wrap(pair), enabled=lambda item: not preview and not actions.busy
@@ -481,6 +519,12 @@ def run(preview=False, preview_seconds=0):
         pystray.MenuItem("Reconectar ahora", reconnect, enabled=not preview),
         pystray.MenuItem(
             "Ver diagnóstico…", actions.wrap(diagnostic), enabled=lambda item: not preview and not actions.busy
+        ),
+        pystray.MenuItem(
+            "Revisar firewall de Windows…",
+            actions.wrap(repair_firewall),
+            enabled=lambda item: not preview and not actions.busy,
+            visible=sys.platform == "win32",
         ),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(
