@@ -158,17 +158,48 @@ def test_ble_main_sleeps_when_not_connected():
     sleep_count = [0]
 
     async def run():
-        async def fake_sleep(t):
+        async def fake_wait(callback, timeout):
             sleep_count[0] += 1
             gw._stop_event.set()
 
-        with patch("cleverswitch.gateway.hid_gateway_ble.asyncio.sleep", side_effect=fake_sleep):
+        with patch("cleverswitch.gateway.hid_gateway_ble.asyncio.to_thread", side_effect=fake_wait):
             with patch.object(gw, "_find_peripheral_by_wpid", new_callable=AsyncMock) as find_mock:
                 await gw._ble_main()
                 find_mock.assert_not_called()
 
     asyncio.run(run())
     assert sleep_count[0] == 1
+
+
+def test_ble_hid_arrival_wakes_subscription_without_half_second_poll():
+    gw, _ = _make_gw()
+    gw._connected = False
+
+    async def run():
+        found = asyncio.Event()
+
+        async def find(_pid):
+            found.set()
+            return object()
+
+        async def listen(_device):
+            gw._stop_event.set()
+
+        with patch.object(gw, "_find_peripheral_by_wpid", side_effect=find):
+            with patch.object(gw, "_connect_and_listen", side_effect=listen):
+                task = asyncio.create_task(gw._ble_main())
+                await asyncio.sleep(0.01)
+                gw._connected = True
+                try:
+                    await asyncio.wait_for(found.wait(), 0.2)
+                    await asyncio.wait_for(task, 1)
+                finally:
+                    gw._stop_event.set()
+                    if not task.done():
+                        task.cancel()
+                        await asyncio.gather(task, return_exceptions=True)
+
+    asyncio.run(run())
 
 
 def test_ble_main_finds_peripheral_when_connected():
