@@ -13,7 +13,15 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.4.5`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Candidata conjunta actual `0.4.6`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
+  sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento
+  del teclado en un único hilo separado, con descarte tras reconexión; descubrimiento
+  acelerado sólo durante una preparación autenticada y lecturas HID que ceden a
+  órdenes pendientes. Bluetooth despierta al conectarse HID. Se mantienen todos
+  los límites, pruebas nuevas de presencia, rearme a 80 px y pausa de 3 s.
+  Medidas comparables y límites en `validation/macos-0.4.6.json`; repetir con
+  `PYTHONPATH=src .venv/bin/python benchmarks/handoff.py --cycles 20`.
 - La 0.4.5 incorpora instalación estable y firewall por subred en Windows, conserva
   datos/Inicio y admite seleccionar una identidad de firma existente en Mac. No hay
   ninguna válida en el llavero de este Mac: la firma continúa siendo ad-hoc y no se
@@ -96,7 +104,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.5 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.6 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir

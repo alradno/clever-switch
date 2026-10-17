@@ -64,6 +64,9 @@ class Hardware:
             or self.context.policy.background_suspended.is_set()
         )
 
+    def expect_arrival(self, seconds):
+        self.context.policy.expect_arrival(seconds)
+
     def notify(self, event):
         if not isinstance(event, HidppResponseEvent):
             return

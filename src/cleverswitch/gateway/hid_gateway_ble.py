@@ -108,7 +108,9 @@ class HidGatewayBLE(HidGatewayBT):
                 await asyncio.to_thread(self._wait_background)
                 continue
             if not self._connected:
-                await asyncio.sleep(0.5)
+                # Wake as soon as HID connects, without adding half a second to
+                # every arrival. Keep the existing bound for stop/suspend checks.
+                await asyncio.to_thread(self._connected_signal.wait, 0.5)
                 continue
             try:
                 ble_device = await self._find_peripheral_by_wpid(self._device_info.pid)

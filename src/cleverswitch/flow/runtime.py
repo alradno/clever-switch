@@ -39,6 +39,9 @@ class Runtime:
         self.last_status = "Vincula Windows 1 y Mac 2 para activar los bordes"
         self.next_follow = 0
         self.follow_candidate = None
+        self.follow_worker = None
+        self.follow_generation = 0
+        self.follow_lock = threading.Lock()
         self.peer_info = {}
         self.budget = Reconnect()
         self.environment = None
@@ -69,8 +72,10 @@ class Runtime:
                 # Neither a parked edge nor old presence evidence is a new intent.
                 if self.edge:
                     self.edge.cooldown()
-                self.follow_candidate = None
-                self.next_follow = 0
+                with self.follow_lock:
+                    self.follow_candidate = None
+                    self.next_follow = 0
+                    self.follow_generation += 1
             self.mode = value
             self.on_change()
 
@@ -194,35 +199,79 @@ class Runtime:
             return {"accepted": self.coordinator.request("keyboard")}
         return {"accepted": False}
 
-    def _follow_keyboard(self):
-        now = time.monotonic()
-        if now < self.next_follow:
+    def _schedule_follow(self):
+        if time.monotonic() < self.next_follow or (self.follow_worker and self.follow_worker.is_alive()):
             return
         if not self.coordinator.can_start() or not self.hardware.allowed():
+            return
+        self.follow_worker = threading.Thread(
+            target=self._follow_keyboard, args=(self.follow_generation,), name="flow-follow", daemon=True
+        )
+        self.follow_worker.start()
+
+    def _follow_keyboard(self, generation=None):
+        # Snapshot this incarnation. A slow probe must not apply to a replacement
+        # link or an offline/reconnected session, nor block the cursor monitor.
+        hardware, coordinator, cursor, link, destination = (
+            self.hardware,
+            self.coordinator,
+            self.cursor,
+            self.link,
+            self.destination,
+        )
+
+        def current():
+            return generation is None or (
+                generation == self.follow_generation
+                and self.peer_ready
+                and not self.stop_event.is_set()
+                and link is self.link
+                and hardware.allowed()
+                and coordinator.can_start()
+            )
+
+        now = time.monotonic()
+        if not current() or now < self.next_follow:
+            return
+        if not coordinator.can_start() or not hardware.allowed():
             self.follow_candidate = None
             return
         self.next_follow = now + 1
-        if self.destination.state and self.destination.state["phase"] not in TERMINAL:
+        if destination.state and destination.state["phase"] not in TERMINAL:
             self.follow_candidate = None
             return
-        if not self.cursor.session_ready():
+        if not cursor.session_ready():
             self.follow_candidate = None
             return
-        if self.hardware.probe("keyboard") is True and self.hardware.probe("mouse") is False:
-            if self.follow_candidate is None:
-                self.follow_candidate = now
+        try:
+            keyboard_here = hardware.probe("keyboard") is True
+            if not current():
                 return
-            if now - self.follow_candidate < 0.6:
+            missing_mouse = keyboard_here and hardware.probe("mouse") is False
+        except (OSError, RuntimeError):
+            if current():
+                self.follow_candidate = None
+            return
+        with self.follow_lock:
+            if not current():
                 return
-            self.follow_candidate = None
-            self.next_follow = now + 10
+            if missing_mouse:
+                if self.follow_candidate is None:
+                    self.follow_candidate = now
+                    return
+                if now - self.follow_candidate < 0.6:
+                    return
+                self.follow_candidate = None
+                self.next_follow = now + 10
+            else:
+                self.follow_candidate = None
+                return
+        if current():
             log.info("Keyboard arrived without mouse; requesting companion follow")
             try:
-                self.link.call("follow")
+                link.call("follow")
             except (OSError, ValueError):
-                self.wake("failure")
-        else:
-            self.follow_candidate = None
+                self.wake("failure", source=link)
 
     def _rpc_failure(self, source=None):
         # The transaction owns its finite retries. Do not suspend its HID readers
@@ -239,6 +288,8 @@ class Runtime:
 
     def _disconnect(self, notify=False):
         with self.transition:
+            with self.follow_lock:
+                self.follow_generation += 1
             if notify and self.discovery and self.peer_ready:
                 try:
                     self.discovery.announce("departing")
@@ -347,8 +398,10 @@ class Runtime:
             y = self.edge.poll(self.cursor.sample())
             if y is not None:
                 self.coordinator.request("edge", y)
-        self._follow_keyboard()
+        self._schedule_follow()
         interval = 0.05 if self.enabled and mouse_here else 1
+        if self.enabled and mouse_here and self.edge.since is not None and not self.edge.latched:
+            interval = 0.01  # Only while confirming the brief edge gesture.
         return min(interval, self.budget.wait() if self.budget.next is not None else interval)
 
     def _run(self):
@@ -440,6 +493,7 @@ class Runtime:
             "status": self.status(),
             "last_failure": coordinator.last_error if coordinator else None,
             "phase": coordinator.phase if coordinator else None,
+            "transfer_elapsed_ms": coordinator.timings if coordinator else {},
             "energy": {
                 "native_events_available": not self.monitor_warning,
                 "background_suspended": self.context.policy.background_suspended.is_set(),

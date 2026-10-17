@@ -20,7 +20,7 @@ class Sample:
 
 
 class Edge:
-    def __init__(self, side, dwell=0.4, clock=time.monotonic):
+    def __init__(self, side, dwell=0.08, clock=time.monotonic):
         if side not in ("left", "right"):
             raise ValueError("Borde inválido")
         self.side, self.dwell, self.clock = side, dwell, clock

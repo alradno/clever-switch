@@ -1,11 +1,19 @@
-# Continuación en Windows — candidata conjunta 0.4.5
+# Continuación en Windows — candidata conjunta 0.4.6
 
 Usar este repositorio como fuente común. Antes de trabajar, revisar `git status` y
 hacer `git pull --ff-only`; conservar cualquier modificación local antes de integrar.
 No usar los ZIP anteriores como base de nuevos cambios.
 
-La edición está en `src/cleverswitch/flow/version.py`: 0.4.5, protocolo 2. Conserva
+La edición está en `src/cleverswitch/flow/version.py`: 0.4.6, protocolo 2. Conserva
 el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
+
+La 0.4.6 comparte las mejoras de rendimiento en ambas direcciones: borde de 80 ms,
+cursor al confirmar el ratón sin esperar al teclado, seguimiento separado del
+monitor del cursor y reconocimiento rápido sólo durante un traslado autorizado.
+Se mantienen el rearme a 80 px, la pausa de 3 s y todas las confirmaciones frescas.
+Las medidas de `validation/macos-0.4.6.json` usan TLS local real y radios simuladas;
+no prueban la reconexión Bluetooth física ni las APIs nativas de Windows. Compilar
+esta candidata consolidada desde el mismo commit, sin instalar versiones intermedias.
 
 La 0.4.5 incluye los instaladores que faltaban en el checkout. `build_tray.py`
 prepara app, dos scripts y manifiesto en `dist`. `Install-CleverSwitch.ps1`, ejecutado

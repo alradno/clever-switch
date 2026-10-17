@@ -19,6 +19,7 @@ import os
 import platform
 import sys
 import threading
+from contextlib import contextmanager
 
 from ..errors.errors import TransportError
 from .constants import (
@@ -211,10 +212,43 @@ _IS_WINDOWS = _SYSTEM == "Windows"
 # loop plus every disconnected gateway's _try_connect) must not overlap.
 _ENUM_LOCK = threading.Lock()
 
-# Bounded read poll. The handle lock is released between polls, so an outbound write never queues
-# behind an idle reader. Worst-case added host-switch latency is one poll; in the common case the
-# read has just returned the ES-key notification and releases the lock immediately.
+# A queued write/lifecycle operation takes priority at the end of this bounded
+# read. A plain Lock can let the polling reader reacquire indefinitely.
 _READ_POLL_MS = 100
+
+
+class _HandleLock:
+    """Keep native calls exclusive while giving queued commands a turn before reads."""
+
+    def __init__(self):
+        self.condition = threading.Condition()
+        self.active = False
+        self.writers = 0
+
+    def __enter__(self):
+        with self.condition:
+            self.writers += 1
+            try:
+                self.condition.wait_for(lambda: not self.active)
+                self.active = True
+            finally:
+                self.writers -= 1
+        return self
+
+    def __exit__(self, *args):
+        with self.condition:
+            self.active = False
+            self.condition.notify_all()
+
+    @contextmanager
+    def reader(self):
+        with self.condition:
+            self.condition.wait_for(lambda: not self.active and not self.writers)
+            self.active = True
+        try:
+            yield
+        finally:
+            self.__exit__()
 
 
 def _is_hidpp_interface(info: dict) -> bool:
@@ -312,9 +346,9 @@ class HIDTransport:
         self._dev: int | None = None
         # Serializes every hidapi call on this handle. The reader thread, the write topic's drain
         # thread and (at shutdown) the discovery thread all reach the same hid_device*; without
-        # this, a write can land inside hid_close's free. Plain Lock, never RLock — the _locked
-        # helpers below exist so no public method ever re-enters.
-        self._lock = threading.Lock()
+        # this, a write can land inside hid_close's free. Non-reentrant: the
+        # _locked helpers below never reacquire, including the output fallback.
+        self._lock = _HandleLock()
         with self._lock:
             self._open_locked()
         log.debug(f"Opened {kind} path={path}")
@@ -350,7 +384,7 @@ class HIDTransport:
 
         Returns None on timeout. Raises TransportError on device error.
         """
-        with self._lock:
+        with self._lock.reader():
             if self._dev is None:
                 log.warning("read on closed transport")
                 raise TransportError("read on closed transport")

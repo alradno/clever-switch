@@ -3,13 +3,36 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.4.5**, protocolo **2**. Mac y Windows se compilan
+Versión candidata conjunta: **0.4.6**, protocolo **2**. Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
 Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
+
+La 0.4.6 reduce la permanencia en el borde de 400 a 80 ms y coloca el cursor en
+cuanto se confirma la llegada del ratón, antes de esperar al teclado. No vuelve
+a colocarlo al confirmar la pareja ni al repetir una respuesta perdida. Conserva
+las pruebas HID++ nuevas, el rearme a 80 px y la pausa de 3 s contra rebotes.
+La comprobación del teclado en segundo plano deja de bloquear el cursor; las
+órdenes HID tienen prioridad sobre nuevas lecturas en espera. El reconocimiento
+se acelera sólo durante un traslado autorizado y vuelve al ritmo normal al acabar.
+Bluetooth del Mac despierta su suscripción al conectar HID, sin esperar otro sondeo.
+
+Con TLS real local y radios simuladas que tardan 200 ms en reconectar, la mediana
+para colocar el cursor baja de unos 685 a 223 ms, y la pareja completa de 687 a
+453 ms, sin contar el borde. Son 20 cruces por sentido y versión; no son medidas
+de Bluetooth físico. Se puede repetir con `benchmarks/handoff.py`.
+La reconexión Bluetooth y la pausa contra rebotes impiden prometer una experiencia
+idéntica a una pantalla por cable. No se reenvían pulsaciones ni movimiento por red.
+El diagnóstico conserva tiempos acumulados de la última transferencia, sin entradas.
+Pasan 738 pruebas (92,12 %) y Ruff. La app 0.4.6 está instalada y arrancada
+en Aplicaciones; la firma, vista previa y fuentes incluidos están comprobados.
+Tras 130 s inactiva cierra en 0,33 s; vínculo, caché e Inicio se conservan.
+La firma ad-hoc puede exigir renovar permisos. Windows no respondió a la prueba
+de enlace: la compilación nativa Windows y aceptación física conjunta siguen pendientes.
+Véase [evidencia de rendimiento](docs/validation/macos-0.4.6.json).
 
 La 0.4.5 añade instalación y actualización de Windows en una ruta fija por usuario.
 Conserva la vinculación, los datos de dispositivos y la preferencia de Inicio. Las
@@ -24,8 +47,8 @@ ad-hoc, que puede exigir renovar permisos aunque los datos se conserven.
 Véase [actualizaciones y firewall](docs/UPDATES.md) y
 [evidencia de 0.4.5](docs/validation/macos-0.4.5.json). La aceptación física y la
 compilación nativa Windows de esta candidata siguen pendientes.
-Pasan 723 pruebas (92,16 %) y Ruff. La app 0.4.5 está instalada y arrancada en
-Aplicaciones; tras 130 s de espera, cierra en 0,33 s. El ejecutable contiene los
+La validación histórica de 0.4.5 registró 723 pruebas (92,16 %) y Ruff correctos.
+Tras 130 s de espera, la app instalada cerró en 0,33 s. El ejecutable contiene los
 módulos probados y conserva identidad, enlace, caché e Inicio.
 
 La revisión 0.4.4 refuerza la reconexión automática por eventos en ambos equipos.

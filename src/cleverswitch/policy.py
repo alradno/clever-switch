@@ -1,6 +1,7 @@
 """Local policy restricted to one MX Keys and one MX Master 3."""
 
 import threading
+import time
 
 
 class PairPolicy:
@@ -20,14 +21,31 @@ class PairPolicy:
         self.observe_only = False
         self.background_suspended = threading.Event()
         self._background_condition = threading.Condition()
+        self._arrival_until = 0.0
 
     def set_background_suspended(self, suspended):
         with self._background_condition:
+            if self.background_suspended.is_set() == suspended:
+                return
             if suspended:
                 self.background_suspended.set()
             else:
                 self.background_suspended.clear()
             self._background_condition.notify_all()
+
+    def expect_arrival(self, seconds):
+        """Temporarily accelerate discovery only during an authenticated lease."""
+        with self._background_condition:
+            self._arrival_until = time.monotonic() + max(0, min(seconds, 30))
+            self._background_condition.notify_all()
+
+    def wait_hardware(self, stop_event, interval):
+        with self._background_condition:
+            if stop_event.is_set() or self.background_suspended.is_set():
+                return
+            if time.monotonic() < self._arrival_until:
+                interval = min(interval, 0.05)
+            self._background_condition.wait(interval)
 
     def wake_background(self):
         with self._background_condition:

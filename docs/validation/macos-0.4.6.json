@@ -1,0 +1,174 @@
+{
+  "edition": "0.4.6",
+  "protocol": 2,
+  "date": "2026-10-17T11:34:47.114477+02:00",
+  "baseline_commit": "9eaada45aeb0258aea7224b161e74782d762dec0",
+  "platform": "macOS 26.6.2 (25G83), ARM64, Python 3.14.6",
+  "tests": {
+    "passed": 738,
+    "coverage_percent": 92.12,
+    "new_cases": 15,
+    "ruff": "passed",
+    "regressions_reproduced_on_baseline": 11
+  },
+  "benchmark": {
+    "transport": "Real mutually authenticated loopback TLS with disk journals",
+    "radios": "Simulated; each successful HID probe costs 3 ms, channel reconnection either immediate or 200 ms",
+    "baseline": {
+      "cycles_each_direction": 20,
+      "edge_dwell_ms": 400.0,
+      "simulated_reconnection_ms": 200,
+      "immediate_radio": {
+        "windows_to_mac": {
+          "cursor": {
+            "median_ms": 38.54,
+            "p95_ms": 41.5
+          },
+          "complete": {
+            "median_ms": 39.64,
+            "p95_ms": 42.74
+          }
+        },
+        "mac_to_windows": {
+          "cursor": {
+            "median_ms": 38.53,
+            "p95_ms": 41.25
+          },
+          "complete": {
+            "median_ms": 39.7,
+            "p95_ms": 42.67
+          }
+        }
+      },
+      "delayed_radio": {
+        "windows_to_mac": {
+          "cursor": {
+            "median_ms": 685.01,
+            "p95_ms": 695.76
+          },
+          "complete": {
+            "median_ms": 686.27,
+            "p95_ms": 697.02
+          }
+        },
+        "mac_to_windows": {
+          "cursor": {
+            "median_ms": 686.1,
+            "p95_ms": 691.52
+          },
+          "complete": {
+            "median_ms": 687.66,
+            "p95_ms": 692.78
+          }
+        }
+      }
+    },
+    "candidate": {
+      "cycles_each_direction": 20,
+      "edge_dwell_ms": 80.0,
+      "simulated_reconnection_ms": 200,
+      "immediate_radio": {
+        "windows_to_mac": {
+          "cursor": {
+            "median_ms": 18.31,
+            "p95_ms": 20.28
+          },
+          "complete": {
+            "median_ms": 40.83,
+            "p95_ms": 42.63
+          }
+        },
+        "mac_to_windows": {
+          "cursor": {
+            "median_ms": 18.56,
+            "p95_ms": 20.59
+          },
+          "complete": {
+            "median_ms": 41.04,
+            "p95_ms": 44.04
+          }
+        }
+      },
+      "delayed_radio": {
+        "windows_to_mac": {
+          "cursor": {
+            "median_ms": 223.57,
+            "p95_ms": 228.3
+          },
+          "complete": {
+            "median_ms": 453.24,
+            "p95_ms": 460.13
+          }
+        },
+        "mac_to_windows": {
+          "cursor": {
+            "median_ms": 222.85,
+            "p95_ms": 227.16
+          },
+          "complete": {
+            "median_ms": 451.42,
+            "p95_ms": 459.39
+          }
+        }
+      }
+    },
+    "excludes": [
+      "physical Bluetooth and OS input delivery",
+      "edge sampling jitter",
+      "native Windows APIs"
+    ],
+    "command": "PYTHONPATH=src .venv/bin/python benchmarks/handoff.py --cycles 20"
+  },
+  "installed": {
+    "edition": "0.4.6",
+    "installed_path": "/Applications/CleverSwitchTray.app",
+    "installed_matches_native_build": true,
+    "signature_valid": true,
+    "previous_native_sigterm_exit_seconds": 0.31,
+    "previous_app_required_forced_exit_after_native_idle_hang": false,
+    "native_idle_wait_seconds": 130,
+    "native_sigterm_exit_seconds": 0.33,
+    "preview_exit_code": 0,
+    "identity_pairing_cache_startup_unchanged": true,
+    "app_relaunched": true,
+    "executable_sha256": "90989b65099237cedf2cd75b846458d8f7da3356b054c6ce2339ea0a214c8651",
+    "permissions_granted_automatically": false
+  },
+  "idle_observation": {
+    "seconds": 30.0,
+    "cpu_seconds": 0.1527,
+    "percent_one_core": 0.509,
+    "limit": "One 30-second local observation, not a battery or physical-handoff measurement"
+  },
+  "peer_readiness": {
+    "reachable": false,
+    "limit": "The configured peer did not complete a read-only TLS readiness check within two seconds"
+  },
+  "source_sha256": {
+    "cleverswitch.discovery.discovery": "541da91b5fdbc0a3f72dfda83dda0067680007290816ed1b4351366b2daf5ccb",
+    "cleverswitch.flow.coordinator": "a4ddc6d66ac9ea6bc48942495af87804b05e0f655300a63e7fa6c9a8686a2a0a",
+    "cleverswitch.flow.cursor": "fbb7fa84bae02dacf297e7109e65cd5332eef1dec0b884f88e629a7398943ee4",
+    "cleverswitch.flow.hardware": "914b29816ac626739538b0035d6126bcc2cf3b510256a4c3af6e3b8e680193f4",
+    "cleverswitch.flow.network": "936e06c2656cb95acf3190a5ebea12cc4ae582cf243c8e62fe98d551c0da4100",
+    "cleverswitch.flow.runtime": "c7b74424c5427d00517fdcc54cd52bdfa2df67ad655dd227a41372a9e956cfc7",
+    "cleverswitch.flow.version": "99c31ab51c0fad269a151452a611da46ce602bfa55a4429902fa90fdf2551882",
+    "cleverswitch.gateway.hid_gateway": "e44691d3415ff689d52a3a813782179d668112f93530d87449e102f035e88e09",
+    "cleverswitch.gateway.hid_gateway_ble": "65cb1d82407911590fe11b2e0f696e36c3b9ec2fbe2bb36dfaa96d65870a3d5d",
+    "cleverswitch.hidpp.transport": "6212dea58b1becd30f4fab8caaeae0ce1d51f11630e68f9b8be45e15dc769da2",
+    "cleverswitch.policy": "8ca62ec5ea84abf29efa705eae1e5628a2628f5a4b34bd00fea00f3b947537ac"
+  },
+  "retained": [
+    "Fresh HID++ nonce proofs",
+    "Mouse confirmed before sending keyboard",
+    "Mutual TLS and pinning",
+    "80 px inward rearm and 3 second post-transfer quiet period",
+    "Finite recovery and passive offline waiting",
+    "Existing pairing, device cache, startup preference and Windows installer/firewall"
+  ],
+  "pending": [
+    "Native Windows build and installer acceptance",
+    "Physical Bluetooth measurements and repeated crossings in both directions",
+    "TCC grants for changed ad-hoc Mac signature; no existing valid signing identity",
+    "Real battery measurement"
+  ]
+}

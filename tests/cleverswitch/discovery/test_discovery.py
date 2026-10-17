@@ -30,7 +30,11 @@ def _make_app_context(shutdown=None, registry=None, topics=None):
         )
     config = MagicMock()
     config.arguments_settings.verbose_extra = False
-    return AppContext(device_registry=registry, topics=topics, config=config, shutdown=shutdown)
+    context = AppContext(device_registry=registry, topics=topics, config=config, shutdown=shutdown)
+    # Gateway construction tests control loop termination through the test event.
+    # Real acceleration/suspension waits have their own concurrency coverage.
+    context.policy.wait_hardware = lambda stop, interval: stop.wait(interval)
+    return context
 
 
 def test_discover_returns_immediately_when_shutdown_is_already_set(mocker):

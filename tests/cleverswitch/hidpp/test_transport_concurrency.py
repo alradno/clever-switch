@@ -156,3 +156,40 @@ def test_write_output_report_falls_back_without_deadlocking(fake_lib, mocker):
 
     assert done.is_set(), "write_output_report fallback deadlocked on the handle lock"
     assert fake_lib.violations == []
+
+
+@pytest.mark.parametrize("method", ["write", "write_output_report"])
+def test_idle_reader_cannot_starve_queued_command(fake_lib, mocker, method):
+    """Repeated 30 ms reads may not win the lock again ahead of an existing command."""
+    mocker.patch("cleverswitch.hidpp.transport._hid_send_output_report", None)
+    entered, stop, written = threading.Event(), threading.Event(), threading.Event()
+
+    def idle_read(*args):
+        entered.set()
+        time.sleep(0.03)
+        return 0
+
+    fake_lib.hid_read_timeout = idle_read
+    transport = HIDTransport("bluetooth", b"test")
+
+    def read_loop():
+        while not stop.is_set():
+            transport.read()
+
+    def command():
+        getattr(transport, method)(bytes([0x11]) + bytes(19))
+        written.set()
+
+    reader = threading.Thread(target=read_loop)
+    writer = threading.Thread(target=command)
+    reader.start()
+    assert entered.wait(1)
+    writer.start()
+    try:
+        assert written.wait(0.25), "Queued HID command starved behind repeated idle reads"
+    finally:
+        stop.set()
+        reader.join(2)
+        writer.join(2)
+        transport.close()
+    assert not fake_lib.violations
