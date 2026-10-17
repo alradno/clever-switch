@@ -13,19 +13,20 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.5.2`, protocolo de control `2` y entrada `1`.
-  Fuentes: `29e9256f29722a5d70ee600821b3dd6b1345acbe`.
-  Reduce consultas en foco local, envía ráfagas en bloques sin espera añadida,
-  protege teclas/arrastres locales del destino y añade medidas agregadas de
-  ida y vuelta. Conserva la recuperación de teclado y el trabajador de permisos
-  de 0.5.1. 970 pruebas por plataforma, Ruff y ambas compilaciones correctas.
-  Mac verifica firma y vista previa; Windows, el ejecutable empaquetado.
-  Véase `validation/input-0.5.2-efficiency.json`.
-  No instalar versiones intermedias ni pedir pruebas al usuario ausente: ha
-  acordado probar ambas plataformas juntas al volver. Esta candidata no está
-  instalada; Aplicaciones conserva 0.5.1. El último estado comprobado del Windows
-  doméstico es 0.5.0. Los permisos de la firma Mac 0.5.1 siguen pendientes.
-  No confundir simulación TLS local con fluidez física o ahorro de batería.
+- Candidata conjunta actual `0.5.3`, protocolo de control `2` y entrada `1`.
+  Fuentes: `717c09daa9a48f1f908f4431c082c81137147437`.
+  Avisos nativos de pantallas, rechazo de coordenadas desfasadas durante el enlace,
+  liberación de entrada y restauración del cursor en pantallas restantes. Se retiran
+  los observadores al desconectar y se rechazan avisos de una instancia anterior.
+  Conserva recuperación de teclado y mejoras de eficiencia de 0.5.1/0.5.2.
+  Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+  firma y vista previa; Windows comprueba el ejecutable empaquetado.
+  Véase `validation/input-0.5.3-displays.json`.
+  No instalar versiones intermedias ni pedir pruebas al usuario ausente; probar
+  ambas plataformas juntas al volver. Aplicaciones conserva 0.5.1, cuyos permisos
+  estaban pendientes en la comprobación anterior. Último Windows comprobado: 0.5.0.
+  Quedan pendientes fluidez, teclado, reposo/DHCP y cambios físicos de monitor,
+  resolución y escala. No confundir registro nativo o simulación con aceptación.
   La compilación no modifica TCC, vinculación, Inicio, firewall ni políticas.
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
   sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento

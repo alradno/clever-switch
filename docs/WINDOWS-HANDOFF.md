@@ -1,36 +1,34 @@
-# Continuación en Windows — candidata conjunta 0.5.2 experimental
+# Continuación en Windows — candidata conjunta 0.5.3 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-Fuentes de la candidata: `29e9256f29722a5d70ee600821b3dd6b1345acbe`.
-Pasan 970 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica firma
-y vista previa; Windows comprueba el ejecutable empaquetado.
-CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39078250742).
-Evidencia: `validation/input-0.5.2-efficiency.json`.
+Fuentes de la candidata: `717c09daa9a48f1f908f4431c082c81137147437`.
+Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado.
+CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39080156597).
+Evidencia: `validation/input-0.5.3-displays.json`.
 
-La 0.5.2 reduce consultas de permisos en foco local (400 ms frente a 100 ms
-remoto, con caducidad de 500 ms), envía hasta 64 eventos ya encolados por escritura
-TLS y evita despertares repetidos cuando ya hay trabajo pendiente. No añade
-espera a un evento aislado. Conserva orden de teclas, rueda y posiciones de clic,
-escrituras parciales y recuperación. Se rechaza un cruce mientras el destino
-mantenga una tecla o un botón físico pulsado. El diagnóstico añade medidas
-agregadas de ida y vuelta usando mensajes existentes, sin historial de entrada.
+La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
+a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
+pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
+entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
+hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
+Un cambio local de pantalla permite una nueva ventana finita de reconexión;
+los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
 
-La simulación reduce consultas de 600 a 150 por minuto local y escrituras de
-200 a 4 por ráfaga, con entrega ordenada en ambos sentidos. Son medidas de trabajo
-evitado, no de Wi-Fi, pantalla o batería. Repetición: benchmarks/input_efficiency.py.
+Se conservan la recuperación de teclado, consultas de permisos separadas del hilo
+de entrada y envío por ráfagas sin espera añadida de 0.5.1/0.5.2. No hay sondeo
+periódico de pantallas cuando está registrado el observador nativo.
 
-Se mantienen las correcciones 0.5.1: permisos fuera del hilo de entrada, recuperación
-de teclas al recibir avisos nativos del teclado, renovación del hook Windows y
-geometría preparada con MOVE_NOCOALESCE. Los observadores no leen informes HID.
-
-El usuario ha pedido seguir desarrollando y probar las versiones juntas al volver.
-No pedirle ahora instalar o renovar permisos. La 0.5.2 no se instala en esta revisión;
-Aplicaciones conserva 0.5.1 y su permiso pendiente. El último estado comprobado del
-Windows doméstico es 0.5.0. La aceptación física aún no está verificada. Validar
-fluidez en ambos sentidos, Easy-Switch del teclado, teclas/arrastre locales en el
-destino, reposo/despertar y reconexión. Conservar configuración y ruta del instalador.
+El usuario ha pedido seguir desarrollando y probar ambas versiones al volver.
+No pedirle instalar ni renovar permisos ahora. La candidata no se instala;
+Aplicaciones conserva 0.5.1. El último Windows doméstico comprobado tenía 0.5.0.
+Validar fluidez en ambos sentidos, Easy-Switch del teclado, teclas/arrastres locales,
+reposo/despertar y DHCP. Añadir retirada de monitor, cambio de resolución/escala
+con foco local y remoto: se debe liberar la entrada y volver a cruzar con la
+geometría nueva. Conservar configuración y ruta del instalador.
 
 «Comprobar permisos de entrada…» revisa la sesión sin registrar hooks ni enviar
 eventos. El ejecutable admite `--input-check archivo.json` para guardar esa misma
@@ -53,8 +51,8 @@ Las reglas se limitan a esa app, dos puertos y la subred guardada, para DHCP en 
 sentidos con perfiles Private/Public. No cambian por cada IP ni por versión.
 El menú detecta rutas temporales, reglas pendientes y bloqueos expresos; sólo revisa
 al arrancar, vincular, cambiar de red o por acción del usuario. [Detalles](UPDATES.md).
-No pedir al usuario instalar aún: falta compilar y comprobar nativamente el paquete,
-UAC, NetSecurity, Inicio y la aceptación física conjunta. Las pruebas PowerShell
+La aceptación física de UAC, NetSecurity, Inicio y actualización en el equipo
+doméstico sigue pendiente. Las pruebas PowerShell
 ejecutadas en Mac usan archivos reales y simulan las APIs de Windows.
 
 La revisión 0.4.4 añade reconexión por eventos y gestión del consumo en ambos:

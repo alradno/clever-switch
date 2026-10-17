@@ -1,10 +1,27 @@
-CLEVERSWITCH 0.5.2 — ENTRADA POR LAN EXPERIMENTAL
-Candidata del 18 de octubre de 2026 preparada para la prueba conjunta al volver
-el usuario. Pasan 970 pruebas en cada plataforma, Ruff y ambas compilaciones.
-Mac verifica firma y vista previa; Windows comprueba el ejecutable empaquetado.
-No instalada: Mac conserva 0.5.1; el
-último estado comprobado del Windows doméstico es 0.5.0. La aceptación física
-sigue pendiente. Evidencia: validation/input-0.5.2-efficiency.json.
+CLEVERSWITCH 0.5.3 — ENTRADA POR LAN EXPERIMENTAL
+Candidata del 18 de octubre de 2026 para la prueba conjunta al volver el usuario.
+Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado.
+No instalada: Mac conserva 0.5.1; el último estado comprobado del Windows doméstico
+es 0.5.0. La aceptación física sigue pendiente.
+Evidencia: validation/input-0.5.3-displays.json.
+
+MEJORAS 0.5.3
+La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
+a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
+pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
+entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
+hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
+Un cambio local de pantalla permite una nueva ventana finita de reconexión;
+los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
+
+En Mac se usan avisos de Quartz y en Windows una ventana oculta que recibe
+WM_DISPLAYCHANGE/WM_DPICHANGED en el hilo existente de entrada. No alteran modos
+de pantalla ni solicitan permisos nuevos. El registro y cierre nativos se prueban
+sin captura; cambios de pantalla e interacción usan dobles y TLS real local.
+Desconectar o reordenar monitores y cambiar resolución/escala sigue pendiente de
+aceptación física conjunta, con el cursor y teclas activas en ambos sentidos.
 
 MEJORAS 0.5.2
 Con foco local, el trabajador de permisos consulta cada 400 ms; durante un foco
