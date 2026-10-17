@@ -1,0 +1,100 @@
+{
+  "edition": "0.5.3",
+  "source_commit": "717c09daa9a48f1f908f4431c082c81137147437",
+  "observed_at": "2026-10-17T23:48:22.157359+00:00",
+  "changes": [
+    "Quartz display callbacks and a hidden Win32 top-level window on the existing input thread; no periodic display reads when observation is active",
+    "Display events invalidate readiness and request channel shutdown without querying geometry or joining workers inside the callback",
+    "Reject geometry that changed between the authenticated offer and observer startup",
+    "Release remote keys/buttons and restore the local pointer inside a remaining display with fresh geometry",
+    "Close both observers on the owner thread even when one fails; retain failed registrations, reject new starts and ignore retired observers",
+    "Local display reconfiguration grants a new finite retry window with a one-second settling delay; network instability still exhausts retries"
+  ],
+  "tests": {
+    "mac": {
+      "tests": 1006,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "windows": {
+      "tests": 1006,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "mac_coverage_percent": 91.92,
+  "ruff": "passed",
+  "changed_python_format": "passed",
+  "regressions_before_fix": {
+    "tests": 5,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "baseline": "a7841968742421f3084da9bdc7c077ac921fb647",
+    "selected": [
+      "tests/cleverswitch/test_input_displays.py::test_observed_geometry_does_not_poll_native_display_apis_per_tick",
+      "tests/cleverswitch/test_input_displays.py::test_geometry_change_during_authenticated_upgrade_rejects_stale_offer",
+      "tests/cleverswitch/test_input_runtime.py::test_repeated_local_display_changes_get_a_fresh_bounded_retry_window"
+    ]
+  },
+  "native_observers": "Both OS test suites register and unregister the real native display observer without hooks, capture, injection or screen changes",
+  "simulated_scenarios": [
+    "local and remote display changes with keys and mouse buttons held, both source directions",
+    "changed origins and sizes after reconnection",
+    "native registration/removal failures and callback lifetimes",
+    "screen change during authenticated stream upgrade",
+    "removed display cursor restoration",
+    "idle stream wake without waiting for heartbeat",
+    "finite retries after display recovery and network failures"
+  ],
+  "mac": {
+    "edition": "0.5.3",
+    "built_at": "2026-10-17T23:44:57.596062+00:00",
+    "signature_valid": true,
+    "modules_match_sources": 23,
+    "preview_exit_code": 0,
+    "installed": false,
+    "installed_edition": "0.5.1",
+    "executable_sha256": "f167937828301b857b3b9669fb2f86b72c3f11bdc8565b71d26cec5c80e1fdff",
+    "os_version": "26.6.2",
+    "architecture": "arm64"
+  },
+  "windows": {
+    "ci_url": "https://github.com/alradno/clever-switch/actions/runs/39080156597",
+    "job_id": 117535293183,
+    "native_build": "passed",
+    "packaged_check": {
+      "edition": "0.5.3",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "artifact_digest_verified": true,
+    "manifest_files_verified": true,
+    "installed_on_home_pc": false
+  },
+  "packages": {
+    "mac_sha256": "64ba7eaf32e951f33ffb2eb33fc43ce3e5b7349da2c4fb71f091b2e7bed0abbf",
+    "windows_sha256": "55ff69c50f06068be2d13ddec6b7e380ab0e2c807e86439e33beba3086970cef"
+  },
+  "installation": "No intermediate installation. Mac installed edition rechecked as 0.5.1; last home Windows observation remains 0.5.0 from the earlier validation.",
+  "physical_acceptance": "Deferred by user until return. No claim of cable-equivalent smoothness, Wi-Fi latency, battery improvement, physical monitor or keyboard channel acceptance.",
+  "remaining": [
+    "Install the joint candidate and verify effective permissions of its final signature when user returns",
+    "Physical smoothness and keyboard Easy-Switch recovery in both directions",
+    "Disconnect/rearrange monitors and change resolution/scale during local and remote focus",
+    "Sleep/wake, DHCP and energy acceptance on the real pair"
+  ],
+  "unchanged": [
+    "pairing and identity",
+    "startup preference",
+    "ports and firewall",
+    "security software and permission databases",
+    "control protocol 2 and input protocol 1"
+  ],
+  "prior_efficiency_evidence": "docs/validation/input-0.5.2-efficiency.json"
+}
