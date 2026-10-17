@@ -46,7 +46,9 @@ class Controller:
         from ..discovery.discovery import discover
         from ..setup.app_setup import setup_context
 
-        self.context = setup_context(argparse.Namespace(config=None, verbose=False, verbose_extra=False))
+        self.context = setup_context(
+            argparse.Namespace(config=None, verbose=False, verbose_extra=False), native_loop=True
+        )
         # Physical Easy-Switch must survive application failure. Observe analytics
         # where supported; never divert keys in the tray/Flow application.
         self.context.policy.observe_only = True
