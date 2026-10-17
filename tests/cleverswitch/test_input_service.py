@@ -133,6 +133,38 @@ def test_physical_input_at_destination_takes_local_control(services, action):
     assert not peer.backend.captured
 
 
+@pytest.mark.parametrize("source", [0, 1])
+@pytest.mark.parametrize("kind,code", [("key", 0xE0), ("button", 0)])
+def test_incoming_focus_does_not_interrupt_a_local_held_key_or_drag(services, source, kind, code):
+    connected(services)
+    peer, target = services[source], services[1 - source]
+    assert not getattr(target, kind)(code, 1)
+    assert peer.session.enter(*target.local.entry(target.side, 0.5))
+    until(lambda: peer.session.phase != "requesting")
+    assert peer.session.phase == target.session.phase == "local"
+    assert not peer.backend.captured
+    assert target.backend.events == []
+    assert getattr(target, "keys" if kind == "key" else "buttons") == {code}
+    assert not getattr(target, kind)(code, 0)
+    enter(peer)
+    assert target.session.phase == "receiving"
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_permission_cadence_tracks_both_sides_of_focus_and_returns_to_idle(services, source):
+    for peer in services:
+        peer.backend.set_active = Mock()
+    connected(services)
+    peer, target = services[source], services[1 - source]
+    enter(peer)
+    for candidate in services:
+        candidate.backend.set_active.assert_called_with(True)
+    peer.session.leave()
+    until(lambda: target.session.phase == "local")
+    for candidate in services:
+        candidate.backend.set_active.assert_called_with(False)
+
+
 def test_mode_is_opt_in_and_constructing_it_does_not_start_capture():
     link = Mock(config={"role": "mac"})
     backend = DesktopBackend()

@@ -241,6 +241,126 @@ def test_receiver_coalesces_available_motion_but_keeps_click_position_and_epoch(
         b.close()
 
 
+def test_queued_actions_share_bounded_writes_without_a_batching_delay():
+    a, b = socket.socketpair()
+    writes, received = [], []
+
+    class ObservedSocket:
+        def __getattr__(self, name):
+            return getattr(a, name)
+
+        def send(self, data):
+            writes.append(len(data))
+            return a.send(data)
+
+    channel = Channel(ObservedSocket(), lambda packet: None, lambda: None)
+    receiver = Channel(b, received.append, lambda: None)
+    actions = [Packet(Kind.KEY, 7, (4, down)) for _ in range(100) for down in (1, 0)]
+    try:
+        for packet in actions:
+            channel.send(packet)
+        receiver.start()
+        channel.start()
+        until(lambda: len(received) == len(actions))
+        assert received == actions
+        assert len(writes) == 4  # At most 64 already queued frames per write.
+        assert channel.sent == len(actions)
+        before = time.monotonic()
+        channel.send(Packet(Kind.MOVE, 7, (12, 20)))
+        until(lambda: len(received) == len(actions) + 1)
+        assert time.monotonic() - before < 0.1  # A lone frame does not wait for more.
+    finally:
+        channel.close()
+        receiver.close()
+
+
+def test_coalesced_outbox_only_wakes_the_transport_when_work_becomes_available(mocker):
+    a, b = socket.socketpair()
+    channel = Channel(a, lambda packet: None, lambda: None)
+    wake = mocker.patch.object(channel, "_wake")
+    try:
+        for x in range(1000):
+            channel.send(Packet(Kind.MOVE, 1, (x, 0)))
+        channel.send(Packet(Kind.BUTTON, 1, (0, 1)))
+        assert wake.call_count == 1
+        assert channel.outbox.coalesced == 999
+    finally:
+        channel.close()
+        b.close()
+
+
+def test_short_writes_and_tls_retry_preserve_every_batched_action():
+    a, b = socket.socketpair()
+    attempts, received = [], []
+
+    class ShortSocket:
+        def __getattr__(self, name):
+            return getattr(a, name)
+
+        def send(self, data):
+            attempts.append(data)
+            if len(attempts) % 3 == 1:
+                raise ssl.SSLWantWriteError()
+            return a.send(data[:17])
+
+    channel = Channel(ShortSocket(), lambda packet: None, lambda: None)
+    receiver = Channel(b, received.append, lambda: None)
+    packets = [Packet(Kind.KEY, 9, (4, down)) for _ in range(10) for down in (1, 0)]
+    try:
+        for packet in packets:
+            channel.send(packet)
+        channel.start()
+        receiver.start()
+        until(lambda: received == packets)
+        assert attempts[0] == attempts[1]  # OpenSSL gets identical bytes after WANT_WRITE.
+        assert channel.sent == len(packets)
+        assert not channel.stop.is_set()
+    finally:
+        channel.close()
+        receiver.close()
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_round_trip_uses_existing_authenticated_heartbeat_without_input_history(endpoints, source):
+    connect(endpoints)
+    peer = endpoints[source]
+    assert peer.channel.timing() is None
+    assert peer.session.enter(10, 20)
+    until(lambda: peer.channel.timing() is not None and peer.channel.timing()["samples"] >= 2)
+    timing = peer.channel.timing()
+    assert 0 <= timing["minimum_ms"] <= timing["average_ms"] <= timing["maximum_ms"]
+    assert timing["age_seconds"] < 1
+    assert timing["mean_variation_ms"] >= 0
+    assert all(type(v) in (int, float) for v in timing.values())
+
+
+def test_round_trip_aggregate_and_unmatched_pong(mocker):
+    a, b = socket.socketpair()
+    channel = Channel(a, lambda packet: None, lambda: None)
+    try:
+        channel.start()
+        b.sendall(Packet(Kind.PONG, 1).encode(1))
+        b.sendall(Packet(Kind.KEY, 1, (4, 0)).encode(2))
+        until(lambda: channel.received == 1)
+        assert channel.timing() is None  # Unsolicited replies are not measurements.
+        channel._round_trip(0.010, 1.0)
+        channel._round_trip(0.030, 2.0)
+        channel._round_trip(0.020, 3.0)
+        mocker.patch("cleverswitch.flow.input_stream.time.monotonic", return_value=4.0)
+        assert channel.timing() == {
+            "samples": 3,
+            "latest_ms": 20.0,
+            "minimum_ms": 10.0,
+            "average_ms": 20.0,
+            "maximum_ms": 30.0,
+            "mean_variation_ms": 15.0,
+            "age_seconds": 1.0,
+        }
+    finally:
+        channel.close()
+        b.close()
+
+
 @pytest.mark.parametrize("closing_at", ["tick", "packet"])
 def test_close_stops_current_receive_batch_and_unsent_input(closing_at):
     a, b = socket.socketpair()
