@@ -1,0 +1,215 @@
+{
+  "edition": "0.5.1",
+  "source_commit": "5241be90f146df0529eaba137b05d8209c19fbe7",
+  "observed_at": "2026-10-17T22:52:34.271203+00:00",
+  "reported_physical_failure_0.5.0": [
+    "User reports microstutters receiving LAN pointer input on Mac",
+    "User reports keyboard no longer forwards after changing its physical channel and returning; mouse still forwards"
+  ],
+  "verified_findings": [
+    "Native Mac permission checks measured about 8.3 ms each; 0.5.0 invokes both synchronously on the input path every 100 ms",
+    "Both adapters previously lacked keyboard arrival/removal recovery",
+    "Windows per-move path repeatedly queried geometry and changed DPI context"
+  ],
+  "changes": [
+    "Shared readiness worker removes permission queries from native and TLS input paths; stale results fail closed after 500 ms",
+    "Secure Input remains checked synchronously on Mac; disconnected input backends stop their workers",
+    "OS keyboard arrival/removal notifications release source-owned keys after lost key-up while retaining pointer focus",
+    "Windows renews its keyboard hook on the owner thread after device changes",
+    "Windows uses prepared physical geometry and MOVE_NOCOALESCE for pointer delivery"
+  ],
+  "tests": {
+    "mac": {
+      "tests": 954,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "windows": {
+      "tests": 954,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "mac_coverage_percent": 91.45,
+  "ruff": "passed",
+  "red_before_green": {
+    "slow_permission_query_blocks_input_path": 2,
+    "absent_keyboard_reconnect_recovery": 2
+  },
+  "pacing": {
+    "scope": "synthetic_native_adapters_with_slow_permission_api_over_loopback_TLS",
+    "baseline_adapters": "a73af306d92e42e0c0f0ec78641afafe61e1b4e8",
+    "not_measured": [
+      "physical_Bluetooth",
+      "WiFi",
+      "screen_refresh",
+      "application"
+    ],
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 203,
+        "coalesced": 31,
+        "received_coalesced": 16,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.755,
+        "delivery_ms": {
+          "p50": 0.427,
+          "p95": 21.704,
+          "p99": 22.961,
+          "max": 28.722,
+          "mean": 3.319
+        },
+        "process_cpu_percent_one_core": 3.9,
+        "duration_seconds": 1.998,
+        "revision": "baseline_0.5.0",
+        "simulated_permission_query_ms": 18
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 200,
+        "coalesced": 35,
+        "received_coalesced": 15,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.317,
+        "delivery_ms": {
+          "p50": 0.488,
+          "p95": 21.807,
+          "p99": 24.107,
+          "max": 28.328,
+          "mean": 3.429
+        },
+        "process_cpu_percent_one_core": 4.39,
+        "duration_seconds": 1.998,
+        "revision": "baseline_0.5.0",
+        "simulated_permission_query_ms": 18
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.464,
+        "delivery_ms": {
+          "p50": 0.384,
+          "p95": 0.517,
+          "p99": 0.589,
+          "max": 0.634,
+          "mean": 0.391
+        },
+        "process_cpu_percent_one_core": 4.43,
+        "duration_seconds": 1.998,
+        "revision": "candidate",
+        "simulated_permission_query_ms": 18
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.332,
+        "delivery_ms": {
+          "p50": 0.413,
+          "p95": 0.549,
+          "p99": 0.614,
+          "max": 0.722,
+          "mean": 0.426
+        },
+        "process_cpu_percent_one_core": 4.84,
+        "duration_seconds": 1.998,
+        "revision": "candidate",
+        "simulated_permission_query_ms": 18
+      }
+    ]
+  },
+  "native_mac_permission_cost_ms": {
+    "listen_median": 8.329,
+    "post_median": 8.383,
+    "scope": "100 read-only API calls each, development process, no capture or injection"
+  },
+  "native_keyboard_observers": "registration and close passed on macOS and Windows; no device open, input reports, hooks or synthetic events in this check",
+  "mac": {
+    "edition": "0.5.1",
+    "installed_path": "/Applications/CleverSwitchTray.app",
+    "signature_valid": true,
+    "observed_at": "2026-10-17T22:44:33.854571+00:00",
+    "installed_matches_sources": true,
+    "verified_module_count": 22,
+    "preview_exit_code": 0,
+    "previous_exit_seconds": 0.32,
+    "network_input_enabled": true,
+    "identity_pairing_cache_startup_preserved": true,
+    "permissions_granted_automatically": false,
+    "security_policy_changes": false,
+    "readiness": {
+      "edition": "0.5.1",
+      "platform": "darwin",
+      "ready": false,
+      "checks": {
+        "listen_permission": false,
+        "post_permission": false,
+        "session_and_accessibility": false,
+        "secure_input_inactive": true
+      }
+    },
+    "app_running": true,
+    "executable_sha256": "32a7ab892188345f97cc07e5ccee7fba717445fd62f48c44713a23d40a1eeff9",
+    "os_version": "26.6.2",
+    "architecture": "arm64"
+  },
+  "windows": {
+    "ci_url": "https://github.com/alradno/clever-switch/actions/runs/39076287821",
+    "native_build": "passed",
+    "packaged_check": {
+      "edition": "0.5.1",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "package_sha256": "3cc0f447a305f2feae2b6513a807e122956d6f8c8ce1c393a1064c74f7127438",
+    "manifest_files_verified": true,
+    "installed_on_home_pc": false,
+    "home_pc_report": {
+      "observed_at": "2026-10-17T22:47:50.589229+00:00",
+      "authenticated": true,
+      "edition": "0.5.0",
+      "input": {
+        "available": true,
+        "enabled": true,
+        "version": 1
+      },
+      "ready": false,
+      "reason": "input"
+    }
+  },
+  "physical_acceptance": "not validated for 0.5.1; 0.5.0 physical feedback reports failures",
+  "remaining": [
+    "Mac Accessibility and Input Monitoring permissions rejected for updated ad-hoc signature",
+    "Home Windows still reports 0.5.0; 0.5.1 package is built but not installed there",
+    "Verify physical smoothness and Easy-Switch recovery in both directions after both apps are ready"
+  ],
+  "unchanged": [
+    "pairing and private identity",
+    "startup preference",
+    "firewall and ports",
+    "security software and permission databases"
+  ]
+}
