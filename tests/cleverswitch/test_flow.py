@@ -345,6 +345,137 @@ def test_discovery_authenticated_dhcp_updates_and_replay(paired):
     assert la.peer == "127.0.0.3"
 
 
+def test_discovery_orders_departure_and_restarted_peer_notices(paired):
+    from unittest.mock import Mock
+
+    la, lb = Link(paired[0], lambda *args: {}, 0), Link(paired[1], lambda *args: {}, 0)
+    la.on_announcement, la.on_departure = Mock(), Mock()
+    da, db = Discovery(la), Discovery(lb)
+    old_arrival = db.packet()
+    departing = db.packet("departing")
+    assert da.accept(departing, lb.address)
+    la.on_departure.assert_called_once()
+    assert not da.accept(old_arrival, lb.address)
+    restarted = Discovery(lb)
+    assert da.accept(restarted.packet(), lb.address)
+    assert not da.accept(db.packet("departing"), lb.address)
+    fresh_receiver = Discovery(la)
+    assert fresh_receiver.accept(restarted.packet(), lb.address)
+    assert not fresh_receiver.accept(db.packet("departing"), lb.address)
+    assert la.on_announcement.call_count == 2
+    la.on_departure.assert_called_once()
+
+
+def test_discovery_transmits_same_notice_to_both_targets_and_replies_once(paired, mocker):
+    la, lb = Link(paired[0], lambda *args: {}, 0), Link(paired[1], lambda *args: {}, 0)
+    da, db = Discovery(la), Discovery(lb)
+    sender = mocker.patch("cleverswitch.flow.network.socket.socket").return_value.__enter__.return_value
+    db.announce()
+    first, second = sender.sendto.call_args_list
+    assert first.args[0] == second.args[0]  # Broadcast/unicast is one event, not two wakeups.
+    da.socket = mocker.Mock()
+    da.wake_reader = mocker.Mock()
+    da.socket.recvfrom.side_effect = [(first.args[0], (lb.address, 1)), (second.args[0], (lb.address, 1))]
+    mocker.patch(
+        "cleverswitch.flow.network.select.select",
+        side_effect=[([da.socket], [], [])] * 2 + [([da.wake_reader], [], [])],
+    )
+    reply = mocker.patch.object(da, "announce")
+    da._run()
+    reply.assert_called_once_with("reply")
+
+
+def test_discovery_reply_does_not_echo_and_failed_reply_keeps_listener(paired, mocker):
+    la, lb = Link(paired[0], lambda *args: {}, 0), Link(paired[1], lambda *args: {}, 0)
+    da, db = Discovery(la), Discovery(lb)
+    da.socket, da.wake_reader = mocker.Mock(), mocker.Mock()
+    packets = [(db.packet(), (lb.address, 1)), (db.packet("reply"), (lb.address, 1))]
+    da.socket.recvfrom.side_effect = packets
+    mocker.patch(
+        "cleverswitch.flow.network.select.select",
+        side_effect=[([da.socket], [], [])] * 2 + [([da.wake_reader], [], [])],
+    )
+    reply = mocker.patch.object(da, "announce", side_effect=OSError("temporary network loss"))
+    da._run()
+    assert da.socket.recvfrom.call_count == 2
+    reply.assert_called_once_with("reply")
+
+
+def test_real_udp_notice_updates_both_addresses_then_mutual_tls_reconnects(paired_tls, mocker):
+    from cleverswitch.flow import network
+
+    la = Link(paired_tls[0], lambda *args: {"ready": True, "protocol": 2}, 0)
+    lb = Link(paired_tls[1], lambda *args: {"ready": True, "protocol": 2}, 0)
+    da, db = Discovery(la), Discovery(lb)
+    departed = threading.Event()
+    la.on_departure = departed.set
+    try:
+        start_tls_peers(la, lb)
+        # macOS requires both peers on 127.0.0.1 with distinct ports. Exercise
+        # the real receive loop and UDP reply without touching the user's LAN.
+        da.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        da.socket.bind((la.address, 0))
+        da.wake_reader, da.wake_writer = socket.socketpair()
+        da.worker = threading.Thread(target=da._run, daemon=True)
+        da.worker.start()
+        la.peer, lb.peer = "127.0.0.3", "127.0.0.4"  # Stale last-known addresses.
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
+            sender.bind((lb.address, 0))
+            sender.settimeout(2)
+            mocker.patch.object(network, "PORT", sender.getsockname()[1] - 1)
+            sender.sendto(db.packet(), da.socket.getsockname())
+            reply, address = sender.recvfrom(513)
+            assert db.accept(reply, address[0]) == "reply"
+            assert la.peer == lb.address and lb.peer == la.address
+            assert la.call("ready")["ready"] and lb.call("ready")["ready"]
+            sender.sendto(db.packet("departing"), da.socket.getsockname())
+            assert departed.wait(2)
+    finally:
+        da.close()
+        db.close()
+        la.close()
+        lb.close()
+    assert not da.worker.is_alive()
+
+
+def test_failed_broadcast_still_notifies_last_known_peer(paired, mocker):
+    discovery = Discovery(Link(paired[0], lambda *args: {}, 0))
+    sender = mocker.patch("cleverswitch.flow.network.socket.socket").return_value.__enter__.return_value
+    sender.sendto.side_effect = [OSError("broadcast unavailable"), 1]
+    discovery.announce()
+    assert sender.sendto.call_count == 2
+    assert sender.sendto.call_args.args[1][0] == discovery.link.peer
+    sender.settimeout.assert_called_once_with(0.2)
+
+
+def test_availability_rejects_forgery_and_accepts_legacy_hint(paired):
+    import hashlib
+    import hmac
+
+    da = Discovery(Link(paired[0], lambda *args: {}, 0))
+    db = Discovery(Link(paired[1], lambda *args: {}, 0))
+    packet = json.loads(db.packet())
+    packet["kind"] = "departing"  # A modified announcement cannot park the peer.
+    assert not da.accept(canonical(packet), db.link.address)
+    for key in ("proof", "session", "epoch", "sequence", "kind"):
+        packet.pop(key)
+    packet["proof"] = hmac.new(db.secret, canonical(packet), hashlib.sha256).hexdigest()
+    assert da.accept(canonical(packet), db.link.address)
+
+
+def test_restart_after_clock_correction_is_not_rejected_indefinitely(paired, mocker):
+    now = [0]
+    mocker.patch("cleverswitch.flow.network.time.monotonic", side_effect=lambda: now[0])
+    da = Discovery(Link(paired[0], lambda *args: {}, 0))
+    db = Discovery(Link(paired[1], lambda *args: {}, 0))
+    assert da.accept(db.packet(), db.link.address)
+    restarted = Discovery(db.link)
+    restarted.epoch = db.epoch - 1_000_000_000
+    assert not da.accept(restarted.packet(), db.link.address)
+    now[0] = 31  # Old packets have expired; a newly signed event can wake us.
+    assert da.accept(restarted.packet(), db.link.address)
+
+
 def test_idle_tls_listener_blocks_without_periodic_wakeups_and_closes(paired, mocker):
     from cleverswitch.flow import network
 

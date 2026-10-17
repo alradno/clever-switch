@@ -422,6 +422,27 @@ def test_disconnect_discards_old_follow_evidence_and_peer_status():
     assert runtime.peer_info == {}
 
 
+def test_callbacks_from_a_closed_link_cannot_wake_its_replacement(tmp_path, mocker):
+    pairing = Mock(directory=tmp_path)
+    pairing.load.return_value = {"role": "mac"}
+    runtime = Runtime(context(), pairing)
+    mocker.patch("cleverswitch.flow.runtime.native_cursor")
+    mocker.patch("cleverswitch.flow.runtime.Hardware")
+    links = [Mock(), Mock()]
+    mocker.patch("cleverswitch.flow.runtime.Link", side_effect=links)
+    mocker.patch("cleverswitch.flow.runtime.Discovery")
+    runtime._connect()
+    links[0].on_authenticated()
+    runtime._disconnect()
+    runtime._connect()
+    links[0].on_authenticated()
+    links[0].on_announcement()
+    assert not runtime._events()
+    links[1].on_authenticated()
+    assert runtime._events() == {"authenticated"}
+    runtime._disconnect()
+
+
 def test_manual_recovery_wakes_presence_checks_from_standby():
     runtime = Runtime(context())
     runtime.mode = "standby"

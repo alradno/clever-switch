@@ -438,6 +438,7 @@ def test_native_windows_notification_registration_callbacks_and_cleanup(mocker):
         return 0
 
     api.NotifyIpInterfaceChange.side_effect = register
+    api.NotifyUnicastIpAddressChange.side_effect = register
     api.NotifyRouteChange2.side_effect = register
     power.PowerRegisterSuspendResumeNotification.side_effect = register
     if not hasattr(ctypes, "WINFUNCTYPE"):
@@ -452,7 +453,8 @@ def test_native_windows_notification_registration_callbacks_and_cleanup(mocker):
     assert not monitor.sleeping
     monitor.close()
     assert events == ["network", "sleep", "resume"]
-    assert api.CancelMibChangeNotify2.call_count == 2
+    assert api.CancelMibChangeNotify2.call_count == 3
+    api.NotifyUnicastIpAddressChange.assert_called_once()
     power.PowerUnregisterSuspendResumeNotification.assert_called_once()
     api.NotifyIpInterfaceChange.side_effect = lambda *args: 5
     with pytest.raises(OSError):
@@ -521,3 +523,159 @@ def test_snapshot_matches_selected_interface_and_excludes_vpn_gateway(mocker):
     mocker.patch.object(sys, "platform", "linux")
     with pytest.raises(RuntimeError):
         native_monitor(lambda reason: None)
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_healthy_heartbeat_does_not_broadcast_availability(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True, "protocol": 2}
+    runtime.wake("startup")
+    runtime._step()
+    discovery.announce.assert_called_once_with()
+    for moment in (30, 60, 90):
+        clock[0] = moment
+        runtime._step()
+    assert link.call.call_count == 4
+    assert discovery.announce.call_count == 1
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+@pytest.mark.parametrize("reason", ["sleep", "pause", "stop"])
+def test_departure_notifies_peer_once_before_closing(tmp_path, mocker, role, reason):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True}
+    runtime.wake("startup")
+    runtime._step()
+    discovery.announce.reset_mock()
+    sequence = Mock()
+    sequence.attach_mock(discovery.announce, "announce")
+    sequence.attach_mock(link.close, "close")
+    if reason == "stop":
+        runtime._disconnect(notify=True)
+    else:
+        runtime.monitor = Mock(sleeping=reason == "sleep")
+        if reason == "pause":
+            runtime.context.policy.paused.set()
+        runtime.wake(reason)
+        assert runtime._step() is None
+    assert sequence.mock_calls[:2] == [mocker.call.announce("departing"), mocker.call.close()]
+    runtime._disconnect(notify=True)
+    discovery.announce.assert_called_once_with("departing")
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_announced_departure_parks_until_return_without_search(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True}
+    runtime.wake("startup")
+    runtime._step()
+    link.call.reset_mock()
+    discovery.announce.reset_mock()
+    hardware.probe.reset_mock()
+    runtime.wake("departure")
+    assert runtime._step() is None
+    clock[0] = 86400
+    assert runtime._step() is None
+    assert not runtime.peer_ready
+    assert runtime.context.policy.background_suspended.is_set()
+    link.call.assert_not_called()
+    discovery.announce.assert_not_called()
+    hardware.probe.assert_not_called()
+    cursor.sample.assert_not_called()
+    runtime.wake("announcement")
+    runtime._step()
+    assert runtime.peer_ready and runtime.mode == "online"
+    assert not runtime.context.policy.background_suspended.is_set()
+
+
+def test_departure_preserves_finite_transfer_recovery_then_parks(tmp_path, mocker):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker)
+    runtime._connect()
+    runtime.listen_allowed = True
+    runtime.peer_ready = True
+    runtime.budget.authenticated()
+    runtime.destination.state = {"phase": "mouse"}
+    runtime.wake("departure")
+    assert runtime._step() == 0.2
+    assert not runtime.context.policy.background_suspended.is_set()
+    runtime.destination.state = {"phase": "aborted"}
+    assert runtime._step() is None
+    assert runtime.context.policy.background_suspended.is_set()
+
+
+def test_latest_availability_event_wins_before_worker_wakes(tmp_path, mocker):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker)
+    runtime.wake("departure")
+    runtime.wake("announcement")
+    assert runtime._events() == {"announcement"}
+    runtime.wake("announcement")
+    runtime.wake("departure")
+    assert runtime._events() == {"departure"}
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_leaving_home_and_returning_with_new_dhcp_address_reconnects(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    home = current[0]
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True, "protocol": 2}
+    runtime.wake("startup")
+    runtime._step()
+    current[0] = Network()  # Wi-Fi lost while leaving home.
+    runtime.wake("network")
+    runtime._step()
+    for moment in (2, 10, 30, 86400):
+        clock[0] = moment
+        runtime._step()
+    assert runtime._step() is None
+    assert link.call.call_count == 1
+    assert runtime.context.policy.background_suspended.is_set()
+    current[0] = Network("192.168.1.50", home.network, home.gateway, home.router_mac)
+    runtime.wake("network")
+    runtime._step()
+    assert runtime.mode == "online" and runtime.peer_ready
+    assert cfg["address"] == "192.168.1.50"
+    assert link.call.call_count == 2
+    assert discovery.announce.call_args == mocker.call()
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_abrupt_peer_power_loss_exhausts_budget_then_reboot_notice_wakes(tmp_path, mocker, role):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker, role)
+    link.call.side_effect = None
+    link.call.return_value = {"ready": True}
+    runtime.wake("startup")
+    runtime._step()
+    link.call.reset_mock()
+    link.call.side_effect = OSError("power lost without a departure notice")
+    clock[0] = 30
+    runtime._step()
+    while runtime.budget.next is not None:
+        clock[0] = runtime.budget.next
+        runtime._step()
+    assert link.call.call_count == 7
+    clock[0] = 86400
+    assert runtime._step() is None
+    assert runtime.context.policy.background_suspended.is_set()
+    link.call.side_effect = None
+    runtime.wake("announcement")
+    runtime._step()
+    assert runtime.peer_ready and runtime.mode == "online"
+    assert link.call.call_count == 8
+
+
+def test_old_authentication_in_same_batch_as_dhcp_change_is_discarded(tmp_path, mocker):
+    runtime, cfg, clock, current, link, discovery, hardware, cursor = rig(tmp_path, mocker)
+    runtime.wake("startup")
+    runtime._step()
+    runtime.budget.suspend()
+    home = current[0]
+    current[0] = Network("192.168.1.50", home.network, home.gateway, home.router_mac)
+    runtime.wake("authenticated")
+    runtime.wake("network")
+    runtime._step()
+    assert not runtime.peer_ready  # The new listener has not authenticated anybody.
+    assert runtime.context.policy.background_suspended.is_set()
