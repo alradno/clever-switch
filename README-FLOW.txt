@@ -1,10 +1,22 @@
-CLEVERSWITCH FLOW — candidata conjunta 0.4.6, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.0, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.5.0 EXPERIMENTAL: entrada continua por LAN, con los periféricos
+conectados físicamente a un equipo. No transmite el escritorio. Ambos equipos
+deben activar expresamente Ratón y teclado por red (experimental). Conserva el
+enlace, el protocolo de control 2 y los puertos; la entrada usa un protocolo
+binario 1 dentro del TLS autenticado existente. El modo físico permanece como
+opción independiente y Easy-Switch sigue funcionando en el propio dispositivo.
+Código y validación: docs/INPUT-LAN.txt. Candidata compilada e instalada en Mac;
+captura, escritura y restauración comprobadas nativamente desde desarrollo.
+Falta renovar permisos de la app instalada y completar la aceptación con Windows.
+Comprobar permisos de entrada muestra los requisitos pendientes sin capturar nada.
+
+HISTORIAL DEL MODO FÍSICO
 REVISIÓN 0.4.6: borde de 80 ms; cursor colocado tras la primera prueba nueva del
 ratón en destino, antes del teclado y sin recolocarlo al terminar. Las consultas
 de seguimiento ya no bloquean el monitor del cursor. El descubrimiento acelera
@@ -118,7 +130,8 @@ no se rearma hasta entrar al menos 80 px en pantalla con una muestra segura,
 sin botones ni modificadores pulsados. Un pequeño movimiento, salir de pantalla
 o esperar sin entrar hacia el centro no lo rearman. Instala esta protección en
 ambos equipos. Se conservan la pausa de llegada y los plazos de coordinación.
-No incluye portapapeles, archivos compartidos ni envío de pulsaciones o movimiento continuo.
+No incluye portapapeles ni archivos compartidos. La entrada continua por red es
+un modo opcional separado del cambio físico de canal descrito en esta sección.
 
 Al usar 1/2 del teclado, observa su notificación cuando el firmware la ofrece.
 Como alternativa, el equipo que recibe el teclado detecta su presencia con una consulta

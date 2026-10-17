@@ -99,7 +99,7 @@ if platform_name == "Darwin":
         CFBundleShortVersionString=EDITION,
         CFBundleVersion=EDITION,
         NSBluetoothAlwaysUsageDescription="Sincroniza únicamente el cambio de dispositivo del teclado y ratón.",
-        NSLocalNetworkUsageDescription="Confirma el cambio de ratón y teclado con tu Windows en el mismo router.",
+        NSLocalNetworkUsageDescription="Sincroniza o comparte el ratón y teclado entre tus equipos en la red local.",
     )
     plist.write_bytes(plistlib.dumps(info))
     # Re-sign with the same identity after plist changes. This does not notarize.

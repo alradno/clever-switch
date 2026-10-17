@@ -3,13 +3,32 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.4.6**, protocolo **2**. Mac y Windows se compilan
+Versión candidata conjunta: **0.5.0 experimental**, protocolo de control **2**.
+Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
 Actualizar la app conserva
 el enlace y los emparejamientos Bluetooth/USB existentes.
 
 ## Estado y coordinación
+
+La candidata 0.5.0 añade entrada continua por LAN, desactivada por defecto. Los
+periféricos permanecen conectados a un equipo y los eventos cruzan por una conexión
+TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de teclado.
+El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
+Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
+la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.0 está compilada e instalada en el Mac. Pasan 932 pruebas (91,43 %) y Ruff.
+Las pruebas nativas desde el entorno de desarrollo confirman captura, envío de
+movimiento, escritura en una ventana propia, liberación de Mayús y restauración
+del cursor. La app instalada requiere renovar sus permisos; la aceptación conjunta
+con Windows sigue pendiente. La latencia medida en loopback excluye las radios,
+las APIs nativas, las aplicaciones y la pantalla.
+El menú «Comprobar permisos de entrada…» comprueba los permisos sin capturar nada.
+Detalles, límites y reproducción: [entrada por red](docs/INPUT-LAN.txt).
+
+### Historial del modo Bluetooth
 
 La 0.4.6 reduce la permanencia en el borde de 400 a 80 ms y coloca el cursor en
 cuanto se confirma la llegada del ratón, antes de esperar al teclado. No vuelve
@@ -206,9 +225,10 @@ Las identidades y la configuración de cada equipo permanecen fuera del reposito
 - `~/.config/cleverswitch-tray/`: caché de dispositivos y bloqueo de instancia.
 
 No subir esas carpetas, archivos de vinculación, secretos ni paquetes que los
-contengan. La app intercambia coordinación por LAN cifrada; no transmite letras,
-portapapeles ni movimientos continuos del cursor. Los periféricos se conectan a
-cada equipo por Bluetooth o receptor Logitech.
+contengan. El modo físico intercambia coordinación por LAN cifrada. El modo de
+entrada por red transmite posiciones, clics y códigos de teclas por TLS al equipo
+vinculado, sin guardar su contenido ni transmitir pantalla, portapapeles o archivos.
+Los periféricos permanecen conectados por Bluetooth o receptor al equipo de origen.
 
 ## Procedencia
 
