@@ -444,6 +444,19 @@ def run(preview=False, preview_seconds=0):
                 dialogs.message("Vincula los equipos", "Completa el enlace de Windows y Mac primero.")
         controller.refresh_event.set()
 
+    def network_input(icon, item):
+        if controller.flow:
+            try:
+                controller.flow.toggle_input()
+            except (OSError, ValueError):
+                from . import dialogs
+
+                dialogs.message(
+                    "Entrada por red no disponible",
+                    "Completa la vinculación y espera a que termine cualquier traslado en curso.",
+                )
+        controller.refresh_event.set()
+
     def recover(icon, item):
         if controller.flow:
             controller.flow.recover()
@@ -459,11 +472,20 @@ def run(preview=False, preview_seconds=0):
         from . import dialogs
 
         if controller.flow:
+            from ..flow.input_check import inspect
+
             controller.check_installation()
             data = controller.flow.diagnostic()
+            data["input_readiness"] = inspect()
             if sys.platform == "win32":
                 data["installation"] = controller.installation
             dialogs.message("Diagnóstico de CleverSwitch", json.dumps(data, ensure_ascii=False, indent=2))
+
+    def check_input(icon, item):
+        from ..flow.input_check import inspect, message
+        from . import dialogs
+
+        dialogs.message("Permisos de entrada por red", message(inspect()))
 
     def repair_firewall(icon, item):
         from . import dialogs
@@ -510,13 +532,34 @@ def run(preview=False, preview_seconds=0):
             enabled=lambda item: not preview and not actions.busy,
         ),
         pystray.MenuItem(
+            "Ratón y teclado por red (experimental)",
+            actions.wrap(network_input),
+            enabled=lambda item: not preview and not actions.busy,
+            checked=lambda item: bool(controller.flow and controller.flow.input_enabled),
+        ),
+        pystray.MenuItem(
             "Cambio por bordes",
             actions.wrap(edges),
-            enabled=lambda item: not preview and not actions.busy,
+            enabled=lambda item: (
+                not preview and not actions.busy and not (controller.flow and controller.flow.input_enabled)
+            ),
             checked=lambda item: bool(controller.flow and controller.flow.enabled),
         ),
-        pystray.MenuItem("Traer ratón y teclado aquí", recover, enabled=not preview),
+        pystray.MenuItem(
+            lambda item: (
+                "Recuperar control local"
+                if controller.flow and controller.flow.input_enabled
+                else "Traer ratón y teclado aquí"
+            ),
+            recover,
+            enabled=not preview,
+        ),
         pystray.MenuItem("Reconectar ahora", reconnect, enabled=not preview),
+        pystray.MenuItem(
+            "Comprobar permisos de entrada…",
+            actions.wrap(check_input),
+            enabled=lambda item: not preview and not actions.busy,
+        ),
         pystray.MenuItem(
             "Ver diagnóstico…", actions.wrap(diagnostic), enabled=lambda item: not preview and not actions.busy
         ),
@@ -592,12 +635,21 @@ def run(preview=False, preview_seconds=0):
 
 def main():
     parser = argparse.ArgumentParser(description="CleverSwitch Tray — sólo MX Keys + MX Master 3")
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--preview", action="store_true", help="Mostrar el icono sin acceso a HID ni configuración de Inicio"
     )
+    mode.add_argument("--input-check", metavar="ARCHIVO", help="Guardar comprobación de permisos sin capturar entrada")
     parser.add_argument("--preview-seconds", type=int, default=0)
     args = parser.parse_args()
-    if args.preview:
+    if args.input_check:
+        import json
+        from pathlib import Path
+
+        from ..flow.input_check import inspect
+
+        Path(args.input_check).write_text(json.dumps(inspect(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    elif args.preview:
         run(True, max(0, args.preview_seconds))
     else:
         with single_instance() as acquired:
