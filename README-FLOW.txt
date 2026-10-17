@@ -1,10 +1,21 @@
-CLEVERSWITCH FLOW — candidata conjunta 0.4.4, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata conjunta 0.4.5, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.4.5: instalación estable de Windows, conservando los datos y la preferencia
+de Inicio. El firewall usa la subred doméstica, no direcciones DHCP individuales,
+y sólo TCP 47654/UDP 47655 para la app instalada. Funciona también con perfil Público.
+El menú comprueba las reglas al arrancar y permite repararlas expresamente; no las
+consulta de forma periódica. Una actualización normal no vuelve a pedir elevación
+si las reglas están correctas. Cambiar de router/subred sigue siendo una elección
+explícita en Red local; conserva el vínculo y actualiza las reglas con permiso UAC.
+Mac admite una identidad de firma existente. Sin ella, la firma ad-hoc puede exigir
+renovar permisos del sistema. Configuración y permisos son cosas distintas.
+Detalles de instalación y límites: docs/UPDATES.md.
+
 REVISIÓN 0.4.4: reconexión por eventos en Mac y Windows. Arranque, regreso a casa
 y despertar producen anuncios autenticados con respuesta directa; después se
 confirma el enlace TLS. Los cambios DHCP se recuperan en ambas direcciones.
@@ -224,11 +235,18 @@ Sin notificaciones en cada cambio; consulta el estado en el menú cuando lo nece
 El modo --preview no inicia HID, conexiones de red ni modificaciones de Inicio.
 
 WINDOWS
-CleverSwitchTray.exe: Windows x64, sin firma comercial. No se ha instalado en este PC.
+CleverSwitchTray.exe: Windows x64, sin firma comercial. Compilar esta candidata allí.
 Prueba de icono sin acceso a dispositivos: CleverSwitchTray.exe --preview --preview-seconds 15
-Install-CleverSwitch.ps1 verifica el hash, copia a una carpeta estable por usuario y registra
-Inicio (HKCU Run). No ejecuta la app, no cambia PATH ni políticas. Ejecútalo sólo cuando
-hayas terminado las pruebas. Uninstall-CleverSwitch.ps1 conserva la configuración.
+Desde PowerShell sin administrador, con la app cerrada: .\dist\Install-CleverSwitch.ps1
+El paquete contiene la app, Install-CleverSwitch.ps1, Configure-CleverSwitchFirewall.ps1
+y cleverswitch-package.json. Verifica todos los hashes antes de sustituir archivos;
+si una copia falla, restaura la anterior. Los hashes comprueban integridad, no autoría.
+Instala en %LOCALAPPDATA%\Programs\CleverSwitchFlow y abre la app sin elevarla.
+Conserva Inicio: desactivado sigue desactivado; si estaba activo desde una carpeta
+anterior, actualiza HKCU Run. No modifica StartupApproved ni la configuración privada.
+Sólo el asistente de firewall pide UAC si faltan reglas o cambia la subred del enlace.
+Con reglas correctas, instalar otra versión no requiere reconfigurar el firewall.
+No cambia PATH, la clasificación de la red ni políticas de ejecución.
 No se desactiva Defender ni se eliminan marcas de seguridad del sistema.
 
 MAC M4 PRO
