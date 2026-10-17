@@ -1,10 +1,26 @@
-CLEVERSWITCH FLOW — candidata conjunta 0.4.3, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata conjunta 0.4.4, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.4.4: reconexión por eventos en Mac y Windows. Arranque, regreso a casa
+y despertar producen anuncios autenticados con respuesta directa; después se
+confirma el enlace TLS. Los cambios DHCP se recuperan en ambas direcciones.
+Al pausar, dormir o cerrar se avisa al compañero cuando el sistema lo permite.
+El compañero deja de buscar hasta un aviso de regreso. Un apagado brusco conserva
+un máximo de siete intentos y luego espera pasivamente, sin consultas periódicas
+al cursor, red ni periféricos. Los traslados incompletos conservan su recuperación
+limitada antes de aparcar los lectores. Los anuncios tienen orden y sesión para
+rechazar duplicados y avisos anteriores; las respuestas no generan otro eco.
+Una conexión sana no difunde anuncios. Windows observa además cambios de IP;
+Mac, cambios del servicio DHCP. Ver diagnóstico muestra el estado de ahorro.
+690 pruebas pasan en Mac (91,98 %), con UDP/TLS reales locales y hardware simulado.
+La aceptación física y compilación Windows siguen pendientes. Para reconectar
+tras encender el ordenador, la app debe arrancar al entrar en la sesión; activa
+esa opción una vez en ambos equipos cuando se despliegue la candidata conjunta.
+
 REVISIÓN 0.4.3: Mac y Windows comparten las mismas correcciones y versión.
 Antes de enviar el ratón se vuelve a comprobar que no se ha pausado/cerrado la
 app, bloqueado la sesión ni empezado un arrastre durante la preparación remota.
@@ -139,6 +155,10 @@ Windows: IP Helper y PowrProf. Mac: SystemConfiguration y NSWorkspace.
 Al volver a la red, se inicia una búsqueda limitada; un anuncio autenticado del
 compañero que regresa despierta al otro, aunque ese equipo no haya cambiado de red.
 Un anuncio por sí solo da un intento adicional limitado, no una nueva búsqueda infinita.
+El receptor devuelve un único aviso directo para informar de su dirección actual.
+Una respuesta no genera otra respuesta; broadcast y unicast llevan el mismo evento.
+Al salir o dormir, un aviso de partida permite aparcar inmediatamente al compañero.
+Si ese aviso se pierde, se aplican las comprobaciones e intentos limitados habituales.
 En reposo, al pausar o fuera de la red reconocida, se suspenden conexión y lectores.
 No envía Wake-on-LAN ni instala un servicio que mantenga despierto el ordenador.
 
@@ -212,8 +232,13 @@ hayas terminado las pruebas. Uninstall-CleverSwitch.ps1 conserva la configuraci�
 No se desactiva Defender ni se eliminan marcas de seguridad del sistema.
 
 MAC M4 PRO
-La .app 0.4.3 se ha compilado en macOS 26.6.2 ARM64; su vista previa funciona y
-el cierre nativo tras 130 s de espera terminó en 0,33 s. Está instalada y arrancada
+La 0.4.4 está compilada, instalada y arrancada en Aplicaciones. Tras 130 segundos
+sin intervención, el cierre nativo terminó en 0.32 s; el ejecutable
+coincide con los cuatro módulos de producción probados. La vinculación, caché
+y configuración de Inicio se conservaron. La aceptación física sigue pendiente.
+
+La validación histórica de la .app 0.4.3 se hizo en macOS 26.6.2 ARM64; su vista previa funcionó y
+el cierre nativo tras 130 s de espera terminó en 0,33 s. Se instaló y arrancó
 en /Applications/CleverSwitchTray.app;
 la firma nueva requiere renovar manualmente Bluetooth y Accesibilidad. La
 estabilidad con los periféricos físicos y ambos equipos actualizados sigue pendiente.

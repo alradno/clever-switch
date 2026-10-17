@@ -14,6 +14,7 @@ from .reconnect import Reconnect
 from .version import EDITION, PROTOCOL
 
 log = logging.getLogger(__name__)
+LINK_EVENTS = frozenset(("authenticated", "announcement", "departure", "failure"))
 
 
 class Runtime:
@@ -31,6 +32,7 @@ class Runtime:
         self.transition = threading.Lock()
         self.enabled = False
         self.peer_ready = False  # Authenticated reachability; prepare checks readiness afresh.
+        self.peer_departed = False
         self.peer_checked = 0
         self.error = None
         self.monitor_warning = False
@@ -45,8 +47,12 @@ class Runtime:
         self.last_environment = None
         self.local_checks = []
 
-    def wake(self, reason):
+    def wake(self, reason, source=None):
         with self.event_lock:
+            if source is not None and source is not self.link:
+                return
+            if reason in ("announcement", "departure"):
+                self.events.difference_update(("announcement", "departure"))
             self.events.add(reason)
             self.wake_event.set()
 
@@ -100,9 +106,11 @@ class Runtime:
             self.destination = Destination(self.hardware, self.cursor, host, self.pairing.directory / "return.json")
             self.destination.arrived = self.edge.cooldown
             self.link = Link(self.pairing, self._handle)
-            self.link.on_authenticated = lambda: self.wake("authenticated")
-            self.link.on_announcement = lambda: self.wake("announcement")
-            self.link.on_failure = self._rpc_failure
+            link = self.link
+            link.on_authenticated = lambda: self.wake("authenticated", source=link)
+            link.on_announcement = lambda: self.wake("announcement", source=link)
+            link.on_departure = lambda: self.wake("departure", source=link)
+            link.on_failure = lambda: self._rpc_failure(link)
             self.coordinator = Coordinator(self.hardware, self.cursor, self.link, self.destination)
             self.context.policy.host_change_handler = self._keyboard_event
             self.link.start()
@@ -133,16 +141,17 @@ class Runtime:
             self.local_checks = [now + delay for delay in (2, 10, 30)] if warming else []
         if sleeping or paused or not self.listen_allowed:
             self.listen_allowed = self.seek_allowed = False
-            self._disconnect()
+            self._disconnect(notify=True)
             self.budget.suspend()
             self.context.policy.set_background_suspended(True)
             self._mode("sleep" if sleeping else "paused" if paused else "outside")
             return
         if config["address"] != network.address:
-            self._disconnect()
+            self._disconnect(notify=True)
             config["address"] = network.address
             self.pairing.save(config)
         if changed or force:
+            self.peer_departed = False
             if self.seek_allowed:
                 self.budget.restart()
                 self._mode("searching")
@@ -215,11 +224,11 @@ class Runtime:
         else:
             self.follow_candidate = None
 
-    def _rpc_failure(self):
+    def _rpc_failure(self, source=None):
         # The transaction owns its finite retries. Do not suspend its HID readers
         # because one of those individual RPC responses was lost.
         if not self._safety_pending():
-            self.wake("failure")
+            self.wake("failure", source=source)
 
     def _keyboard_event(self, event):
         coordinator = self.coordinator
@@ -228,8 +237,13 @@ class Runtime:
         # Buttons are never diverted; offline presses keep their native behavior.
         return True
 
-    def _disconnect(self):
+    def _disconnect(self, notify=False):
         with self.transition:
+            if notify and self.discovery and self.peer_ready:
+                try:
+                    self.discovery.announce("departing")
+                except OSError:
+                    log.debug("Departure notice could not be sent; peer timeout remains bounded")
             for component in (self.coordinator, self.destination, self.link, self.discovery, self.hardware):
                 if component:
                     try:
@@ -239,9 +253,12 @@ class Runtime:
                         log.debug("Local component cleanup failed")
             self.coordinator = self.destination = self.link = self.discovery = self.hardware = None
             self.peer_ready = False
+            self.peer_departed = False
             self.peer_info = {}
             self.follow_candidate = None
             self.next_follow = 0
+            with self.event_lock:
+                self.events.difference_update(LINK_EVENTS)
 
     def _attempt(self):
         self._evaluate()
@@ -250,7 +267,7 @@ class Runtime:
         try:
             if self.link is None:
                 self._connect()
-            if self.seek_allowed and self.discovery:
+            if self.seek_allowed and self.discovery and not self.budget.online:
                 try:
                     self.discovery.announce()
                 except OSError:
@@ -272,11 +289,14 @@ class Runtime:
 
     def _step(self):
         events = self._events()
+        previous_link = self.link
         if self.local_checks and time.monotonic() >= self.local_checks[0]:
             self.local_checks.pop(0)
             self._evaluate()
         if events & {"startup", "network", "resume", "sleep", "pause", "manual"}:
             self._evaluate(force=bool(events & {"startup", "resume", "manual"}))
+        if self.link is not previous_link:
+            events.difference_update(LINK_EVENTS)
         if self.listen_allowed and self.link is None and self.budget.next is None and not self.seek_allowed:
             # Unknown ARP identity may listen passively, without starting a retry loop.
             try:
@@ -285,6 +305,7 @@ class Runtime:
                 self._disconnect()
                 self._mode("standby")
         if "authenticated" in events and self.listen_allowed:
+            self.peer_departed = False
             self.budget.authenticated()
             self.peer_ready = True
             self.peer_checked = time.monotonic()
@@ -292,7 +313,15 @@ class Runtime:
             self._mode("online")
             self.on_change()
         if "announcement" in events and self.listen_allowed:
+            self.peer_departed = False
             self.budget.hint()
+        if "departure" in events and self.listen_allowed:
+            self.peer_departed = True
+        if self.peer_departed and not self._safety_pending():
+            self.peer_ready = False
+            self.peer_info = {}
+            self.budget.suspend()
+            self._mode("standby")
         if "failure" in events and self.budget.online and not self._safety_pending():
             self.peer_ready = False
             self.budget.failed()
@@ -338,7 +367,7 @@ class Runtime:
                     wait = 0.2 if self._safety_pending() else None
                 self.wake_event.wait(wait)
         finally:
-            self._disconnect()
+            self._disconnect(notify=True)
             self.context.policy.set_background_suspended(True)
 
     def status(self):
@@ -353,6 +382,8 @@ class Runtime:
         if self.mode == "paused":
             return "Cambio automático pausado · enlace suspendido"
         if self.mode == "standby":
+            if self.peer_departed:
+                return "Compañero en reposo o cerrado · esperando su aviso de regreso"
             return (
                 "Espera pasiva · usa Reconectar ahora si vuelve el compañero"
                 if self.monitor_warning
@@ -409,6 +440,13 @@ class Runtime:
             "status": self.status(),
             "last_failure": coordinator.last_error if coordinator else None,
             "phase": coordinator.phase if coordinator else None,
+            "energy": {
+                "native_events_available": not self.monitor_warning,
+                "background_suspended": self.context.policy.background_suspended.is_set(),
+                "waiting_for_peer_notice": self.mode == "standby",
+                "active_retry_scheduled": not self.budget.online and self.budget.next is not None,
+                "attempts": self.budget.attempts,
+            },
         }
 
     def reconnect_now(self):

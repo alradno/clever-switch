@@ -13,18 +13,23 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.4.3`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
-- La nueva revisión se documenta en `validation/macos-0.4.3.json`: 665 pruebas,
+- Candidata conjunta actual `0.4.4`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- La revisión 0.4.4 añade avisos ordenados de llegada/partida, respuesta directa
+  para recuperar DHCP, ausencia de difusión periódica en conexión sana y descarte
+  de callbacks de conexiones cerradas. Windows observa cambios de dirección IP;
+  Mac observa cambios del servicio DHCP. Pasan 690 pruebas, cobertura 91,98 %.
+  Véase `validation/macos-0.4.4.json`; las APIs Windows están simuladas en Mac.
+- La revisión anterior se documenta en `validation/macos-0.4.3.json`: 665 pruebas,
   91,36 % de cobertura y 16 casos observados fallando antes de corregirlos. Se
   comprueban ambos sentidos, cancelación durante preparación, reconexión con el
   mismo listener, plazos TLS totales y cierre seguro del lector HID de Windows.
   Mac y Windows deben incorporar el mismo commit. Consolidar las mejoras antes
   de pedir instalaciones al usuario en Windows; aún no hay aceptación física conjunta.
-- La 0.4.3 está compilada, instalada y arrancada. El cierre nativo tras 130 s
+- La 0.4.3 anterior se compiló, instaló y arrancó. El cierre nativo tras 130 s
   sin intervención terminó en 0,33 s. La 0.4.2 anterior no respondió a SIGTERM
   tras una espera prolongada: se conservó la muestra de hilos y se corrigió el
   despertar del bucle nativo con MachSignals. Windows y el CLI no cambian esa ruta.
-- La revisión posterior está en `validation/macos-0.4.2.json`; conserva la base
+- La revisión anterior está en `validation/macos-0.4.2.json`; conserva la base
   integrada y corrige envío Bluetooth duplicado, recuperación manual, rearme tras
   reconexión, botones pulsados al llegar y errores de UDP. Las cifras de 0.4.1
   que siguen son la validación histórica de la integración inicial.
@@ -50,6 +55,11 @@ las siete correcciones de coordinación de Windows que se detallan debajo. Añad
 el rearme del borde a 80 px, registro rotativo y borrado de error al reconectar.
 El módulo fuente `flow/identity.py`, omitido por `identity.*` en `.gitignore`,
 se recupera desde los fuentes locales del Mac y queda versionado.
+
+La 0.4.4 está compilada, instalada y arrancada en Aplicaciones. Tras 130 segundos
+sin intervención, el cierre nativo terminó en 0.32 s; el ejecutable
+coincide con los cuatro módulos de producción probados. La vinculación, caché
+y configuración de Inicio se conservaron. La aceptación física sigue pendiente.
 
 ## Fallos encontrados y correcciones incluidas
 
@@ -81,7 +91,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.3 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.4 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir
@@ -100,6 +110,13 @@ permisos, secuencia temporal y resultados sin incluir claves o archivos de enlac
 - Inactividad/sueño del ratón, reposo/despertar del Mac y cambios de red.
 - Corte del enlace durante un traslado, recuperación y ausencia de ping-pong.
 - Mac fuera de casa: búsqueda finita y espera pasiva, sin sondeos continuos.
+- Volver a casa con DHCP distinto, despertar cada equipo, reiniciar Windows y
+  reabrir la app: quien vuelve anuncia y ambos restablecen el enlace sin pulsar
+  Reconectar ahora. Repetir con el compañero ya en espera durante horas.
+- Comparar apagado normal y brusco; el primero puede avisar, el segundo debe
+  agotar su presupuesto y aparcar. Verificar también pausa/reanudación.
+- Inicio de sesión habilitado una vez en cada equipo para cubrir el reinicio.
+  El proceso no despierta un ordenador apagado ni actúa antes de iniciar sesión.
 - Cerrar la app y actualizarla: configuración, vínculo y botones físicos conservados.
 
 Si falla un traslado, conservar el texto de `Ver diagnóstico…` y el contenido

@@ -1,13 +1,38 @@
-# Continuación en Windows — candidata conjunta 0.4.3
+# Continuación en Windows — candidata conjunta 0.4.4
 
 Usar este repositorio como fuente común. Antes de trabajar, revisar `git status` y
 hacer `git pull --ff-only`; conservar cualquier modificación local antes de integrar.
 No usar los ZIP anteriores como base de nuevos cambios.
 
-La edición está en `src/cleverswitch/flow/version.py`: 0.4.3, protocolo 2. Conserva
+La edición está en `src/cleverswitch/flow/version.py`: 0.4.4, protocolo 2. Conserva
 el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
 
-La revisión 0.4.3 sincroniza estas correcciones en ambos sistemas:
+La revisión 0.4.4 añade reconexión por eventos y gestión del consumo en ambos:
+
+- Arranque, despertar y regreso a casa anuncian disponibilidad. Una única respuesta
+  directa informa de la dirección actual del receptor; TLS confirma la conexión.
+- Pausa, reposo y cierre avisan de la partida cuando sea posible. El compañero
+  aparca sus consultas; un apagado brusco conserva el máximo de siete intentos.
+- Sin anuncios periódicos en una conexión sana ni sondeos de red/cursor/HID/BLE
+  durante la ausencia. Recuperación de traslados pendiente siempre limitada.
+- Avisos ordenados por sesión, sin ecos ni duplicados; se descartan callbacks
+  de conexiones anteriores para no reactivar falsamente un enlace tras DHCP.
+- IP Helper observa además NotifyUnicastIpAddressChange; Mac observa el servicio
+  DHCP en SystemConfiguration. No se necesita un servicio ni sondeos del sistema.
+
+Pasan 690 pruebas en Mac, cobertura 91,98 %, incluido aviso UDP y reconexión TLS
+reales en loopback. La evidencia está en `validation/macos-0.4.4.json`.
+Compilar y probar nativamente Windows sigue pendiente. Para comprobar reinicios,
+activar Inicio al entrar en la sesión una vez desde la copia instalada estable.
+El instalador de Windows ya registra ese arranque por usuario. No probar con
+copias en carpetas temporales ni cambiar las reglas de firewall sin comprobar la ruta.
+
+La 0.4.4 está compilada, instalada y arrancada en Aplicaciones. Tras 130 segundos
+sin intervención, el cierre nativo terminó en 0.32 s; el ejecutable
+coincide con los cuatro módulos de producción probados. La vinculación, caché
+y configuración de Inicio se conservaron. La aceptación física sigue pendiente.
+
+La revisión anterior 0.4.3 sincroniza estas correcciones en ambos sistemas:
 
 - Cancelación antes de enviar el ratón si se pausa/cierra, se bloquea la sesión
   o se pulsa un botón/modificador durante la espera de preparación.
@@ -52,7 +77,7 @@ incluye TLS real local con periféricos simulados y cancelación de una tarea as
 Bluetooth real con la radio simulada. La compilación, firma, vista previa y cierre
 nativo por SIGTERM pasan. Véase `validation/macos-0.4.2.json`.
 
-La candidata 0.4.3 está instalada y arrancada en Aplicaciones; el cierre nativo
+La candidata 0.4.3 anterior se instaló y arrancó en Aplicaciones; el cierre nativo
 tras 130 s de espera terminó en 0,33 s. Los siete módulos modificados del ejecutable
 coinciden con los fuentes probados. Identidad, enlace, caché e Inicio se conservaron.
 Los permisos guardados no coinciden con la firma ad-hoc actual;

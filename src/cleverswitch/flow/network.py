@@ -74,6 +74,7 @@ class Link:
         self.error = None
         self.on_authenticated = lambda: None
         self.on_announcement = lambda: None
+        self.on_departure = lambda: None
         self.on_failure = lambda: None
         self.wake_reader = self.wake_writer = None
 
@@ -187,14 +188,31 @@ class Discovery:
         self.socket = None
         self.wake_reader = self.wake_writer = None
         self.stop_event = threading.Event()
+        self.session = secrets.token_hex(16)
+        self.epoch = time.time_ns()
+        self.sequence = 0
+        self.packet_lock = threading.Lock()
+        self.peer_session = None
+        self.peer_epoch = 0
+        self.peer_sequence = 0
+        self.peer_observed_at = -float("inf")
 
-    def packet(self):
+    def packet(self, kind="available"):
+        if kind not in ("available", "reply", "departing"):
+            raise ValueError("Aviso de disponibilidad inválido")
+        with self.packet_lock:
+            self.sequence += 1
+            sequence = self.sequence
         packet = {
             "link": self.link.config["link"],
             "role": self.link.config["role"],
             "time": int(time.time()),
             "nonce": secrets.token_hex(16),
             "address": self.link.address,
+            "session": self.session,
+            "epoch": self.epoch,
+            "sequence": sequence,
+            "kind": kind,
         }
         packet["proof"] = hmac.new(self.secret, canonical(packet), hashlib.sha256).hexdigest()
         return canonical(packet)
@@ -208,7 +226,9 @@ class Discovery:
             expected = hmac.new(self.secret, canonical(packet), hashlib.sha256).hexdigest()
             if not isinstance(proof, str) or not hmac.compare_digest(proof, expected):
                 return False
-            if set(packet) != {"link", "role", "time", "nonce", "address"}:
+            legacy = {"link", "role", "time", "nonce", "address"}
+            extended = legacy | {"session", "epoch", "sequence", "kind"}
+            if set(packet) not in (legacy, extended):
                 return False
             role = "mac" if self.link.config["role"] == "windows" else "windows"
             if packet["link"] != self.link.config["link"] or packet["role"] != role:
@@ -218,14 +238,43 @@ class Discovery:
                 self.link.config["network"]
             ):
                 return False
-            if not isinstance(packet["time"], int) or abs(packet["time"] - time.time()) > 30:
+            if type(packet["time"]) is not int or abs(packet["time"] - time.time()) > 30:
                 return False
             if not isinstance(packet["nonce"], str) or len(packet["nonce"]) != 32 or packet["nonce"] in self.seen:
                 return False
+            kind = packet.get("kind", "available")
+            if set(packet) == extended:
+                session, epoch, sequence = packet["session"], packet["epoch"], packet["sequence"]
+                recent = time.monotonic() - self.peer_observed_at <= 30
+                if (
+                    kind not in ("available", "reply", "departing")
+                    or not isinstance(session, str)
+                    or len(session) != 32
+                    or type(sequence) is not int
+                    or not 0 < sequence < 2**63
+                    or type(epoch) is not int
+                    or not 0 < epoch < 2**63
+                    or (recent and epoch < self.peer_epoch)
+                    or (recent and epoch == self.peer_epoch and session != self.peer_session)
+                    or (session == self.peer_session and (epoch != self.peer_epoch or sequence <= self.peer_sequence))
+                ):
+                    return False
+                # Order process incarnations too: a delayed departure from a
+                # previous boot must not retire the newly available peer.
+                # After the packet lifetime, a fresh restart may have an older
+                # wall clock (NTP correction); do not reject it indefinitely.
+                self.peer_session, self.peer_epoch, self.peer_sequence = session, epoch, sequence
+                self.peer_observed_at = time.monotonic()
+            elif self.peer_session:
+                # A delayed legacy packet cannot supersede an ordered notice.
+                return False
             self.seen.append(packet["nonce"])
             self.link.peer = address
-            self.link.on_announcement()
-            return True
+            if kind == "departing":
+                self.link.on_departure()
+            else:
+                self.link.on_announcement()
+            return kind
         except (ValueError, KeyError, TypeError, AttributeError):
             return False
 
@@ -248,18 +297,37 @@ class Discovery:
                 if self.wake_reader in readable:
                     return
                 raw, sender = self.socket.recvfrom(513)
-                self.accept(raw, sender[0])
+                kind = self.accept(raw, sender[0])
             except OSError:
                 return
+            if kind == "available":
+                # Reply once so a returning peer also learns our DHCP address.
+                # Replies never cause replies, and send failure keeps us listening.
+                try:
+                    self.announce("reply")
+                except OSError:
+                    log.debug("Availability reply could not be sent")
 
-    def announce(self):
+    def announce(self, kind="available"):
         network = ipaddress.ip_network(self.link.config["network"])
+        targets = [self.link.peer]
+        if kind == "available":
+            targets.insert(0, str(network.broadcast_address))
+        packet = self.packet(kind)
         # Bind the selected private interface even with a VPN/default-route change.
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
             sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sender.settimeout(0.2)
             sender.bind((self.link.address, 0))
-            sender.sendto(self.packet(), (str(network.broadcast_address), PORT + 1))
-            sender.sendto(self.packet(), (self.link.peer, PORT + 1))
+            sent, error = False, None
+            for target in dict.fromkeys(targets):
+                try:
+                    sender.sendto(packet, (target, PORT + 1))
+                    sent = True
+                except OSError as exc:
+                    error = exc
+            if not sent and error:
+                raise error
 
     def close(self):
         self.stop_event.set()
