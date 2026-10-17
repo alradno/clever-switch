@@ -14,8 +14,11 @@ opción independiente y Easy-Switch sigue funcionando en el propio dispositivo.
 Código y validación: docs/INPUT-LAN.txt. Candidata compilada e instalada en Mac;
 captura, escritura y restauración comprobadas nativamente desde desarrollo.
 Permisos de la app instalada comprobados. Pasan 936 pruebas en cada plataforma;
-Windows está compilado y su ejecutable comprobado. Falta instalarlo en el equipo
-del usuario y completar la aceptación conjunta.
+Windows está compilado y su ejecutable comprobado. El 18 de octubre, el equipo
+doméstico responde como 0.5.0 con entrada por red activada y disponible. Pasan seis
+consultas TLS y se mantiene la conexión persistente sin reiniciar el Mac.
+Falta comprobar movimiento y escritura reales, reposo y recuperación conjunta.
+Evidencia y alcance: docs/validation/joint-0.5.0-link.json.
 Comprobar permisos de entrada muestra los requisitos pendientes sin capturar nada.
 
 HISTORIAL DEL MODO FÍSICO
