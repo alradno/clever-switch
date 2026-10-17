@@ -108,7 +108,10 @@ class HidGateway(Thread, Subscriber):
         this_device_collection = enumerate_hid_devices(product_id=self._device_info.pid)
         if len(this_device_collection) == 0:
             self._backoff = _RECONNECT_BACKOFF_MIN
-            self._stop_event.wait(_RECONNECT_INTERVAL)
+            if self.energy_policy is None:
+                self._stop_event.wait(_RECONNECT_INTERVAL)
+            else:
+                self.energy_policy.wait_hardware(self._stop_event, _RECONNECT_INTERVAL)
             return
 
         for device in this_device_collection[self._device_info.pid]:
