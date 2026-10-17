@@ -1,6 +1,7 @@
 import sys
 from unittest.mock import Mock
 
+import pystray  # Select the actual host backend before tests simulate sys.platform.
 import pytest
 
 from cleverswitch.tray import app
@@ -8,7 +9,9 @@ from cleverswitch.tray import app
 
 def test_windows_firewall_menu_repairs_then_reconnects_and_reports_status(mocker):
     captured = {}
-    controller = Mock(context=None, paused=False, flow=Mock(enabled=False), installation={"state": "ready"})
+    controller = Mock(
+        context=None, paused=False, flow=Mock(enabled=False, input_enabled=False), installation={"state": "ready"}
+    )
     controller.flow.diagnostic.return_value = {"mode": "standby"}
     mocker.patch.object(app, "Controller", return_value=controller)
     mocker.patch.object(sys, "platform", "win32")
@@ -16,13 +19,15 @@ def test_windows_firewall_menu_repairs_then_reconnects_and_reports_status(mocker
     mocker.patch.object(app.startup, "is_enabled", return_value=False)
     mocker.patch("cleverswitch.tray.actions.threading.Thread.start", lambda self: self.run())
     notice = mocker.patch("cleverswitch.tray.dialogs.message")
+    readiness = mocker.patch("cleverswitch.flow.input_check.inspect", return_value={"ready": True, "checks": {}})
+    mocker.patch("cleverswitch.flow.identity.local_addresses", return_value=[])
     icon = Mock()
 
     def create(*args):
         captured["menu"] = args[3]
         return icon
 
-    mocker.patch("pystray.Icon", side_effect=create)
+    mocker.patch.object(pystray, "Icon", side_effect=create)
 
     def exercise(**kwargs):
         menu = {item.text: item for item in captured["menu"]}
@@ -32,6 +37,10 @@ def test_windows_firewall_menu_repairs_then_reconnects_and_reports_status(mocker
         menu["Ver diagnóstico…"](icon)
         assert '"installation"' in notice.call_args.args[1]
         assert '"ready"' in notice.call_args.args[1]
+        assert '"input_readiness"' in notice.call_args.args[1]
+        menu["Comprobar permisos de entrada…"](icon)
+        assert "preparados" in notice.call_args.args[1]
+        assert readiness.call_count == 2
 
     icon.run.side_effect = exercise
     app.run()
@@ -40,7 +49,7 @@ def test_windows_firewall_menu_repairs_then_reconnects_and_reports_status(mocker
 @pytest.mark.parametrize("case", ["preview", "windows-new", "windows-response", "mac", "existing", "multiple-nics"])
 def test_tray_pairing_menu_and_actions_never_start_hardware(case, tmp_path, mocker):
     captured = {}
-    controller = Mock(context=None, paused=False, flow=Mock(enabled=False))
+    controller = Mock(context=None, paused=False, flow=Mock(enabled=False, input_enabled=False))
     controller.status.return_value = "Estado"
     controller.device_status.return_value = "Dispositivo"
     controller.flow.status.return_value = "Enlace"
@@ -75,8 +84,10 @@ def test_tray_pairing_menu_and_actions_never_start_hardware(case, tmp_path, mock
         menu = {item.text: item for item in captured["menu"]}
         assert "Cambio por bordes" in menu
         assert "Traer ratón y teclado aquí" in menu
+        assert "Ratón y teclado por red (experimental)" in menu
         if case == "preview":
             assert not menu["Cambio por bordes"].enabled
+            assert not menu["Ratón y teclado por red (experimental)"].enabled
             networks.assert_not_called()
             startup.assert_not_called()
             files.assert_not_called()
@@ -103,6 +114,8 @@ def test_tray_pairing_menu_and_actions_never_start_hardware(case, tmp_path, mock
         menu["Guardar enlace para Mac…"](icon)
         pairing.export_invitation.assert_called_once()
         controller.flow.toggle_edges.assert_called_once()
+        menu["Ratón y teclado por red (experimental)"](icon)
+        controller.flow.toggle_input.assert_called_once()
         menu["Traer ratón y teclado aquí"](icon)
         controller.flow.recover.assert_called_once()
         next(iter(network))(icon)
