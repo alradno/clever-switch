@@ -56,6 +56,9 @@ class Devices:
     def allowed(self):
         return self.enabled
 
+    def expect_arrival(self, seconds):
+        pass
+
     def known(self):
         return self.recognized
 
@@ -502,9 +505,9 @@ def test_cursor_dwell_drag_corners_and_bounce():
     edge = Edge("right", clock=lambda: clock[0])
     sample = Sample(1919, 600, 0, 0, 1920, 1080)
     assert edge.poll(sample) is None
-    clock[0] = 0.39
+    clock[0] = 0.079
     assert edge.poll(sample) is None
-    clock[0] = 0.41
+    clock[0] = 0.081
     assert edge.poll(sample) == pytest.approx(600 / 1080)
     clock[0] = 1
     assert edge.poll(sample) is None
