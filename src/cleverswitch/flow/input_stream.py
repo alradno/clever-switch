@@ -30,7 +30,9 @@ class Channel:
         self.worker = None
         self.failure = None
         self.sent = self.received = 0
+        self.writes = 0
         self.received_coalesced = 0
+        self._timing = None
         self._finalized = False
         self._finalize_lock = threading.Lock()
 
@@ -54,13 +56,46 @@ class Channel:
 
     def send(self, packet):
         try:
-            self.outbox.put(packet)
+            wake = self.outbox.put(packet)
         except (BufferError, ConnectionError):
             self.failure = "backpressure"
             self.stop.set()
             self._wake()
             raise
-        self._wake()
+        if wake:
+            self._wake()
+
+    def _round_trip(self, seconds, now):
+        # One immutable aggregate, no samples or event payloads retained. This
+        # measures queueing + TLS + peer scheduling, not physical input latency.
+        if self._timing is None:
+            self._timing = (1, seconds, seconds, seconds, seconds, 0.0, now)
+        else:
+            count, last, low, high, total, variation, _ = self._timing
+            self._timing = (
+                count + 1,
+                seconds,
+                min(low, seconds),
+                max(high, seconds),
+                total + seconds,
+                variation + abs(seconds - last),
+                now,
+            )
+
+    def timing(self):
+        sample = self._timing
+        if sample is None:
+            return None
+        count, last, low, high, total, variation, checked = sample
+        return {
+            "samples": count,
+            "latest_ms": round(last * 1000, 3),
+            "minimum_ms": round(low * 1000, 3),
+            "average_ms": round(total / count * 1000, 3),
+            "maximum_ms": round(high * 1000, 3),
+            "mean_variation_ms": round(variation / max(1, count - 1) * 1000, 3),
+            "age_seconds": round(max(0, time.monotonic() - checked), 3),
+        }
 
     def _read_packets(self, decoder):
         packets, total, needs_write = [], 0, False
@@ -99,6 +134,7 @@ class Channel:
     def _run(self):
         decoder = Decoder()
         tx = b""
+        tx_count = 0
         sequence = ping = 0
         pending_ping = None
         was_active = False
@@ -113,7 +149,7 @@ class Channel:
                     was_active, active_since = active, now
                     next_ping = now if active else now + 15
                     if active and pending_ping:
-                        pending_ping = pending_ping[0], min(pending_ping[1], now + self.timeout)
+                        pending_ping = pending_ping[0], min(pending_ping[1], now + self.timeout), pending_ping[2]
                 self.on_tick()
                 if self.stop.is_set():
                     break
@@ -124,13 +160,13 @@ class Channel:
                 if now >= next_ping and pending_ping is None:
                     ping += 1
                     self.send(Packet(Kind.PING, ping))
-                    pending_ping = ping, now + (self.timeout if active else 45)
+                    pending_ping = ping, now + (self.timeout if active else 45), now
                     next_ping = now + (self.interval if active else 15)
                 if not tx:
-                    item = self.outbox.pop()
-                    if item is not None:
-                        sequence += 1
-                        tx = item.encode(sequence)
+                    items = self.outbox.take()
+                    tx_count = len(items)
+                    tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
+                    sequence += tx_count
                 # Heartbeats only run at the interactive rate during a focus
                 # transfer. An idle connected session sleeps for up to 15 s.
                 deadlines = [now + (self.interval if active else 15)]
@@ -160,6 +196,7 @@ class Channel:
                                 self.send(Packet(Kind.PONG, packet.epoch))
                             elif packet.kind == Kind.PONG:
                                 if pending_ping and packet.epoch == pending_ping[0]:
+                                    self._round_trip(last_rx - pending_ping[2], last_rx)
                                     pending_ping = None
                             else:
                                 self.received += 1
@@ -175,10 +212,11 @@ class Channel:
                         count = self.connection.send(tx)
                         if not count:
                             raise ConnectionError
+                        self.writes += 1
                         tx = tx[count:]
                         write_waits_read = False
                         if not tx:
-                            self.sent += 1
+                            self.sent += tx_count
                     except ssl.SSLWantReadError:
                         write_waits_read = True
                     except (ssl.SSLWantWriteError, BlockingIOError):

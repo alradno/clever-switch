@@ -12,7 +12,8 @@ class Readiness:
     def __init__(self, check, clock=time.monotonic):
         self.check, self.clock = check, clock
         self.sample = (False, float("-inf"))
-        self.interval, self.max_age = 0.1, 0.5
+        self.interval, self.idle_interval, self.max_age = 0.1, 0.4, 0.5
+        self.active = threading.Event()
         self.wake, self.stop = threading.Event(), threading.Event()
         self.worker = None
 
@@ -45,15 +46,25 @@ class Readiness:
         self.worker = threading.Thread(target=self._run, name="flow-input-health", daemon=True)
         self.worker.start()
 
+    def set_active(self, active):
+        if self.active.is_set() != bool(active):
+            self.active.set() if active else self.active.clear()
+            self.wake.set()
+
     def _run(self):
         while not self.stop.is_set():
-            self.wake.wait(self.interval)
+            # Keep the same 500 ms trust limit in both modes. An explicit
+            # ready() demand wakes this early, without waiting in a native hook.
+            interval = self.interval if self.active.is_set() else self.idle_interval
+            delay = max(0, interval - (self.clock() - self.sample[1]))
+            self.wake.wait(delay)
             self.wake.clear()
             if not self.stop.is_set() and self.clock() - self.sample[1] >= self.interval:
                 self._refresh()
 
     def close(self):
         self.stop.set()
+        self.active.clear()
         self.wake.set()
         if self.worker is not None and self.worker is not threading.current_thread():
             self.worker.join(timeout=1)

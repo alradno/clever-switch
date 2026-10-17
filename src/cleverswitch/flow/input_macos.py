@@ -83,6 +83,9 @@ class MacInput:
     def _check_ready(self):
         return self._ready() and self.q.CGPreflightListenEventAccess() and self.q.CGPreflightPostEventAccess()
 
+    def set_active(self, active):
+        self.health.set_active(active)
+
     def lock_state(self):
         flags = self.q.CGEventSourceFlagsState(self.q.kCGEventSourceStateCombinedSessionState)
         return int(bool(flags & self.q.kCGEventFlagMaskAlphaShift)), 1

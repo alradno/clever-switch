@@ -141,6 +141,7 @@ class Outbox:
         with self.lock:
             if self.closed:
                 raise ConnectionError("Canal de entrada cerrado")
+            empty = not self.items
             if (
                 packet.kind == Kind.MOVE
                 and self.items
@@ -153,10 +154,16 @@ class Outbox:
                 self.items.append(packet)
             else:
                 raise BufferError("Cola de entrada saturada")
+            return empty
 
     def pop(self):
         with self.lock:
             return self.items.popleft() if self.items else None
+
+    def take(self, limit=64):
+        # Drain only work that already exists; batching adds no waiting period.
+        with self.lock:
+            return [self.items.popleft() for _ in range(min(limit, len(self.items)))]
 
     def close(self):
         with self.lock:

@@ -150,6 +150,9 @@ class WindowsInput:
     def ready(self):
         return self.health.ready()
 
+    def set_active(self, active):
+        self.health.set_active(active)
+
     def lock_state(self):
         def read():
             return sum(bit for bit, vk in ((1, 0x14), (2, 0x90), (4, 0x91)) if self.api.GetKeyState(vk) & 1), 7

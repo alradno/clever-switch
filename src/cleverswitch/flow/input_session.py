@@ -16,13 +16,16 @@ LOCK_KEYS = {57: 1, 83: 2, 71: 4}
 
 
 class Session:
-    def __init__(self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None):
+    def __init__(
+        self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None, can_receive=None
+    ):
         if role not in ("windows", "mac"):
             raise ValueError("Equipo inválido")
         self.role, self.desktop, self.backend, self.send = role, desktop, backend, send
         self.clock = clock
         self.token = token or (lambda: secrets.randbelow(2**64 - 1) + 1)
         self.on_active = on_active or (lambda active: None)
+        self.can_receive = can_receive or (lambda: True)
         self.lock = threading.RLock()
         self.phase = "local"
         self.epoch = 0
@@ -144,6 +147,7 @@ class Session:
             (self.phase != "local" and not collision_lost)
             or packet.epoch in self.retired
             or not self.backend.ready()
+            or not self.can_receive()
             or point != packet.values
             or not self.retry_releases()
         ):

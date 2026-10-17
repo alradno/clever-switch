@@ -145,19 +145,30 @@ class Service:
                 raise ConnectionError("Entrada por red cancelada")
             self._prepare()
             self.local = self.backend.desktop
-            session = Session(self.role, self.local, self.backend, lambda p: channel.send(p))
+            session = Session(
+                self.role,
+                self.local,
+                self.backend,
+                lambda p: channel.send(p),
+                can_receive=lambda: not self.keys and not self.buttons,
+            )
             channel = Channel(
                 connection,
                 self._receive,
                 lambda: self._ended(session),
                 self._tick,
             )
-            session.on_active = channel.set_active
+            session.on_active = lambda active: self._active(channel, active)
             self.session, self.channel = session, channel
             self.remote_position = None
             self.armed = False
             self.on_change()
             return channel
+
+    def _active(self, channel, active):
+        channel.set_active(active)
+        if hasattr(self.backend, "set_active"):
+            self.backend.set_active(active)
 
     def _receive(self, packet):
         self._drain()
@@ -374,4 +385,6 @@ class Service:
             "frames_received": channel.received if channel else 0,
             "moves_coalesced": channel.outbox.coalesced if channel else 0,
             "received_moves_coalesced": channel.received_coalesced if channel else 0,
+            "write_calls": channel.writes if channel else 0,
+            "round_trip": channel.timing() if channel else None,
         }
