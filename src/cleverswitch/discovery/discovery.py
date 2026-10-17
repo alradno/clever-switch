@@ -68,7 +68,7 @@ def discover(app_context: AppContext) -> None:
                         hid_gateway.start()
                     event_listener.start()
 
-            shutdown.wait(0.5)
+            app_context.policy.wait_hardware(shutdown, 0.5)
     except RuntimeError as error:
         log.error(f"Error occurred running discovery: {error}")
     finally:
