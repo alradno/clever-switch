@@ -137,3 +137,43 @@ def test_full_path_windows_denied_injection_never_keeps_mac_captured(native_peer
     assert not sender.backend.captured and not sender.backend.hidden
     assert sender.session.phase == "local"
     assert windows_api.SendInput.call_count == 1
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_keyboard_reconnect_releases_lost_keyup_and_resumes_without_losing_mouse(native_peers, source):
+    peers, windows_api, mac_api = native_peers
+    sender, receiver = peers[source], peers[1 - source]
+    enter(sender)
+    key(sender, 0xE1, 1)
+    until(lambda: receiver.session.keys == {0xE1})
+    # The keyboard changes its physical channel while Shift is down. There is
+    # no key-up on this host. The OS then reports its removal/arrival.
+    if source == 0:
+        sender.backend._device_changed()  # OS notification -> hook owner -> TLS
+    else:
+        sender.backend.keyboard_changed()
+    until(lambda: not receiver.session.keys)
+    assert not sender.keys and not sender.backend.held_keys
+    assert sender.session.phase == "sending" and sender.backend.captured
+    key(sender, 4, 1)
+    until(lambda: receiver.session.keys == {4})
+    key(sender, 4, 0)
+    until(lambda: not receiver.session.keys)
+    x, y = sender.backend.anchor
+    motion(sender, int(x + (20 if source == 0 else -20)), int(y))
+    assert sender.session.phase == "sending"
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_keyboard_reconnect_while_local_does_not_leave_crossing_inhibited(native_peers, source):
+    peers, _, _ = native_peers
+    sender = peers[source]
+    key(sender, 0xE0, 1)
+    assert sender.keys == {0xE0}
+    sender.backend.keyboard_changed()
+    assert not sender.keys and not sender.backend.held_keys
+    enter(sender)
+    key(sender, 4, 1)
+    until(lambda: peers[1 - source].session.keys == {4})
+    key(sender, 4, 0)
+    until(lambda: not peers[1 - source].session.keys)

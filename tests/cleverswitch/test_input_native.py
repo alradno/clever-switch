@@ -157,7 +157,7 @@ def test_windows_maps_virtual_desktop_and_preserves_fractional_wheel(win):
     backend.inject(event(Kind.MOVE, -1920, -100))
     backend.inject(event(Kind.MOVE, 1919, 1079))
     assert [(entry.mouse.x, entry.mouse.y) for entry in api.inputs] == [(0, 0), (65535, 65535)]
-    assert all(entry.mouse.flags == 0xC001 for entry in api.inputs)
+    assert all(entry.mouse.flags == 0xE001 for entry in api.inputs)
     for _ in range(4):
         backend.inject(event(Kind.WHEEL, -0.25, 0.25))
     assert sum(c.c_int32(e.mouse.data).value for e in api.inputs if e.mouse.flags == 0x800) == 120
@@ -451,6 +451,92 @@ def test_native_readiness_cache_does_not_query_os_per_mouse_report(win, mac):
         backend._ready.return_value = False
         assert not backend.ready()
         assert backend._ready.call_count == 2
+
+
+@pytest.mark.parametrize("platform", ["win", "mac"])
+def test_permission_query_cannot_stall_native_input(platform, request):
+    backend, _ = request.getfixturevalue(platform)
+    now = [1.0]
+    backend.clock = lambda: now[0]
+    backend.start(backend.sink)
+    entered, release, returned = threading.Event(), threading.Event(), threading.Event()
+    result = []
+
+    def slow_check():
+        entered.set()
+        release.wait(1)
+        return True
+
+    backend._ready = slow_check
+    now[0] += 0.101
+
+    def input_path():
+        result.append(backend.ready())
+        returned.set()
+
+    thread = threading.Thread(target=input_path)
+    thread.start()
+    try:
+        assert entered.wait(1)
+        assert returned.wait(0.05), "The native/TLS input path waited for a permission API"
+        assert result == [True]
+        now[0] += 0.6
+        assert not backend.ready()  # A stuck checker must fail closed.
+    finally:
+        release.set()
+        thread.join(1)
+
+
+def test_windows_move_and_drag_use_prepared_geometry_without_os_queries(win):
+    backend, api = win
+    backend.start(backend.sink)
+    api.GetSystemMetrics.reset_mock()
+    api.EnumDisplayMonitors.reset_mock()
+    api.SetThreadDpiAwarenessContext.reset_mock()
+    backend.inject(event(Kind.BUTTON, 0, 1))
+    for x in range(100):
+        backend.inject(event(Kind.MOVE, x, 100))
+    backend.inject(event(Kind.BUTTON, 0, 0))
+    api.GetSystemMetrics.assert_not_called()
+    api.EnumDisplayMonitors.assert_not_called()
+    api.SetThreadDpiAwarenessContext.assert_not_called()
+    assert len(api.inputs) == 102
+    assert all(entry.mouse.flags & 0x2000 for entry in api.inputs[1:-1])
+
+
+def test_windows_device_notification_renews_only_keyboard_hook_on_owner_thread(win):
+    from .test_input_stream import until
+
+    backend, api = win
+    monitor = Mock()
+    backend.monitor_factory = Mock(return_value=monitor)
+    backend.start(backend.sink)
+    backend.held_keys.add(0xE1)
+    backend._device_changed()
+    until(lambda: backend.sink.keyboard_changed.called)
+    assert [call.args[0] for call in api.SetWindowsHookExW.call_args_list] == [14, 13, 13]
+    assert not backend.held_keys
+    backend.close()
+    monitor.start.assert_called_once()
+    monitor.close.assert_called_once()
+    calls = api.SetWindowsHookExW.call_count
+    backend._device_changed()
+    assert api.SetWindowsHookExW.call_count == calls
+
+
+def test_mac_observer_lifetime_follows_enabled_tap(mac):
+    backend, api = mac
+    monitor = Mock()
+    backend.monitor_factory = Mock(return_value=monitor)
+    backend.start(backend.sink)
+    changed = backend.monitor_factory.call_args.args[0]
+    backend.held_keys.add(4)
+    changed()
+    assert not backend.held_keys
+    backend.sink.keyboard_changed.assert_called_once()
+    backend.close()
+    monitor.start.assert_called_once()
+    monitor.close.assert_called_once()
 
 
 def test_mac_capture_failure_and_post_failure_are_reported_without_fake_success(mac):
