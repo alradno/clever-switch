@@ -156,7 +156,7 @@ class WindowsMonitor:
 
     def start(self):
         try:
-            for name in ("NotifyIpInterfaceChange", "NotifyRouteChange2"):
+            for name in ("NotifyIpInterfaceChange", "NotifyUnicastIpAddressChange", "NotifyRouteChange2"):
                 function = getattr(self.api, name)
                 function.argtypes = (
                     ctypes.c_uint16,
@@ -215,7 +215,12 @@ class MacMonitor:
         if not self.store or not sc.SCDynamicStoreSetNotificationKeys(
             self.store,
             None,
-            ["State:/Network/Global/IPv4", "State:/Network/Interface/.*/IPv4", "State:/Network/Interface/.*/Link"],
+            [
+                "State:/Network/Global/IPv4",
+                "State:/Network/Service/.*/IPv4",
+                "State:/Network/Interface/.*/IPv4",
+                "State:/Network/Interface/.*/Link",
+            ],
         ):
             raise OSError("No se pudo observar la red")
         self.source = sc.SCDynamicStoreCreateRunLoopSource(None, self.store, 0)
