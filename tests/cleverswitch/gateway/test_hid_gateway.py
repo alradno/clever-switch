@@ -308,6 +308,44 @@ def test_close_still_closes_transport_when_thread_never_started(make_fake_transp
     assert transport.close_count == 1
 
 
+def test_slow_reader_keeps_ownership_after_close_join_timeout(mocker):
+    reading, release = threading.Event(), threading.Event()
+    closed_by = []
+    transport = MagicMock()
+
+    def delayed_read():
+        reading.set()
+        assert release.wait(2), "test must release the simulated native read"
+        return None
+
+    transport.read.side_effect = delayed_read
+    transport.close.side_effect = lambda: closed_by.append(threading.current_thread())
+    gateway = HidGateway(_device_info(), MagicMock(spec=EventListener))
+    gateway._transport = transport
+    gateway._set_connected(True)
+    mocker.patch("cleverswitch.gateway.hid_gateway._CLOSE_JOIN_TIMEOUT", 0.01)
+    gateway.start()
+    try:
+        assert reading.wait(1)
+        gateway.close()
+        assert gateway.is_alive()
+        assert closed_by == [], "a foreign thread must never free an active HID handle"
+    finally:
+        release.set()
+        gateway.join(1)
+    assert not gateway.is_alive()
+    assert closed_by == [gateway]
+
+
+def test_stopped_gateway_drops_queued_writes():
+    gateway = HidGateway(_device_info(), MagicMock(spec=EventListener))
+    gateway._transport = MagicMock()
+    gateway._set_connected(True)
+    gateway._stop_event.set()
+    gateway.notify(WriteEvent(slot=1, pid=BOLT_PID, hid_message=bytes([REPORT_LONG]) + bytes(19)))
+    gateway._transport.write.assert_not_called()
+
+
 # ── Thread-death guards ─────────────────────────────────────────────────────
 
 
