@@ -1,10 +1,25 @@
-CLEVERSWITCH FLOW — candidata conjunta 0.4.5, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata conjunta 0.4.6, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
 Modificación independiente, sin mantenimiento ni certificación del autor original.
 
 QUÉ HACE
+REVISIÓN 0.4.6: borde de 80 ms; cursor colocado tras la primera prueba nueva del
+ratón en destino, antes del teclado y sin recolocarlo al terminar. Las consultas
+de seguimiento ya no bloquean el monitor del cursor. El descubrimiento acelera
+a intervalos de 50 ms sólo durante la preparación autenticada, con un máximo de
+30 s, y vuelve al ritmo normal al terminar; no activa trabajo fuera de casa.
+Las lecturas HID ceden a órdenes pendientes y Bluetooth del Mac despierta al
+conectarse HID. La espera entre respuestas de ausencia baja a 40 ms durante el
+traslado; los fallos de red conservan su espera y todos los plazos siguen limitados.
+El diagnóstico incluye elapsed_ms de la última transferencia. Son duraciones
+de fases, nunca caracteres ni historial del cursor. Protocolo 2 sin revincular.
+En loopback TLS con reconexión simulada de 200 ms por dispositivo, cursor ~223 ms
+y pareja ~453 ms, frente a ~685/~687 ms en 0.4.5, sin incluir la permanencia en borde.
+No son medidas físicas. Cambiar canales Bluetooth requiere reconectar las radios;
+no equivale a una pantalla por cable ni al envío continuo de entrada por red.
+
 REVISIÓN 0.4.5: instalación estable de Windows, conservando los datos y la preferencia
 de Inicio. El firewall usa la subred doméstica, no direcciones DHCP individuales,
 y sólo TCP 47654/UDP 47655 para la app instalada. Funciona también con perfil Público.
@@ -96,7 +111,7 @@ un error observado en la prueba real de cierre del ejecutable de Windows.
 Icono de bandeja en Windows y barra de menús en Mac, sin consola ni ventana permanente.
 Inicio al entrar en sesión, pausa, estado y opción de traer ambos dispositivos aquí.
 Borde derecho de la pantalla principal de Windows -> Mac; izquierdo de Mac -> Windows.
-Mantén el cursor 400 ms en el borde. Esquinas (40 px), arrastre, modificadores y sesión
+Mantén el cursor 80 ms en el borde. Esquinas (40 px), arrastre, modificadores y sesión
 bloqueada inhiben el inicio por borde. El cursor entra a la misma altura relativa,
 24 px dentro de la pantalla de destino. Después de un cruce o llegada, el borde
 no se rearma hasta entrar al menos 80 px en pantalla con una muestra segura,
