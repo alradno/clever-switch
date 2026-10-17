@@ -1,0 +1,67 @@
+{
+  "edition": "0.4.3",
+  "installed_path": "/Applications/CleverSwitchTray.app",
+  "installed_matches_native_build": true,
+  "signature_valid": true,
+  "previous_native_sigterm_exit_seconds": null,
+  "previous_app_required_forced_exit_after_native_idle_hang": true,
+  "native_idle_wait_seconds": 130,
+  "native_sigterm_exit_seconds": 0.33,
+  "preview_exit_code": 0,
+  "identity_pairing_cache_startup_unchanged": true,
+  "app_relaunched": true,
+  "executable_sha256": "b87f42f391cbcafba902448e48cfec044f57cd9091dad9cfc306eef239024ce1",
+  "permissions_granted_automatically": false,
+  "protocol": 2,
+  "status": "joint_candidate_pending_native_windows_and_physical_acceptance",
+  "base_commit": "f87763c84c9661aa5bd6abb63b4e5efe84f28489",
+  "observed_at": "2026-10-17T10:01:24.853861+02:00",
+  "os": "26.6.2",
+  "os_build": "25G83",
+  "architecture": "arm64",
+  "tests_passed": 665,
+  "tests_excluded": 0,
+  "coverage_percent": 91.36,
+  "new_tests": 19,
+  "regression_cases_observed_failing_before_fix": 16,
+  "real_tls_simulated_handoffs": 12,
+  "deliberately_lost_acknowledgements": 48,
+  "ruff_check_passed": true,
+  "ruff_format_passed": true,
+  "native_build_passed": true,
+  "all_changed_production_modules_match_installed": true,
+  "mac_native_signal_comparison": [
+    {
+      "mode": "ordinary",
+      "exited": false,
+      "seconds": 2.004
+    },
+    {
+      "mode": "native",
+      "exited": true,
+      "exit_code": 0,
+      "seconds": 0.014
+    }
+  ],
+  "physical_stability_validated": false,
+  "windows_build_tested": false,
+  "permissions_renewal_pending": [
+    "Bluetooth",
+    "Accessibility"
+  ],
+  "changes": [
+    "Revalidate pause, shutdown, session and held buttons after remote preparation before moving the mouse",
+    "Require new inward cursor motion and fresh keyboard observations after reconnecting with retained listeners",
+    "Enforce a total TLS RPC budget across TCP, handshake, writes and fragmented reads",
+    "Keep HID handle ownership with a slow native reader; reject queued writes after closing",
+    "Keep menu and diagnostics readable while replacing runtime components",
+    "Wake the idle Mac native run loop for shutdown signals; preserve Windows and CLI signal handling",
+    "Keep Mac and Windows on one edition and commit; stage one joint candidate before native Windows acceptance"
+  ],
+  "limits": [
+    "Device motion and Windows native APIs are simulated on Mac in the automated suite",
+    "Native Windows build and real bidirectional peripheral stability remain unverified",
+    "The old Mac app required a forced exit after SIGTERM failed in native idle; its last transfer was committed",
+    "The new signature still requires manual Bluetooth and Accessibility renewal; no permissions were granted automatically"
+  ]
+}
