@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.1 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.2 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,26 +19,33 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.1 corrige las pausas periódicas de las consultas de permisos y añade
-recuperación del teclado al desconectarlo/reconectarlo con Easy-Switch. La lectura
-de permisos sale del hilo que entrega la entrada en ambos sistemas. Windows
-renueva su capturador de teclado tras el aviso del sistema y prepara la geometría
-antes de recibir movimientos. La recuperación libera teclas pendientes y conserva
-el foco del ratón; no cambia canales Bluetooth.
+La 0.5.2 reduce el trabajo de permisos cuando el foco está en local: una consulta
+cada 400 ms, frente a 100 ms durante el control remoto. El resultado sigue
+caducando a los 500 ms y una petición de entrada puede adelantar la consulta.
+Sin compañero se detiene ese trabajador. Las ráfagas ya encoladas se envían
+juntas, hasta 64 eventos por escritura, sin esperar a reunir eventos nuevos ni
+alterar el orden de teclas, clics y posiciones. Se rechaza un cruce si el destino
+tiene teclas o botones físicos pulsados, para no interrumpir un arrastre local.
 
-Pasan 954 pruebas en Mac y Windows, Ruff y ambas compilaciones. La simulación con
-consultas de permisos de 18 ms baja el p99 de entrega de 23–24 ms a menos de 0,7 ms
-en ambos sentidos. Usa TLS local real y APIs de entrada simuladas; no mide las
-radios, la pantalla ni las aplicaciones. Reproducción: `benchmarks/input_pacing.py`.
+El diagnóstico añade tiempos de ida y vuelta y su variación usando los mensajes
+de presencia existentes. Son cifras agregadas de cola, TLS y respuesta del
+compañero; no guardan entrada ni miden el tiempo hasta dibujar el cursor.
+En la comparación reproducible, un minuto local simulado pasa de 600 a 150
+consultas. Una ráfaga de 200 acciones pasa de 200 a 4 escrituras, en ambos sentidos.
+Es una medida de trabajo evitado, no de autonomía ni de latencia física de Wi-Fi.
+Reproducción: `benchmarks/input_efficiency.py`.
 
-Mac 0.5.1 está instalada y arrancada en Aplicaciones, con configuración conservada.
-La nueva firma ad-hoc tiene pendientes los permisos de Accesibilidad y
-Monitorización de entrada. Windows 0.5.1 está compilada y su paquete verificado,
-pero el equipo doméstico aún responde como 0.5.0. Esa versión ya tuvo una prueba
-física con microcortes y pérdida de teclado comunicados por el usuario. La
-aceptación física de 0.5.1 queda pendiente de permisos y actualización de ambos.
-Véanse [evidencia y límites](docs/validation/input-0.5.1-reliability.json) y
-[compilación Windows](https://github.com/alradno/clever-switch/actions/runs/39076287821).
+Pasan 970 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba también el ejecutable empaquetado.
+Evidencia: [0.5.2](docs/validation/input-0.5.2-efficiency.json).
+Los paquetes se preparan para una única prueba conjunta cuando vuelva el usuario.
+La candidata 0.5.2 no se instala aún: Aplicaciones conserva 0.5.1 y su permiso
+pendiente; la última comprobación del Windows doméstico corresponde a 0.5.0.
+La aceptación física de fluidez, batería y recuperación del teclado sigue pendiente.
+
+Se mantienen las correcciones 0.5.1: consultas de permisos fuera del hilo de
+entrada, recuperación del teclado por avisos nativos y geometría Windows
+preparada antes de mover el cursor. [Evidencia anterior](docs/validation/input-0.5.1-reliability.json).
 El menú «Comprobar permisos de entrada…» revisa los requisitos sin capturar nada.
 Detalles de uso: [entrada por red](docs/INPUT-LAN.txt).
 
