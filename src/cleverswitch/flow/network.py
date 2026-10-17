@@ -277,6 +277,9 @@ class Link:
 class Discovery:
     """Only paired peers can change the destination address; TLS still pins identity."""
 
+    _epoch_lock = threading.Lock()
+    _last_epoch = 0
+
     def __init__(self, link):
         self.link = link
         self.secret = base64.b64decode(link.config["secret"])
@@ -286,7 +289,12 @@ class Discovery:
         self.wake_reader = self.wake_writer = None
         self.stop_event = threading.Event()
         self.session = secrets.token_hex(16)
-        self.epoch = time.time_ns()
+        # Rebuilding the link can happen within one Windows wall-clock tick, or
+        # after a clock correction. Keep incarnations ordered within this process;
+        # the receiver still rejects notices from a superseded incarnation.
+        with Discovery._epoch_lock:
+            Discovery._last_epoch = max(time.time_ns(), Discovery._last_epoch + 1)
+            self.epoch = Discovery._last_epoch
         self.sequence = 0
         self.packet_lock = threading.Lock()
         self.peer_session = None
