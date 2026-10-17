@@ -1,33 +1,33 @@
-# Continuación en Windows — candidata conjunta 0.5.0 experimental
+# Continuación en Windows — candidata conjunta 0.5.1 experimental
 
-Usar este repositorio como fuente común. Antes de trabajar, revisar `git status` y
-hacer `git pull --ff-only`; conservar cualquier modificación local antes de integrar.
-No usar los ZIP anteriores como base de nuevos cambios.
+Usar este repositorio como fuente común. Revisar `git status` antes de
+`git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-La edición está en `src/cleverswitch/flow/version.py`: 0.5.0 experimental, protocolo 2.
-La entrada por LAN está implementada en los mismos fuentes para ambos equipos,
-con protocolo binario 1 opcional y activación explícita. El Mac está compilado e
-instalado y sus permisos comprobados. Pasan 936 pruebas en ambas plataformas.
-Windows está compilado y su diagnóstico empaquetado carga las APIs nativas y
-confirma sesión disponible en CI. El 18 de octubre, tras la instalación indicada
-por el usuario, el equipo doméstico responde por TLS como 0.5.0, con entrada por
-red activada y disponible. Seis consultas correctas y una conexión persistente
-confirman el enlace real con el Mac ya abierto. No se ha inspeccionado la ruta o
-hash del ejecutable instalado ni probado la entrega física de entrada.
-Evidencia: `validation/joint-0.5.0-link.json`. Paquete compilado del commit
-`4797a3e78fa5c02951bf3c02ee95f71500d6e1d7`:
-[Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39069359804).
-El workflow Windows candidate valida y compila los mismos fuentes, sin instalar
-la app, capturar entrada ni alterar el firewall del runner. Sus artefactos incluyen
-ejecutable, instalador y manifiesto del mismo commit; no equivalen a aceptación física.
-No confundir las pruebas de APIs simuladas con una aceptación en Windows.
-Consolidar y validar antes de distribuirla al usuario.
-La corrección final mantiene ordenados los reinicios del enlace dentro del proceso,
-incluso con un reloj de baja resolución o ajustado hacia atrás. Las cuatro regresiones
-de ambos sentidos fallaron antes y pasan después; los avisos de la sesión antigua
-siguen rechazándose. No se ha debilitado la validación TLS ni la cancelación.
-Véase [INPUT-LAN.txt](INPUT-LAN.txt). Conserva
-el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
+Fuentes de los binarios 0.5.1: `5241be90f146df0529eaba137b05d8209c19fbe7`.
+Pasan 954 pruebas en cada plataforma. Windows está compilado y su ejecutable
+empaquetado pasa la comprobación nativa; se ha registrado/cerrado también el
+observador nativo del teclado sin capturar entrada. Paquete y manifiesto verificados:
+[Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39076287821).
+
+La corrección saca las consultas de permisos del hilo de entrada en ambas
+plataformas y recupera teclas pendientes al cambiar de canal físico y volver.
+Windows recibe avisos de interfaz de teclado mediante CM_Register_Notification
+y renueva el hook en su hilo original. La geometría se prepara antes de recibir
+movimiento y SendInput usa MOVE_NOCOALESCE. Mac tiene la misma recuperación por
+avisos IOKit, sin abrir ni leer dispositivos desde ese observador.
+
+El Windows doméstico aún responde como 0.5.0. No hay vía de administración remota
+para instalar 0.5.1. El Mac 0.5.1 ya está instalado en Aplicaciones, pero faltan
+los permisos de su nueva firma ad-hoc. No modificar TCC ni controles de seguridad.
+El usuario ya probó 0.5.0 y comunicó microcortes y fallo de teclado; la aceptación
+física de 0.5.1 no está comprobada. Validar ambos orígenes, teclas mantenidas al
+cambiar Easy-Switch, reconexión, arrastre local en destino y salida segura.
+
+La simulación compara el p99 de entrega con consultas de permisos de 18 ms:
+23–24 ms antes y menos de 0,7 ms después. No mide Wi-Fi, pantalla ni aplicaciones.
+Reproducción: `PYTHONPATH=src .venv/bin/python benchmarks/input_pacing.py`.
+Evidencia: `validation/input-0.5.1-reliability.json`. No se cambian vinculación,
+protocolo, puertos, instalador o firewall. Detalles: [INPUT-LAN.txt](INPUT-LAN.txt).
 
 «Comprobar permisos de entrada…» revisa la sesión sin registrar hooks ni enviar
 eventos. El ejecutable admite `--input-check archivo.json` para guardar esa misma

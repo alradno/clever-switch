@@ -1,8 +1,24 @@
-CLEVERSWITCH 0.5.0 — ENTRADA POR LAN EXPERIMENTAL
-Estado a 2026-10-18: ambas apps 0.5.0 ejecutándose, modo por red activado y
-conexión TLS persistente disponible en la red doméstica. Permisos del Mac
-comprobados y entrada Windows declarada disponible por el compañero autenticado.
-El movimiento y la escritura reales entre las pantallas siguen pendientes.
+CLEVERSWITCH 0.5.1 — ENTRADA POR LAN EXPERIMENTAL
+Estado a 2026-10-18: candidata corregida y compilada en ambas plataformas, 954 pruebas
+por plataforma. Mac instalada y arrancada, pero macOS rechaza los permisos de su
+nueva firma. Windows doméstico aún responde como 0.5.0; paquete 0.5.1 preparado.
+La prueba física de 0.5.0 reportó microcortes y pérdida de teclado tras Easy-Switch.
+La aceptación física de 0.5.1 sigue pendiente. Evidencia: validation/input-0.5.1-reliability.json.
+
+CORRECCIONES 0.5.1
+Las consultas de permisos se ejecutan en un trabajador separado, compartido por
+ambos backends. El movimiento y los callbacks nativos leen un resultado acotado:
+una consulta bloqueada deja de autorizar entrada a los 500 ms. El trabajador sólo
+existe con el backend conectado y habilitado; consulta a 100 ms y termina al
+suspender la entrada. Secure Input sigue comprobándose directamente en Mac.
+
+Los avisos de llegada/salida de teclados liberan las teclas que pudieron perder
+su key-up al cambiar el canal físico. Conservan ratón y enlace TLS. Windows
+renueva además el hook del teclado en su hilo original. Mac usa notificaciones
+IOKit y Windows CM_Register_Notification; no abren dispositivos ni leen informes
+HID. No hay sondeo continuo de teclados ni órdenes de cambio de canal.
+Windows utiliza la geometría ya preparada y pide no combinar sus movimientos
+posteriormente en la cola de Windows. Se conserva el orden de teclas y clics.
 
 COMPORTAMIENTO
 Ratón y teclado permanecen conectados físicamente al mismo equipo. Al cruzar
@@ -81,7 +97,7 @@ Con autorización para la prueba se ha comprobado captura Quartz, envío de un
 movimiento propio, ocultación/restauración del cursor y escritura con Mayús en
 una ventana propia, cerrando y liberando después la entrada. Son APIs reales
 del Mac desde el intérprete de desarrollo; no equivalen al cruce físico con Windows.
-La 0.5.0 está compilada, instalada y arrancada en Aplicaciones con el modo por red
+Como evidencia histórica, la 0.5.0 se compiló, instaló y arrancó en Aplicaciones con el modo por red
 activado. Su comprobación mediante LaunchServices confirma que los permisos de
 escucha y envío, Accesibilidad y la sesión están preparados. Windows pasa
 936 pruebas, compilación y diagnóstico del ejecutable; CI no llama a SendInput.

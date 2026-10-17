@@ -13,23 +13,22 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.5.0` experimental, protocolo de control `2` y
-  entrada binaria `1`, en `src/cleverswitch/flow/version.py`. Añade captura e
-  inyección por APIs públicas detrás de activación explícita, con pruebas
-  simuladas para ambas plataformas. Está compilada, instalada y arrancada en
-  Aplicaciones, con entrada por red activada expresamente. Las pruebas nativas
-  desde desarrollo confirman captura, movimiento, escritura y liberación. La
-  comprobación lanzada por LaunchServices desde la app instalada confirma ahora
-  escucha, envío, Accesibilidad y sesión preparados, con Entrada segura inactiva.
-  Pasan 936 pruebas en Mac y en Windows; la compilación Windows y su diagnóstico
-  empaquetado también pasan. El 18 de octubre, Windows responde por TLS como
-  0.5.0 con entrada por red activada y disponible. Seis consultas correctas y
-  la misma conexión persistente confirman el enlace real, sin reiniciar el Mac.
-  El cruce físico sigue pendiente; no se ha inspeccionado la ruta o hash del
-  ejecutable Windows instalado. Véanse `validation/windows-0.5.0-native.json`
-  y `validation/joint-0.5.0-link.json`.
-  No modificar permisos, excepciones ni controles de seguridad automáticamente.
-  Estado y validación pendientes: [INPUT-LAN.txt](INPUT-LAN.txt).
+- Candidata conjunta actual `0.5.1`, protocolo de control `2` y entrada `1`.
+  Fuentes de los binarios: `5241be90f146df0529eaba137b05d8209c19fbe7`.
+  Corrige consultas de permisos que bloqueaban la entrada y añade recuperación
+  del teclado por avisos nativos de llegada/salida en Mac y Windows. Windows
+  renueva el hook y prepara la geometría antes de los movimientos. No cambia
+  canales físicos ni registra caracteres/posiciones.
+  Pasan 954 pruebas en ambas plataformas, Ruff y las compilaciones nativas.
+  La comparación sintética con consultas lentas baja el p99 de 23–24 ms a menos
+  de 0,7 ms. No equivale a rendimiento físico de Wi-Fi, periféricos o pantallas.
+  Mac instalada y arrancada en Aplicaciones; configuración, identidad y enlace
+  conservados. Su nueva firma ad-hoc no tiene permisos efectivos de Accesibilidad
+  ni Monitorización de entrada. Windows 0.5.1 preparada; el equipo doméstico aún
+  responde como 0.5.0. La prueba física de esa versión reportó microcortes y pérdida
+  de teclado; aceptación física de 0.5.1 pendiente de permisos/actualización.
+  Véase `validation/input-0.5.1-reliability.json` y [INPUT-LAN.txt](INPUT-LAN.txt).
+  No conceder permisos ni modificar controles de seguridad automáticamente.
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
   sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento
   del teclado en un único hilo separado, con descarte tras reconexión; descubrimiento
