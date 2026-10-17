@@ -1,11 +1,25 @@
-# Continuación en Windows — candidata conjunta 0.4.6
+# Continuación en Windows — candidata conjunta 0.5.0 experimental
 
 Usar este repositorio como fuente común. Antes de trabajar, revisar `git status` y
 hacer `git pull --ff-only`; conservar cualquier modificación local antes de integrar.
 No usar los ZIP anteriores como base de nuevos cambios.
 
-La edición está en `src/cleverswitch/flow/version.py`: 0.4.6, protocolo 2. Conserva
+La edición está en `src/cleverswitch/flow/version.py`: 0.5.0 experimental, protocolo 2.
+La entrada por LAN está implementada en los mismos fuentes para ambos equipos,
+con protocolo binario 1 opcional y activación explícita. El Mac está compilado e
+instalado; la compilación y aceptación nativas de Windows siguen pendientes.
+El workflow Windows candidate valida y compila los mismos fuentes, sin instalar
+la app, capturar entrada ni alterar el firewall del runner. Sus artefactos incluyen
+ejecutable, instalador y manifiesto del mismo commit; no equivalen a aceptación física.
+No confundir las pruebas de APIs simuladas con una aceptación en Windows.
+Consolidar y validar antes de distribuirla al usuario.
+Véase [INPUT-LAN.txt](INPUT-LAN.txt). Conserva
 el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
+
+«Comprobar permisos de entrada…» revisa la sesión sin registrar hooks ni enviar
+eventos. El ejecutable admite `--input-check archivo.json` para guardar esa misma
+comprobación desde su propia identidad. No modifica el enlace ni exige elevación.
+El estado de entrada suspendida distingue ahora este equipo del compañero.
 
 La 0.4.6 comparte las mejoras de rendimiento en ambas direcciones: borde de 80 ms,
 cursor al confirmar el ratón sin esperar al teclado, seguimiento separado del

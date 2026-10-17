@@ -1,0 +1,129 @@
+CLEVERSWITCH 0.5.0 — ENTRADA POR LAN EXPERIMENTAL
+Estado a 2026-10-17: instalada en Mac; comprobaciones nativas parciales.
+Aceptación conjunta con Windows pendiente.
+
+COMPORTAMIENTO
+Ratón y teclado permanecen conectados físicamente al mismo equipo. Al cruzar
+el borde hacia el otro, una conexión TLS ya establecida reenvía la entrada.
+No hay cambio de canal Bluetooth ni transmisión de imágenes, ventanas o archivos.
+Windows está a la izquierda y el Mac a la derecha. Cada aplicación y distribución
+de teclado siguen perteneciendo a su equipo. Los modificadores conservan su
+posición física: no se transforma automáticamente Command en Control.
+
+La opción del menú está desactivada por defecto. Vincular o actualizar no la
+activa ni concede permisos. Requiere activación en ambas apps y protocolo de
+entrada compatible. El modo físico conserva su preferencia y queda suspendido
+mientras se usa la entrada por red. Los botones Easy-Switch siguen siendo nativos.
+Para recuperación local: Ctrl+Alt+Shift+Esc o la opción del menú. Si el equipo al
+que están conectados físicamente los dispositivos se apaga, sus botones físicos
+permiten elegir otro canal: el software no puede retransmitir desde un host apagado.
+
+El cruce comienza por dirección y borde, sin permanencia temporal. Tras volver
+hay que desplazarse 8 unidades hacia el interior para rearmarlo. No se cruza
+manteniendo botones o teclas pulsados: no traslada arrastres entre aplicaciones
+de dos sistemas. Admite monitores múltiples, coordenadas negativas y huecos;
+si cambia la geometría, cancela el foco y renueva la conexión.
+
+PROTOCOLO Y RECURSOS
+Se reutilizan TLS mutuo, pinning, vinculación y TCP 47654. No cambia el firewall
+por subred, no fija nuevas IPs ni abre puertos. Sólo Windows inicia el stream;
+los dos pueden ser el origen físico. Una conexión admite un único foco remoto.
+Hay confirmación inicial, épocas y secuencias para descartar mensajes antiguos.
+Los primeros movimientos siguen a la solicitud por el stream ya autenticado,
+sin esperar a que vuelva la confirmación. El destino sólo los aplica si acepta
+ese foco. Teclas, clics, rueda y bloqueos esperan la confirmación; así un cruce
+cancelado antes de confirmarse no ejecuta clics tardíos. Desde la primera acción
+en espera, también se encolan los movimientos siguientes para conservar su orden
+y posición. El plazo de 400 ms para confirmar sigue vigente; después se cancela.
+Las colas son limitadas. Sólo se combinan movimientos contiguos de la misma
+época, tanto al enviar como al recibir; nunca se combinan a través de teclas,
+clics, rueda o cambios de foco. Así un receptor lento no reproduce un historial
+de posiciones viejas. No se registran pulsaciones ni posiciones en disco.
+
+Un callback nativo no espera a un bloqueo del inyector. Los eventos que coinciden
+con una confirmación se conservan temporalmente en una cola limitada. Si falta
+el ACK durante 400 ms o falla la conexión activa durante aproximadamente 600 ms,
+se devuelve el control local. El planificador del sistema puede añadir demora:
+esos valores son plazos lógicos, no garantías de tiempo real.
+
+Se liberan las teclas y botones que inyectó la sesión. Si el sistema rechaza
+una liberación, se conserva en memoria y se bloquea un nuevo foco hasta poder
+resolverla. Bloq Mayús se sincroniza; Windows añade Bloq Num/Bloq Despl. Sólo se
+sincronizan los estados que admite el origen. La vuelta restaura los cambios
+de bloqueo en el origen físico sin repetir toggles confirmados.
+
+Una captura Windows que termina después del plazo se deshace en su hilo original.
+La liberación espera a las capturas en curso, aunque todavía no hayan ocultado
+el cursor. Los cruces simultáneos no aceptan otro foco si queda restauración
+pendiente; en ese caso se cierra el stream. Los callbacks diferidos comprueban
+su sesión bajo el bloqueo y descartan movimiento de un foco ya cancelado.
+El menú distingue un cruce rechazado o vencido de una conexión TLS disponible.
+Una cancelación interrumpe también el bloque de eventos que se estaba recibiendo
+y los envíos pendientes, sin entregar más acciones de ese bloque después del cierre.
+
+Sin compañero se suspenden los capturadores y lectores; se mantiene la búsqueda
+finita y la espera por eventos existentes. En local, el stream conectado usa
+heartbeats espaciados; durante el foco remoto vigila a 100 ms. Hay recuperación
+acotada de conexiones inestables. Los chequeos de presencia online existentes
+detectan recuperación de sesión/permisos, sin registrar hooks repetidamente
+mientras el sistema no está preparado. Fuera de casa no se sondea el cursor.
+
+APIS Y LÍMITES QUE REQUIEREN ACEPTACIÓN NATIVA
+Mac: Quartz Event Tap y CGEventPost, preflight de permisos y Secure Input.
+Windows: hooks de sesión y SendInput, sin servicio, driver ni elevación.
+Ambos mecanismos son visibles para el sistema y sus herramientas de seguridad.
+El marcador de eventos evita bucles; no oculta la entrada sintética.
+No se modifica Falcon, TCC, Gatekeeper, Defender, certificados o permisos.
+
+Con autorización para la prueba se ha comprobado captura Quartz, envío de un
+movimiento propio, ocultación/restauración del cursor y escritura con Mayús en
+una ventana propia, cerrando y liberando después la entrada. Son APIs reales
+del Mac desde el intérprete de desarrollo; no equivalen al cruce físico con Windows.
+La 0.5.0 está compilada, instalada y arrancada en Aplicaciones con el modo por red
+activado. Su comprobación mediante LaunchServices detecta que macOS requiere
+renovar permisos para esa compilación. No se ha llamado a SendInput en Windows.
+No se infiere aceptación de una política EDR por superar estas pruebas.
+
+COMPROBACIÓN DE PERMISOS
+El menú Comprobar permisos de entrada revisa sesión, Accesibilidad, escucha y
+entrada segura en Mac; sesión interactiva en Windows. No registra capturadores,
+no envía eventos, no solicita permisos ni carga la vinculación. Ver diagnóstico
+incluye los mismos resultados y el estado distingue un impedimento local del remoto.
+También se puede ejecutar CleverSwitchTray --input-check archivo.json. En Mac,
+para comprobar la identidad de la app instalada y no la del terminal, usar:
+open -n -W -a /Applications/CleverSwitchTray.app --args --input-check /tmp/cleverswitch-input.json
+Esta comprobación tampoco mide la conexión ni garantiza que una aplicación
+concreta acepte entrada sintética.
+
+La aceptación debe comprobar teclado español, teclas muertas, atajos y ambos
+modificadores, repeticiones, bloqueos iniciales distintos, rueda natural/horizontal,
+clics y dobles clics con la preferencia del sistema, escalas y monitores múltiples,
+visibilidad del cursor Windows sin ratón físico, suspensión/despertar y DHCP.
+Las teclas multimedia/Fn y pantallas protegidas no están resueltas por el protocolo
+de teclas estándar. UAC, pantalla de acceso, Secure Input y aplicaciones que
+rechazan entrada sintética no se eluden. No es una promesa de compatibilidad
+con juegos o software protegido. El ahorro de batería real sigue sin medir.
+
+PRUEBAS REPRODUCIBLES
+.venv/bin/python -m pytest
+.venv/bin/ruff check src tests benchmarks build_tray.py tray_main.py
+PYTHONPATH=src .venv/bin/python benchmarks/input_stream.py --seconds 3
+
+El benchmark genera dos identidades temporales de prueba y TLS mutuo real en
+loopback. Usa sólo entrada sintética y receptores en memoria; elimina el material
+temporal al terminar y muestra únicamente métricas agregadas. Ofrece 125/1000 Hz
+en ambos sentidos y un receptor artificialmente lento. Informa percentiles,
+movimientos combinados, retrasos del generador y CPU conjunta de los dos extremos.
+No mide Bluetooth, Wi-Fi, inyección nativa, aplicación ni refresco de pantalla.
+La duración de cruce incluye la resolución de espera del observador del benchmark.
+Medidas sintéticas: validation/macos-0.5.0-input.json.
+Compilación instalada y comprobaciones nativas: validation/macos-0.5.0-native.json.
+
+La suite incluye el recorrido callback de plataforma -> servicio -> TLS mutuo ->
+adaptador de la otra plataforma -> API simulada, en ambos sentidos, con tecla,
+clic y retorno. También comprueba denegación de SendInput y activación de Secure
+Input simuladas: se libera el modificador y se recupera el cursor del origen.
+Un relay TCP local añade demora a bloques cifrados o retiene un sentido de la
+conexión. Comprueba ambos orígenes, cortes unidireccionales, confirmación retenida,
+rechazo del destino y liberación tras vencer el plazo. No simula la radio ni
+convierte estos resultados en medidas de latencia física de la red doméstica.

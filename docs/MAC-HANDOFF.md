@@ -13,7 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.4.6`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Candidata conjunta actual `0.5.0` experimental, protocolo de control `2` y
+  entrada binaria `1`, en `src/cleverswitch/flow/version.py`. Añade captura e
+  inyección por APIs públicas detrás de activación explícita, con pruebas
+  simuladas para ambas plataformas. Está compilada, instalada y arrancada en
+  Aplicaciones, con entrada por red activada expresamente. Las pruebas nativas
+  desde desarrollo confirman captura, movimiento, escritura y liberación. La
+  comprobación lanzada por LaunchServices desde la app instalada detecta permisos
+  pendientes de renovar; no confundir el permiso del intérprete con el de la app.
+  No modificar permisos, excepciones ni controles de seguridad automáticamente.
+  Estado y validación pendientes: [INPUT-LAN.txt](INPUT-LAN.txt).
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
   sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento
   del teclado en un único hilo separado, con descarte tras reconexión; descubrimiento
@@ -104,7 +113,8 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.6 en ambos equipos.
+7. Sólo en un entorno autorizado para entrada nativa, abrir la candidata y
+   confirmar que el menú muestra la misma edición en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir
