@@ -60,6 +60,7 @@ class Service:
         self.other_side = "left" if self.side == "right" else "right"
         self.remote = None
         self.local = None
+        self.offered = None
         self.remote_position = None
         self.session = self.channel = None
         self.started = False
@@ -77,10 +78,14 @@ class Service:
         if self.enabled:
             link.input_accept = self.accept
 
-    def offer(self):
+    def _check_ready(self):
         if self.closed or not self.enabled or not self.can_start() or not self.backend.ready():
             raise ConnectionError("Entrada por red no disponible")
-        return {"version": VERSION, "displays": self.backend.desktop.wire()}
+
+    def offer(self):
+        self._check_ready()
+        self.offered = self.backend.desktop
+        return {"version": VERSION, "displays": self.offered.wire()}
 
     def _validate(self, value):
         if (
@@ -93,7 +98,7 @@ class Service:
         return Desktop.from_wire(value["displays"])
 
     def _prepare(self):
-        self.offer()
+        self._check_ready()
         if self.session is not None and not self.session.retry_releases():
             raise ConnectionError("Hay entrada pendiente de liberar")
         if not self.started:
@@ -145,6 +150,11 @@ class Service:
                 raise ConnectionError("Entrada por red cancelada")
             self._prepare()
             self.local = self.backend.desktop
+            # Observation starts only after authenticated upgrade. Reject a
+            # change between the offer and registration instead of publishing a
+            # session whose peer still has the previous screen coordinates.
+            if self.offered is None or self.local.displays != self.offered.displays or not self.backend.ready():
+                raise ConnectionError("Las pantallas cambiaron durante la conexión")
             session = Session(
                 self.role,
                 self.local,
@@ -175,6 +185,9 @@ class Service:
         self.session.receive(packet)
 
     def _tick(self):
+        if getattr(self.backend, "display_invalidated", False) is True:
+            self.fail("display")
+            return
         self._drain()
         session = self.session
         if session.unreleased or session.pending_locks is not None or session.pending_capture:
@@ -187,7 +200,7 @@ class Service:
                 self.fail("permission")
                 return
             self.session.tick()
-        if now >= self.next_geometry:
+        if getattr(self.backend, "display_events", False) is not True and now >= self.next_geometry:
             self.next_geometry = now + 1
             if self.local.displays != self.backend.desktop.displays:
                 self.fail("display")
@@ -260,6 +273,7 @@ class Service:
             not self.closed
             and self.enabled
             and self.started
+            and getattr(self.backend, "display_invalidated", False) is not True
             and self.session is not None
             and self.channel is not None
             and not self.channel.stop.is_set()

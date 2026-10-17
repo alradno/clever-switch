@@ -544,7 +544,10 @@ class Runtime:
             return min(wait, 0.05) if wait is not None else 0.05
         if service.channel is not None and service.channel is self.input_seen_channel:
             self.input_seen_channel = None
-            if time.monotonic() - self.input_online_since >= 30:
+            # A local display reconfiguration is new availability, not a
+            # failing network. Allow a fresh finite window, with the normal
+            # first delay so a burst of OS display changes can settle.
+            if service.channel.failure == "display" or time.monotonic() - self.input_online_since >= 30:
                 self.input_budget.restart()
             self.input_budget.failed()
         # Failed releases survive a DHCP rebind. Do not discard their ownership

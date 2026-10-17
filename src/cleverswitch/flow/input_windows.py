@@ -63,15 +63,26 @@ class Message(c.Structure):
 
 
 class WindowsInput:
-    def __init__(self, api=None, kernel=None, ready=None, desktop=None, clock=time.monotonic, monitor_factory=None):
+    def __init__(
+        self,
+        api=None,
+        kernel=None,
+        ready=None,
+        desktop=None,
+        clock=time.monotonic,
+        monitor_factory=None,
+        display_monitor_factory=None,
+    ):
         if api is None:
             api = c.WinDLL("user32", use_last_error=True)
             kernel = c.WinDLL("kernel32", use_last_error=True)
             from .cursor import WindowsCursor
             from .input_devices import WindowsKeyboardMonitor
+            from .input_displays import WindowsDisplayMonitor
 
             ready = WindowsCursor().session_ready
             monitor_factory = WindowsKeyboardMonitor
+            display_monitor_factory = WindowsDisplayMonitor
         self.api, self.kernel, self._ready = api, kernel, ready
         self.clock = clock
         self.health = Readiness(lambda: self._ready(), lambda: self.clock())
@@ -79,6 +90,9 @@ class WindowsInput:
         self.pointer_desktop = None
         self.monitor_factory = monitor_factory
         self.device_monitor = None
+        self.display_monitor_factory = display_monitor_factory
+        self.display_monitor = None
+        self.display_invalidated = False
         self.device_event = threading.Event()
         self.sink = None
         self.worker = None
@@ -147,7 +161,18 @@ class WindowsInput:
             if prior:
                 self.api.SetThreadDpiAwarenessContext(prior)
 
+    @property
+    def display_events(self):
+        return self.display_monitor is not None and self.display_monitor.active
+
+    def display_changed(self, observer):
+        if observer is self.display_monitor and not self.stopping.is_set():
+            self.display_invalidated = True
+            self.sink.fail("display")
+
     def ready(self):
+        if self.display_invalidated:
+            return False
         return self.health.ready()
 
     def set_active(self, active):
@@ -171,8 +196,8 @@ class WindowsInput:
             if self.stopping.is_set() or self.failed:
                 raise RuntimeError("El capturador anterior todavía está terminando")
             return
-        if self.device_monitor is not None:
-            raise RuntimeError("El observador anterior del teclado no ha terminado")
+        if self.device_monitor is not None or self.display_monitor is not None:
+            raise RuntimeError("Un observador anterior de entrada no ha terminado")
         if not self.ready():
             raise PermissionError("Sesión de entrada no disponible")
         self.sink = sink
@@ -180,7 +205,6 @@ class WindowsInput:
         self.started.clear()
         self.stopping.clear()
         self.device_event.clear()
-        self.pointer_desktop = self.desktop
         self.health.start()
         self.dispatch = Dispatch(self._wake_control)
         self.worker = threading.Thread(target=self._run, name="flow-input-win32", daemon=True)
@@ -191,7 +215,7 @@ class WindowsInput:
 
     def _run(self):
         hooks = []
-        monitor = None
+        monitor = display_monitor = None
         try:
             if self.stopping.is_set():
                 return
@@ -200,6 +224,11 @@ class WindowsInput:
             self.dispatch.owner = threading.get_ident()
             message = Message()
             self.api.PeekMessageW(c.byref(message), None, 0, 0, 0)
+            if self.display_monitor_factory is not None:
+                display_monitor = self.display_monitor_factory(lambda: self.display_changed(display_monitor))
+                self.display_monitor = display_monitor
+                display_monitor.start()
+            self.pointer_desktop = self.desktop
             module = self.kernel.GetModuleHandleW(None)
             for kind, callback in ((14, self._mouse_hook), (13, self._key_hook)):
                 hook = self.api.SetWindowsHookExW(kind, callback, module, 0)
@@ -246,15 +275,16 @@ class WindowsInput:
                 self.sink.fail()
         finally:
             self.started.set()
-            if monitor is not None:
-                try:
-                    monitor.close()
-                    self.device_monitor = None
-                except Exception:
-                    # Retain the callback if Windows could not unregister it,
-                    # but always restore input and remove the capture hooks.
-                    self.failed = True
-                    self.sink.fail()
+            for observer, attribute in ((monitor, "device_monitor"), (display_monitor, "display_monitor")):
+                if observer is not None:
+                    try:
+                        observer.close()
+                        setattr(self, attribute, None)
+                    except Exception:
+                        # Retain failed native registrations, but still close the
+                        # other observer and restore input on the owner thread.
+                        self.failed = True
+                        self.sink.fail()
             for hook in hooks:
                 self.api.UnhookWindowsHookEx(hook)
             try:
@@ -386,7 +416,11 @@ class WindowsInput:
             self.captured = False
             try:
                 if self.restore_pending is not None:
-                    self.restore(self.restore_pending)
+                    point = self.restore_pending
+                    if self.display_invalidated:
+                        self.pointer_desktop = self.desktop
+                        point = self.pointer_desktop.clamp(*point)
+                    self.restore(point)
                     self.restore_pending = None
             finally:
                 if self.hidden:
@@ -440,6 +474,8 @@ class WindowsInput:
         self.capture(False)
         self.pointer_desktop = None
         self.health.close()
+        if self.device_monitor is None and self.display_monitor is None:
+            self.display_invalidated = False
 
     def keyboard_changed(self):
         self.held_keys.clear()

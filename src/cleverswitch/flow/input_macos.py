@@ -24,6 +24,7 @@ class MacInput:
         clock=time.monotonic,
         double_click=None,
         monitor_factory=None,
+        display_monitor_factory=None,
     ):
         if api is None:
             import ctypes
@@ -33,6 +34,7 @@ class MacInput:
 
             from .cursor import MacCursor
             from .input_devices import MacKeyboardMonitor
+            from .input_displays import MacDisplayMonitor
 
             api = Quartz
             ready = MacCursor().session_ready
@@ -41,6 +43,7 @@ class MacInput:
             secure_input = carbon.IsSecureEventInputEnabled
             double_click = NSEvent.doubleClickInterval
             monitor_factory = MacKeyboardMonitor
+            display_monitor_factory = MacDisplayMonitor
         self.q, self._ready, self.secure_input = api, ready, secure_input
         self.clock = clock
         self.health = Readiness(self._check_ready, lambda: self.clock())
@@ -48,6 +51,9 @@ class MacInput:
         self._desktop = desktop
         self.monitor_factory = monitor_factory
         self.device_monitor = None
+        self.display_monitor_factory = display_monitor_factory
+        self.display_monitor = None
+        self.display_invalidated = False
         self.sink = self.worker = self.tap = self.runloop = None
         self.started = threading.Event()
         self.stopping = threading.Event()
@@ -75,7 +81,18 @@ class MacInput:
             result.append(Display(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height))
         return Desktop(result)
 
+    @property
+    def display_events(self):
+        return self.display_monitor is not None and self.display_monitor.active
+
+    def display_changed(self, observer):
+        if observer is self.display_monitor and not self.stopping.is_set():
+            self.display_invalidated = True
+            self.sink.fail("display")
+
     def ready(self):
+        if self.display_invalidated:
+            return False
         if self.secure_input():
             return False
         return self.health.ready()
@@ -99,8 +116,8 @@ class MacInput:
             if self.stopping.is_set() or self.failed:
                 raise RuntimeError("El capturador anterior todavía está terminando")
             return
-        if self.device_monitor is not None:
-            raise RuntimeError("El observador anterior del teclado no ha terminado")
+        if self.device_monitor is not None or self.display_monitor is not None:
+            raise RuntimeError("Un observador anterior de entrada no ha terminado")
         if not self.ready():
             raise PermissionError("Entrada no disponible; comprueba los permisos del sistema")
         self.sink = sink
@@ -117,10 +134,14 @@ class MacInput:
     def _run(self):
         q = self.q
         source = None
-        monitor = None
+        monitor = display_monitor = None
         try:
             if self.stopping.is_set():
                 return
+            if self.display_monitor_factory is not None:
+                display_monitor = self.display_monitor_factory(lambda: self.display_changed(display_monitor))
+                self.display_monitor = display_monitor
+                display_monitor.start()
             types = (
                 q.kCGEventMouseMoved,
                 q.kCGEventLeftMouseDragged,
@@ -171,13 +192,16 @@ class MacInput:
                 self.sink.fail()
         finally:
             self.started.set()
-            if monitor is not None:
-                try:
-                    monitor.close()
-                    self.device_monitor = None
-                except Exception:
-                    self.failed = True
-                    self.sink.fail()
+            for observer, attribute in ((monitor, "device_monitor"), (display_monitor, "display_monitor")):
+                if observer is not None:
+                    try:
+                        observer.close()
+                        setattr(self, attribute, None)
+                    except Exception:
+                        # Retain failed native registrations, but still close the
+                        # other observer and restore input on the owner thread.
+                        self.failed = True
+                        self.sink.fail()
             if self.tap is not None:
                 q.CGEventTapEnable(self.tap, False)
                 q.CFMachPortInvalidate(self.tap)
@@ -298,7 +322,10 @@ class MacInput:
             self.captured = False
             try:
                 if self.restore_pending is not None:
-                    self.restore(self.restore_pending)
+                    point = self.restore_pending
+                    if self.display_invalidated:
+                        point = self.desktop.clamp(*point)
+                    self.restore(point)
                     self.restore_pending = None
             finally:
                 if self.hidden:
@@ -416,6 +443,8 @@ class MacInput:
         self.injected_point = None
         self.injected_caps = None
         self.health.close()
+        if self.device_monitor is None and self.display_monitor is None:
+            self.display_invalidated = False
 
     def keyboard_changed(self):
         self.held_keys.clear()
