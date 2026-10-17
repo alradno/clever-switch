@@ -21,9 +21,18 @@ MAX_MESSAGE = 2048
 OPS = frozenset(("ready", "prepare", "mouse", "keyboard", "commit", "status", "abort", "return", "follow"))
 
 
-def receive_exact(connection, size):
+def remaining_timeout(connection, deadline):
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("Se agotó el plazo de comunicación con el otro equipo")
+    connection.settimeout(remaining)
+
+
+def receive_exact(connection, size, deadline=None):
     data = bytearray()
     while len(data) < size:
+        if deadline is not None:
+            remaining_timeout(connection, deadline)
         part = connection.recv(size - len(data))
         if not part:
             raise ConnectionError("Enlace interrumpido")
@@ -31,11 +40,11 @@ def receive_exact(connection, size):
     return bytes(data)
 
 
-def receive(connection):
-    size = struct.unpack("!I", receive_exact(connection, 4))[0]
+def receive(connection, deadline=None):
+    size = struct.unpack("!I", receive_exact(connection, 4, deadline))[0]
     if not 0 < size <= MAX_MESSAGE:
         raise ValueError("Mensaje inválido")
-    value = json.loads(receive_exact(connection, size))
+    value = json.loads(receive_exact(connection, size, deadline))
     if not isinstance(value, dict):
         raise ValueError("Mensaje inválido")
     return value
@@ -101,11 +110,12 @@ class Link:
                     private_ip(remote[0], self.pairing.testing)
                     if remote[0] != self.peer:
                         continue
-                    raw.settimeout(2.5)
+                    deadline = time.monotonic() + 2.5
+                    remaining_timeout(raw, deadline)
                     with self.server_context.wrap_socket(raw, server_side=True) as connection:
                         self.pairing.verify_pin(connection)
                         self.on_authenticated()
-                        request = receive(connection)
+                        request = receive(connection, deadline)
                         if set(request) != {"link", "id", "op", "args"}:
                             raise ValueError("Formato inválido")
                         if request["link"] != self.config["link"] or request["op"] not in OPS:
@@ -117,6 +127,7 @@ class Link:
                             raise ValueError("Parámetros inválidos")
                         self.replays.append(nonce)
                         result = self.handler(request["op"], request["args"])
+                        remaining_timeout(connection, deadline)
                         send(connection, {"id": nonce, "result": result})
                 except Exception:
                     # No peer payload, certificates or pairing secrets in logs.
@@ -132,13 +143,18 @@ class Link:
     def _call(self, op, args=None, timeout=3.0):
         if op not in OPS:
             raise ValueError("Operación inválida")
+        # One budget spans TCP, TLS, writes and every received fragment. Socket
+        # timeouts alone restart on each read and can outlive transfer recovery.
+        deadline = time.monotonic() + timeout
         nonce = secrets.token_hex(16)
         peer = private_ip(self.peer, self.pairing.testing)
         with socket.create_connection((peer, self.port), timeout=timeout, source_address=(self.address, 0)) as raw:
+            remaining_timeout(raw, deadline)
             with self.client_context.wrap_socket(raw) as connection:
                 self.pairing.verify_pin(connection)
+                remaining_timeout(connection, deadline)
                 send(connection, {"link": self.config["link"], "id": nonce, "op": op, "args": args or {}})
-                reply = receive(connection)
+                reply = receive(connection, deadline)
                 if set(reply) != {"id", "result"} or reply["id"] != nonce or not isinstance(reply["result"], dict):
                     raise ValueError("Respuesta inválida")
                 self.on_authenticated()

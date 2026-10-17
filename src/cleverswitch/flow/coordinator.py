@@ -360,6 +360,15 @@ class Coordinator:
             prepared = response.get("accepted") is True
             if not prepared:
                 raise RuntimeError(REASONS.get(response.get("reason"), "El otro equipo no está listo"))
+            # Preparing can take several seconds. The user's session, pause
+            # choice or mouse buttons may have changed while awaiting that ACK.
+            if (
+                self.stop_event.is_set()
+                or not self.hardware.allowed()
+                or not self.cursor.session_ready()
+                or (kind == "edge" and not self.cursor.sample().safe)
+            ):
+                raise RuntimeError("El cambio se ha cancelado antes de mover los dispositivos")
             # Suppress our own HID host notifications, without disabling physical buttons.
             self.suppressed_until = self.clock() + 20
             self.status = "Comprobando la llegada del ratón…"
