@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import signal
+import sys
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -56,3 +60,21 @@ def test_setup_context_initializes_subscribers(mocker):
 
     setup_context(_cli_args())
     mock_init.assert_called_once()
+
+
+@pytest.mark.parametrize("platform,native_loop", [("darwin", True), ("darwin", False), ("win32", True)])
+def test_shutdown_registration_matches_the_platform_event_loop(mocker, platform, native_loop):
+    from cleverswitch.setup.app_setup import _setup_shutdown
+
+    ordinary = mocker.patch("cleverswitch.setup.app_setup.signal.signal")
+    native = Mock()
+    mocker.patch.object(sys, "platform", platform)
+    mocker.patch.dict(sys.modules, {"PyObjCTools": SimpleNamespace(MachSignals=SimpleNamespace(signal=native))})
+    event = _setup_shutdown(native_loop=native_loop)
+    selected, unused = (native, ordinary) if platform == "darwin" and native_loop else (ordinary, native)
+    unused.assert_not_called()
+    handlers = {call.args[0]: call.args[1] for call in selected.call_args_list}
+    assert signal.SIGTERM in handlers
+    assert not event.is_set()
+    handlers[signal.SIGTERM](signal.SIGTERM)
+    assert event.is_set()
