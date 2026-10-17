@@ -7,12 +7,21 @@ No usar los ZIP anteriores como base de nuevos cambios.
 La edición está en `src/cleverswitch/flow/version.py`: 0.5.0 experimental, protocolo 2.
 La entrada por LAN está implementada en los mismos fuentes para ambos equipos,
 con protocolo binario 1 opcional y activación explícita. El Mac está compilado e
-instalado; la compilación y aceptación nativas de Windows siguen pendientes.
+instalado y sus permisos comprobados. Pasan 936 pruebas en ambas plataformas.
+Windows está compilado y su diagnóstico empaquetado carga las APIs nativas y
+confirma sesión disponible en CI. La instalación en el equipo doméstico y la
+captura/inyección físicas siguen pendientes. Paquete y evidencia del commit
+`4797a3e78fa5c02951bf3c02ee95f71500d6e1d7`:
+[Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39069359804).
 El workflow Windows candidate valida y compila los mismos fuentes, sin instalar
 la app, capturar entrada ni alterar el firewall del runner. Sus artefactos incluyen
 ejecutable, instalador y manifiesto del mismo commit; no equivalen a aceptación física.
 No confundir las pruebas de APIs simuladas con una aceptación en Windows.
 Consolidar y validar antes de distribuirla al usuario.
+La corrección final mantiene ordenados los reinicios del enlace dentro del proceso,
+incluso con un reloj de baja resolución o ajustado hacia atrás. Las cuatro regresiones
+de ambos sentidos fallaron antes y pasan después; los avisos de la sesión antigua
+siguen rechazándose. No se ha debilitado la validación TLS ni la cancelación.
 Véase [INPUT-LAN.txt](INPUT-LAN.txt). Conserva
 el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
 

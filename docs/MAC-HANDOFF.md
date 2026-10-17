@@ -19,8 +19,11 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   simuladas para ambas plataformas. Está compilada, instalada y arrancada en
   Aplicaciones, con entrada por red activada expresamente. Las pruebas nativas
   desde desarrollo confirman captura, movimiento, escritura y liberación. La
-  comprobación lanzada por LaunchServices desde la app instalada detecta permisos
-  pendientes de renovar; no confundir el permiso del intérprete con el de la app.
+  comprobación lanzada por LaunchServices desde la app instalada confirma ahora
+  escucha, envío, Accesibilidad y sesión preparados, con Entrada segura inactiva.
+  Pasan 936 pruebas en Mac y en Windows; la compilación Windows y su diagnóstico
+  empaquetado también pasan. La instalación en el Windows doméstico y el cruce
+  físico siguen pendientes. Véase `validation/windows-0.5.0-native.json`.
   No modificar permisos, excepciones ni controles de seguridad automáticamente.
   Estado y validación pendientes: [INPUT-LAN.txt](INPUT-LAN.txt).
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
