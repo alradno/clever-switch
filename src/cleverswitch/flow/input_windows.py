@@ -10,6 +10,7 @@ import time
 
 from .input_dispatch import Dispatch
 from .input_geometry import Desktop, Display
+from .input_health import Readiness
 from .input_keys import EVENT_TAG, WINDOWS, WINDOWS_REVERSE
 from .input_protocol import Kind
 
@@ -62,16 +63,23 @@ class Message(c.Structure):
 
 
 class WindowsInput:
-    def __init__(self, api=None, kernel=None, ready=None, desktop=None, clock=time.monotonic):
+    def __init__(self, api=None, kernel=None, ready=None, desktop=None, clock=time.monotonic, monitor_factory=None):
         if api is None:
             api = c.WinDLL("user32", use_last_error=True)
             kernel = c.WinDLL("kernel32", use_last_error=True)
             from .cursor import WindowsCursor
+            from .input_devices import WindowsKeyboardMonitor
 
             ready = WindowsCursor().session_ready
+            monitor_factory = WindowsKeyboardMonitor
         self.api, self.kernel, self._ready = api, kernel, ready
-        self.clock, self.ready_until, self.ready_value = clock, 0, False
+        self.clock = clock
+        self.health = Readiness(lambda: self._ready(), lambda: self.clock())
         self._desktop = desktop
+        self.pointer_desktop = None
+        self.monitor_factory = monitor_factory
+        self.device_monitor = None
+        self.device_event = threading.Event()
         self.sink = None
         self.worker = None
         self.thread_id = None
@@ -140,11 +148,7 @@ class WindowsInput:
                 self.api.SetThreadDpiAwarenessContext(prior)
 
     def ready(self):
-        now = self.clock()
-        if now >= self.ready_until:
-            self.ready_value = bool(self._ready())
-            self.ready_until = now + 0.1
-        return self.ready_value
+        return self.health.ready()
 
     def lock_state(self):
         def read():
@@ -164,12 +168,17 @@ class WindowsInput:
             if self.stopping.is_set() or self.failed:
                 raise RuntimeError("El capturador anterior todavía está terminando")
             return
+        if self.device_monitor is not None:
+            raise RuntimeError("El observador anterior del teclado no ha terminado")
         if not self.ready():
             raise PermissionError("Sesión de entrada no disponible")
         self.sink = sink
         self.failed = False
         self.started.clear()
         self.stopping.clear()
+        self.device_event.clear()
+        self.pointer_desktop = self.desktop
+        self.health.start()
         self.dispatch = Dispatch(self._wake_control)
         self.worker = threading.Thread(target=self._run, name="flow-input-win32", daemon=True)
         self.worker.start()
@@ -179,6 +188,7 @@ class WindowsInput:
 
     def _run(self):
         hooks = []
+        monitor = None
         try:
             if self.stopping.is_set():
                 return
@@ -199,6 +209,10 @@ class WindowsInput:
                 if vk and self.api.GetAsyncKeyState(vk) & 0x8000:
                     self.held_keys.add(usage)
             self.held_buttons = {i for i, vk in enumerate((1, 2, 4, 5, 6)) if self.api.GetAsyncKeyState(vk) & 0x8000}
+            if self.monitor_factory is not None:
+                monitor = self.monitor_factory(self._device_changed)
+                self.device_monitor = monitor
+                monitor.start()
             self.started.set()
             while not self.stopping.is_set():
                 result = self.api.GetMessageW(c.byref(message), None, 0, 0)
@@ -209,6 +223,18 @@ class WindowsInput:
                 if message.message == 0x8011:
                     self.dispatch.drain()
                     continue
+                if message.message == 0x8012:
+                    self.device_event.clear()
+                    # Windows can silently remove a low-level hook after a
+                    # timeout. A keyboard arrival/removal renews it on its owner
+                    # thread, without restarting the pointer or the TLS link.
+                    self.api.UnhookWindowsHookEx(hooks.pop())
+                    hook = self.api.SetWindowsHookExW(13, self._key_hook, module, 0)
+                    if not hook:
+                        raise OSError("No se pudo recuperar el teclado")
+                    hooks.append(hook)
+                    self.keyboard_changed()
+                    continue
                 self.api.TranslateMessage(c.byref(message))
                 self.api.DispatchMessageW(c.byref(message))
         except Exception:
@@ -217,6 +243,15 @@ class WindowsInput:
                 self.sink.fail()
         finally:
             self.started.set()
+            if monitor is not None:
+                try:
+                    monitor.close()
+                    self.device_monitor = None
+                except Exception:
+                    # Retain the callback if Windows could not unregister it,
+                    # but always restore input and remove the capture hooks.
+                    self.failed = True
+                    self.sink.fail()
             for hook in hooks:
                 self.api.UnhookWindowsHookEx(hook)
             try:
@@ -224,6 +259,13 @@ class WindowsInput:
             finally:
                 self.dispatch.close()
                 self.thread_id = None
+
+    def _device_changed(self):
+        if self.stopping.is_set() or self.device_event.is_set():
+            return
+        self.device_event.set()
+        if self.thread_id is None or not self.api.PostThreadMessageW(self.thread_id, 0x8012, 0, 0):
+            self.sink.fail()
 
     def _wake_control(self):
         if self.thread_id is None or not self.api.PostThreadMessageW(self.thread_id, 0x8011, 0, 0):
@@ -297,17 +339,14 @@ class WindowsInput:
         self._submit(event)
 
     def restore(self, point):
-        prior = self.api.SetThreadDpiAwarenessContext(c.c_void_p(-4))
-        try:
-            left, top, width, height = (self.api.GetSystemMetrics(i) for i in (76, 77, 78, 79))
-            if width < 2 or height < 2:
-                raise OSError("Escritorio no disponible")
-            x = round((point[0] - left) * 65535 / (width - 1))
-            y = round((point[1] - top) * 65535 / (height - 1))
-            self._mouse_input(0x8000 | 0x4000 | 1, x=max(0, min(65535, x)), y=max(0, min(65535, y)))
-        finally:
-            if prior:
-                self.api.SetThreadDpiAwarenessContext(prior)
+        # Geometry was measured in physical pixels before capture. The service
+        # detects display changes and renegotiates; no DPI switches or display
+        # queries belong in every mouse report. Keep drag messages uncoalesced
+        # by Windows after our own bounded, ordered queue has selected a move.
+        desktop = self.pointer_desktop or self.desktop
+        x = round((point[0] - desktop.left) * 65535 / (desktop.right - desktop.left))
+        y = round((point[1] - desktop.top) * 65535 / (desktop.bottom - desktop.top))
+        self._mouse_input(0x8000 | 0x4000 | 0x2000 | 1, x=max(0, min(65535, x)), y=max(0, min(65535, y)))
 
     def capture(self, enabled):
         # ShowCursor uses the calling thread's counter. Hide and show must run
@@ -396,3 +435,12 @@ class WindowsInput:
         self.held_keys.clear()
         self.held_buttons.clear()
         self.capture(False)
+        self.pointer_desktop = None
+        self.health.close()
+
+    def keyboard_changed(self):
+        self.held_keys.clear()
+        try:
+            self.sink.keyboard_changed()
+        except Exception:
+            self.sink.fail()

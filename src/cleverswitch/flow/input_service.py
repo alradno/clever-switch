@@ -208,11 +208,11 @@ class Service:
             except queue.Empty:
                 return
             delivered = False
-            if session is self.session and epoch:
+            if session is not None and session is self.session and (epoch or method.__name__ == "keyboard_changed"):
                 with session.lock:
                     # A native cancel can retire the epoch while this worker
                     # waits for the lock. Validate ownership inside the lock.
-                    if session is self.session and epoch == session.epoch:
+                    if session is self.session and (epoch == session.epoch or method.__name__ == "keyboard_changed"):
                         method(self, *args)
                         delivered = True
             if not delivered and method.__name__ in ("key", "button"):
@@ -317,6 +317,15 @@ class Service:
     @native_callback
     def key(self, code, down):
         return self._physical(Kind.KEY, code, down)
+
+    @native_callback
+    def keyboard_changed(self):
+        # A physical channel change can lose key-up. Retire only the keys this
+        # source forwarded; keep the mouse focus and the authenticated stream.
+        if self._available():
+            for code in sorted(self.keys):
+                self.session.input(Kind.KEY, code, 0)
+        self.keys.clear()
 
     @native_callback
     def button(self, code, down):

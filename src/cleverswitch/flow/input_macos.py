@@ -9,12 +9,22 @@ import threading
 import time
 
 from .input_geometry import Desktop, Display
+from .input_health import Readiness
 from .input_keys import EVENT_TAG, MAC, MAC_DEVICE_FLAGS, MAC_MODIFIER_FLAGS, MAC_REVERSE
 from .input_protocol import Kind
 
 
 class MacInput:
-    def __init__(self, api=None, ready=None, secure_input=None, desktop=None, clock=time.monotonic, double_click=None):
+    def __init__(
+        self,
+        api=None,
+        ready=None,
+        secure_input=None,
+        desktop=None,
+        clock=time.monotonic,
+        double_click=None,
+        monitor_factory=None,
+    ):
         if api is None:
             import ctypes
 
@@ -22,6 +32,7 @@ class MacInput:
             from AppKit import NSEvent
 
             from .cursor import MacCursor
+            from .input_devices import MacKeyboardMonitor
 
             api = Quartz
             ready = MacCursor().session_ready
@@ -29,10 +40,14 @@ class MacInput:
             carbon.IsSecureEventInputEnabled.restype = ctypes.c_bool
             secure_input = carbon.IsSecureEventInputEnabled
             double_click = NSEvent.doubleClickInterval
+            monitor_factory = MacKeyboardMonitor
         self.q, self._ready, self.secure_input = api, ready, secure_input
-        self.clock, self.ready_until, self.ready_value = clock, 0, False
+        self.clock = clock
+        self.health = Readiness(self._check_ready, lambda: self.clock())
         self.double_click = double_click or (lambda: 0.5)
         self._desktop = desktop
+        self.monitor_factory = monitor_factory
+        self.device_monitor = None
         self.sink = self.worker = self.tap = self.runloop = None
         self.started = threading.Event()
         self.stopping = threading.Event()
@@ -63,13 +78,10 @@ class MacInput:
     def ready(self):
         if self.secure_input():
             return False
-        now = self.clock()
-        if now >= self.ready_until:
-            self.ready_value = bool(
-                self._ready() and self.q.CGPreflightListenEventAccess() and self.q.CGPreflightPostEventAccess()
-            )
-            self.ready_until = now + 0.1
-        return self.ready_value
+        return self.health.ready()
+
+    def _check_ready(self):
+        return self._ready() and self.q.CGPreflightListenEventAccess() and self.q.CGPreflightPostEventAccess()
 
     def lock_state(self):
         flags = self.q.CGEventSourceFlagsState(self.q.kCGEventSourceStateCombinedSessionState)
@@ -84,12 +96,15 @@ class MacInput:
             if self.stopping.is_set() or self.failed:
                 raise RuntimeError("El capturador anterior todavía está terminando")
             return
+        if self.device_monitor is not None:
+            raise RuntimeError("El observador anterior del teclado no ha terminado")
         if not self.ready():
             raise PermissionError("Entrada no disponible; comprueba los permisos del sistema")
         self.sink = sink
         self.failed = False
         self.started.clear()
         self.stopping.clear()
+        self.health.start()
         self.worker = threading.Thread(target=self._run, name="flow-input-quartz", daemon=True)
         self.worker.start()
         if not self.started.wait(2) or self.failed or not self.worker.is_alive():
@@ -99,6 +114,7 @@ class MacInput:
     def _run(self):
         q = self.q
         source = None
+        monitor = None
         try:
             if self.stopping.is_set():
                 return
@@ -139,6 +155,10 @@ class MacInput:
             self.held_keys = {usage for usage, native in MAC.items() if q.CGEventSourceKeyState(state, native)}
             self.held_buttons = {button for button in range(5) if q.CGEventSourceButtonState(state, button)}
             self.caps = bool(q.CGEventSourceFlagsState(state) & q.kCGEventFlagMaskAlphaShift)
+            if self.monitor_factory is not None:
+                monitor = self.monitor_factory(self.keyboard_changed)
+                self.device_monitor = monitor
+                monitor.start()
             self.started.set()
             if not self.stopping.is_set():
                 q.CFRunLoopRun()
@@ -148,6 +168,13 @@ class MacInput:
                 self.sink.fail()
         finally:
             self.started.set()
+            if monitor is not None:
+                try:
+                    monitor.close()
+                    self.device_monitor = None
+                except Exception:
+                    self.failed = True
+                    self.sink.fail()
             if self.tap is not None:
                 q.CGEventTapEnable(self.tap, False)
                 q.CFMachPortInvalidate(self.tap)
@@ -385,3 +412,11 @@ class MacInput:
         self.held_buttons.clear()
         self.injected_point = None
         self.injected_caps = None
+        self.health.close()
+
+    def keyboard_changed(self):
+        self.held_keys.clear()
+        try:
+            self.sink.keyboard_changed()
+        except Exception:
+            self.sink.fail()
