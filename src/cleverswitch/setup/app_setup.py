@@ -29,11 +29,11 @@ from .platform_setup import check
 log = logging.getLogger(__name__)
 
 
-def setup_context(args: argparse.Namespace) -> AppContext:
+def setup_context(args: argparse.Namespace, *, native_loop=False) -> AppContext:
     log.info(f"CleverSwitch {__version__} starting")
     check()
     config = _load_config(args)
-    shutdown = _setup_shutdown()
+    shutdown = _setup_shutdown(native_loop=native_loop)
     topics = _setup_topics()
     registry = _setup_logi_device_registry()
     cache = _setup_device_cache(config)
@@ -50,13 +50,21 @@ def _load_config(args: argparse.Namespace) -> Config:
         sys.exit(1)
 
 
-def _setup_shutdown() -> threading.Event:
+def _setup_shutdown(*, native_loop=False) -> threading.Event:
     # Graceful shutdown on Ctrl-C / SIGTERM, plus SIGHUP/SIGQUIT where the platform provides them
     shutdown = threading.Event()
+    register = signal.signal
+    if native_loop and sys.platform == "darwin":
+        # Python's deferred signal handler cannot wake an idle NSApplication.
+        # MachSignals posts to its native run loop without a polling timer.
+        # The CLI and Windows retain ordinary Python signal handling.
+        from PyObjCTools import MachSignals
+
+        register = MachSignals.signal
     for sig_name in ("SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT"):
         sig = getattr(signal, sig_name, None)
         if sig is not None:
-            signal.signal(sig, lambda *_: shutdown.set())
+            register(sig, lambda *_: shutdown.set())
     return shutdown
 
 
