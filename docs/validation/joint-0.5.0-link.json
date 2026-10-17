@@ -1,0 +1,139 @@
+{
+  "observed_at": "2026-10-17T22:21:53.928700+00:00",
+  "edition": "0.5.0",
+  "windows_installation_reported_by_user": true,
+  "scope": "Real home LAN: authenticated control readiness and existing input connection; no input injected",
+  "probe_count": 6,
+  "successful_probes": 6,
+  "duration_seconds": 5.25,
+  "same_persistent_connection_observed": true,
+  "mac_process_unchanged": true,
+  "mac_readiness": {
+    "edition": "0.5.0",
+    "platform": "darwin",
+    "ready": true,
+    "checks": {
+      "listen_permission": true,
+      "post_permission": true,
+      "session_and_accessibility": true,
+      "secure_input_inactive": true
+    }
+  },
+  "samples": [
+    {
+      "authenticated": true,
+      "response_ms": 32.03,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    },
+    {
+      "authenticated": true,
+      "response_ms": 36.85,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    },
+    {
+      "authenticated": true,
+      "response_ms": 24.51,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    },
+    {
+      "authenticated": true,
+      "response_ms": 34.17,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    },
+    {
+      "authenticated": true,
+      "response_ms": 24.88,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    },
+    {
+      "authenticated": true,
+      "response_ms": 27.55,
+      "peer": {
+        "edition": "0.5.0",
+        "protocol": 2,
+        "ready": false,
+        "reason": "input",
+        "input": {
+          "available": true,
+          "enabled": true,
+          "version": 1
+        }
+      }
+    }
+  ],
+  "windows_install_path_verified": false,
+  "windows_installed_binary_hash_verified": false,
+  "physical_input_delivery_verified": false,
+  "input_to_display_latency_measured": false,
+  "firewall_rules_inspected": false,
+  "configuration_changes": false,
+  "security_policy_changes": false,
+  "control_rpc_median_ms": 29.79,
+  "latency_scope": "Control RPC includes a new TCP/TLS handshake each time; it is not the input stream or input-to-display latency",
+  "candidate_source_commit": "4797a3e78fa5c02951bf3c02ee95f71500d6e1d7",
+  "observed_at_local": "2026-10-18T00:21:53.928700+02:00",
+  "windows_runtime": {
+    "edition": "0.5.0",
+    "protocol": 2,
+    "ready": false,
+    "reason": "input",
+    "input": {
+      "available": true,
+      "enabled": true,
+      "version": 1
+    }
+  },
+  "ready_field_meaning": "ready=false and reason=input disable the old Bluetooth handoff; input.available=true describes readiness for LAN input",
+  "connection_observed_before_manual_probe": true,
+  "mac_manual_reconnect_requested": false
+}
