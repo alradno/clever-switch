@@ -1,6 +1,8 @@
 CLEVERSWITCH 0.5.0 — ENTRADA POR LAN EXPERIMENTAL
-Estado a 2026-10-17: instalada en Mac con permisos comprobados; Windows compilado
-y comprobado en CI. Instalación Windows y aceptación física conjunta pendientes.
+Estado a 2026-10-18: ambas apps 0.5.0 ejecutándose, modo por red activado y
+conexión TLS persistente disponible en la red doméstica. Permisos del Mac
+comprobados y entrada Windows declarada disponible por el compañero autenticado.
+El movimiento y la escritura reales entre las pantallas siguen pendientes.
 
 COMPORTAMIENTO
 Ratón y teclado permanecen conectados físicamente al mismo equipo. Al cruzar
@@ -82,7 +84,13 @@ del Mac desde el intérprete de desarrollo; no equivalen al cruce físico con Wi
 La 0.5.0 está compilada, instalada y arrancada en Aplicaciones con el modo por red
 activado. Su comprobación mediante LaunchServices confirma que los permisos de
 escucha y envío, Accesibilidad y la sesión están preparados. Windows pasa
-936 pruebas, compilación y diagnóstico del ejecutable; no se ha llamado a SendInput.
+936 pruebas, compilación y diagnóstico del ejecutable; CI no llama a SendInput.
+Tras la instalación indicada por el usuario, Windows confirma 0.5.0, protocolo 2
+y entrada 1 activada y disponible. Seis consultas autenticadas han respondido y
+la conexión persistente se mantiene. El Mac conserva su proceso y sus permisos.
+No se ha generado entrada durante esta comprobación ni se ha inspeccionado la
+ruta o hash del ejecutable instalado en Windows. Las duraciones de las consultas
+incluyen un nuevo handshake TLS y no miden latencia de entrada o de pantalla.
 No se infiere aceptación de una política EDR por superar estas pruebas.
 
 COMPROBACIÓN DE PERMISOS
@@ -120,6 +128,7 @@ La duración de cruce incluye la resolución de espera del observador del benchm
 Medidas sintéticas: validation/macos-0.5.0-input.json.
 Compilación instalada y comprobaciones nativas: validation/macos-0.5.0-native.json.
 Compilación Windows y artefactos comprobados: validation/windows-0.5.0-native.json.
+Enlace real tras la instalación Windows: validation/joint-0.5.0-link.json.
 
 La suite incluye el recorrido callback de plataforma -> servicio -> TLS mutuo ->
 adaptador de la otra plataforma -> API simulada, en ambos sentidos, con tecla,

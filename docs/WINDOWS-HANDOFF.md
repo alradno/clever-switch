@@ -9,8 +9,12 @@ La entrada por LAN está implementada en los mismos fuentes para ambos equipos,
 con protocolo binario 1 opcional y activación explícita. El Mac está compilado e
 instalado y sus permisos comprobados. Pasan 936 pruebas en ambas plataformas.
 Windows está compilado y su diagnóstico empaquetado carga las APIs nativas y
-confirma sesión disponible en CI. La instalación en el equipo doméstico y la
-captura/inyección físicas siguen pendientes. Paquete y evidencia del commit
+confirma sesión disponible en CI. El 18 de octubre, tras la instalación indicada
+por el usuario, el equipo doméstico responde por TLS como 0.5.0, con entrada por
+red activada y disponible. Seis consultas correctas y una conexión persistente
+confirman el enlace real con el Mac ya abierto. No se ha inspeccionado la ruta o
+hash del ejecutable instalado ni probado la entrega física de entrada.
+Evidencia: `validation/joint-0.5.0-link.json`. Paquete compilado del commit
 `4797a3e78fa5c02951bf3c02ee95f71500d6e1d7`:
 [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39069359804).
 El workflow Windows candidate valida y compila los mismos fuentes, sin instalar

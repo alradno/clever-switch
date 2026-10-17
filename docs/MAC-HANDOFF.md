@@ -22,8 +22,12 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   comprobación lanzada por LaunchServices desde la app instalada confirma ahora
   escucha, envío, Accesibilidad y sesión preparados, con Entrada segura inactiva.
   Pasan 936 pruebas en Mac y en Windows; la compilación Windows y su diagnóstico
-  empaquetado también pasan. La instalación en el Windows doméstico y el cruce
-  físico siguen pendientes. Véase `validation/windows-0.5.0-native.json`.
+  empaquetado también pasan. El 18 de octubre, Windows responde por TLS como
+  0.5.0 con entrada por red activada y disponible. Seis consultas correctas y
+  la misma conexión persistente confirman el enlace real, sin reiniciar el Mac.
+  El cruce físico sigue pendiente; no se ha inspeccionado la ruta o hash del
+  ejecutable Windows instalado. Véanse `validation/windows-0.5.0-native.json`
+  y `validation/joint-0.5.0-link.json`.
   No modificar permisos, excepciones ni controles de seguridad automáticamente.
   Estado y validación pendientes: [INPUT-LAN.txt](INPUT-LAN.txt).
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
