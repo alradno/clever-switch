@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.2, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.3, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,30 +10,24 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
-REVISIÓN 0.5.2: consultas de permisos a 400 ms con foco local y 100 ms en remoto,
-con el mismo límite de 500 ms para caducar una autorización. Las consultas siguen
-fuera del hilo de entrada y se detienen al desconectar. Una ráfaga ya encolada
-se envía en bloques de hasta 64 eventos sin espera añadida; conserva acciones,
-posiciones y orden. No se toma el control del destino si mantiene teclas o
-botones físicos pulsados. El diagnóstico añade ida y vuelta y variación del
-stream usando sus mensajes existentes, sin guardar pulsaciones o posiciones.
+REVISIÓN 0.5.3
+La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
+a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
+pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
+entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
+hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
+Un cambio local de pantalla permite una nueva ventana finita de reconexión;
+los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
 
-En simulación: 600 -> 150 consultas por minuto local; 200 acciones -> 4 escrituras
-en vez de 200, con entrega ordenada en ambos sentidos. No mide batería, radio,
-pantalla o aplicaciones. Repetir con benchmarks/input_efficiency.py.
-Pasan 970 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba también el ejecutable empaquetado.
-
-La 0.5.2 queda preparada para probar ambos equipos juntos al volver el usuario.
-No se instala en esta revisión: Mac conserva 0.5.1 y permisos pendientes de la
-firma anterior; el último estado comprobado del Windows doméstico es 0.5.0.
-La prueba física de 0.5.0 reportó microcortes y pérdida de teclado; la aceptación
-física conjunta sigue pendiente. Evidencia: docs/validation/input-0.5.2-efficiency.json.
-Comprobar permisos de entrada muestra los requisitos pendientes sin capturar nada.
-
-Se conservan las mejoras 0.5.1: consultas lentas separadas del hilo de entrada,
-avisos nativos de teclado para liberar teclas tras un cambio físico de canal,
-renovación del hook Windows y geometría preparada antes de mover el cursor.
+Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado.
+Se conservan las mejoras 0.5.1/0.5.2 de teclado, permisos, transporte y diagnóstico.
+La candidata se prepara para probar ambos equipos juntos al volver el usuario.
+No se instala ahora: Mac conserva 0.5.1 y el último estado comprobado del Windows
+doméstico es 0.5.0. La aceptación física sigue pendiente, incluidos cambios de
+pantalla, fluidez y recuperación del teclado. Véase docs/INPUT-LAN.txt y
+la evidencia docs/validation/input-0.5.3-displays.json.
 
 HISTORIAL DEL MODO FÍSICO
 REVISIÓN 0.4.6: borde de 80 ms; cursor colocado tras la primera prueba nueva del

@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.2 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.3 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,33 +19,31 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.2 reduce el trabajo de permisos cuando el foco está en local: una consulta
-cada 400 ms, frente a 100 ms durante el control remoto. El resultado sigue
-caducando a los 500 ms y una petición de entrada puede adelantar la consulta.
-Sin compañero se detiene ese trabajador. Las ráfagas ya encoladas se envían
-juntas, hasta 64 eventos por escritura, sin esperar a reunir eventos nuevos ni
-alterar el orden de teclas, clics y posiciones. Se rechaza un cruce si el destino
-tiene teclas o botones físicos pulsados, para no interrumpir un arrastre local.
+La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
+a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
+pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
+entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
+hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
+Un cambio local de pantalla permite una nueva ventana finita de reconexión;
+los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
 
-El diagnóstico añade tiempos de ida y vuelta y su variación usando los mensajes
-de presencia existentes. Son cifras agregadas de cola, TLS y respuesta del
-compañero; no guardan entrada ni miden el tiempo hasta dibujar el cursor.
-En la comparación reproducible, un minuto local simulado pasa de 600 a 150
-consultas. Una ráfaga de 200 acciones pasa de 200 a 4 escrituras, en ambos sentidos.
-Es una medida de trabajo evitado, no de autonomía ni de latencia física de Wi-Fi.
-Reproducción: `benchmarks/input_efficiency.py`.
+Se conservan las mejoras anteriores: recuperación del teclado al cambiar de canal,
+consultas de permisos fuera del hilo de entrada, ráfagas TLS sin espera añadida y
+protección del destino si mantiene teclas o botones físicos pulsados. El diagnóstico
+muestra tiempos agregados de ida y vuelta sin guardar entrada. Las medidas de
+[eficiencia 0.5.2](docs/validation/input-0.5.2-efficiency.json) describen trabajo
+simulado evitado, no autonomía ni latencia física.
 
-Pasan 970 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba también el ejecutable empaquetado.
-Evidencia: [0.5.2](docs/validation/input-0.5.2-efficiency.json).
-Los paquetes se preparan para una única prueba conjunta cuando vuelva el usuario.
-La candidata 0.5.2 no se instala aún: Aplicaciones conserva 0.5.1 y su permiso
-pendiente; la última comprobación del Windows doméstico corresponde a 0.5.0.
-La aceptación física de fluidez, batería y recuperación del teclado sigue pendiente.
+Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado.
+Evidencia: [0.5.3](docs/validation/input-0.5.3-displays.json).
+Los paquetes quedan preparados para una única prueba conjunta al volver el usuario.
+No se instalan candidatas intermedias: Aplicaciones conserva 0.5.1; la última
+comprobación del Windows doméstico corresponde a 0.5.0. Quedan pendientes los
+permisos de la firma final y la aceptación física de fluidez, batería, recuperación
+del teclado y cambios de monitor en ambos sentidos.
 
-Se mantienen las correcciones 0.5.1: consultas de permisos fuera del hilo de
-entrada, recuperación del teclado por avisos nativos y geometría Windows
-preparada antes de mover el cursor. [Evidencia anterior](docs/validation/input-0.5.1-reliability.json).
 El menú «Comprobar permisos de entrada…» revisa los requisitos sin capturar nada.
 Detalles de uso: [entrada por red](docs/INPUT-LAN.txt).
 
