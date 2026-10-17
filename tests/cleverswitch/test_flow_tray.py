@@ -6,6 +6,37 @@ import pytest
 from cleverswitch.tray import app
 
 
+def test_windows_firewall_menu_repairs_then_reconnects_and_reports_status(mocker):
+    captured = {}
+    controller = Mock(context=None, paused=False, flow=Mock(enabled=False), installation={"state": "ready"})
+    controller.flow.diagnostic.return_value = {"mode": "standby"}
+    mocker.patch.object(app, "Controller", return_value=controller)
+    mocker.patch.object(sys, "platform", "win32")
+    mocker.patch.object(sys, "frozen", False, create=True)
+    mocker.patch.object(app.startup, "is_enabled", return_value=False)
+    mocker.patch("cleverswitch.tray.actions.threading.Thread.start", lambda self: self.run())
+    notice = mocker.patch("cleverswitch.tray.dialogs.message")
+    icon = Mock()
+
+    def create(*args):
+        captured["menu"] = args[3]
+        return icon
+
+    mocker.patch("pystray.Icon", side_effect=create)
+
+    def exercise(**kwargs):
+        menu = {item.text: item for item in captured["menu"]}
+        menu["Revisar firewall de Windows…"](icon)
+        controller.check_installation.assert_called_with(repair=True)
+        controller.flow.reconnect_now.assert_called_once()
+        menu["Ver diagnóstico…"](icon)
+        assert '"installation"' in notice.call_args.args[1]
+        assert '"ready"' in notice.call_args.args[1]
+
+    icon.run.side_effect = exercise
+    app.run()
+
+
 @pytest.mark.parametrize("case", ["preview", "windows-new", "windows-response", "mac", "existing", "multiple-nics"])
 def test_tray_pairing_menu_and_actions_never_start_hardware(case, tmp_path, mocker):
     captured = {}
