@@ -13,7 +13,12 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.4.4`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- Candidata conjunta actual `0.4.5`, protocolo `2`, en `src/cleverswitch/flow/version.py`.
+- La 0.4.5 incorpora instalación estable y firewall por subred en Windows, conserva
+  datos/Inicio y admite seleccionar una identidad de firma existente en Mac. No hay
+  ninguna válida en el llavero de este Mac: la firma continúa siendo ad-hoc y no se
+  garantiza conservar permisos TCC al actualizar. No crear certificados, relajar
+  requisitos de firma ni modificar TCC. Véanse `UPDATES.md` y `validation/macos-0.4.5.json`.
 - La revisión 0.4.4 añade avisos ordenados de llegada/partida, respuesta directa
   para recuperar DHCP, ausencia de difusión periódica en conexión sana y descarte
   de callbacks de conexiones cerradas. Windows observa cambios de dirección IP;
@@ -91,7 +96,7 @@ medir estabilidad. No cambiar la vinculación para actualizar el código.
    las carpetas `.config` existentes y cualquier vinculación ya completada.
 6. Revisar los permisos reales de Accesibilidad, Bluetooth, Red local y acceso a HID
    que solicite macOS. Una compilación con firma ad-hoc puede necesitar reautorización.
-7. Abrir la app actualizada y confirmar que el menú muestra 0.4.4 en ambos equipos.
+7. Abrir la app actualizada y confirmar que el menú muestra 0.4.5 en ambos equipos.
 8. Usar `Ver diagnóstico…` para comprobar el estado de modelos, enlace y último fallo.
 
 No afirmar que compilar o pasar pruebas demuestra estabilidad física. No eludir

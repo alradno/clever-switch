@@ -1,11 +1,23 @@
-# Continuación en Windows — candidata conjunta 0.4.4
+# Continuación en Windows — candidata conjunta 0.4.5
 
 Usar este repositorio como fuente común. Antes de trabajar, revisar `git status` y
 hacer `git pull --ff-only`; conservar cualquier modificación local antes de integrar.
 No usar los ZIP anteriores como base de nuevos cambios.
 
-La edición está en `src/cleverswitch/flow/version.py`: 0.4.4, protocolo 2. Conserva
+La edición está en `src/cleverswitch/flow/version.py`: 0.4.5, protocolo 2. Conserva
 el enlace y la coordinación de Windows 0.4.0 integrada con el Mac en 0.4.1.
+
+La 0.4.5 incluye los instaladores que faltaban en el checkout. `build_tray.py`
+prepara app, dos scripts y manifiesto en `dist`. `Install-CleverSwitch.ps1`, ejecutado
+sin administrador, instala en `%LOCALAPPDATA%\Programs\CleverSwitchFlow`, conserva
+datos/Inicio y abre la app. Sólo el helper del firewall se eleva cuando hace falta.
+Las reglas se limitan a esa app, dos puertos y la subred guardada, para DHCP en ambos
+sentidos con perfiles Private/Public. No cambian por cada IP ni por versión.
+El menú detecta rutas temporales, reglas pendientes y bloqueos expresos; sólo revisa
+al arrancar, vincular, cambiar de red o por acción del usuario. [Detalles](UPDATES.md).
+No pedir al usuario instalar aún: falta compilar y comprobar nativamente el paquete,
+UAC, NetSecurity, Inicio y la aceptación física conjunta. Las pruebas PowerShell
+ejecutadas en Mac usan archivos reales y simulan las APIs de Windows.
 
 La revisión 0.4.4 añade reconexión por eventos y gestión del consumo en ambos:
 
@@ -24,7 +36,7 @@ Pasan 690 pruebas en Mac, cobertura 91,98 %, incluido aviso UDP y reconexión TL
 reales en loopback. La evidencia está en `validation/macos-0.4.4.json`.
 Compilar y probar nativamente Windows sigue pendiente. Para comprobar reinicios,
 activar Inicio al entrar en la sesión una vez desde la copia instalada estable.
-El instalador de Windows ya registra ese arranque por usuario. No probar con
+El instalador 0.4.5 conserva la elección anterior de arranque. No probar con
 copias en carpetas temporales ni cambiar las reglas de firewall sin comprobar la ruta.
 
 La 0.4.4 está compilada, instalada y arrancada en Aplicaciones. Tras 130 segundos
