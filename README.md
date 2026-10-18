@@ -28,6 +28,17 @@ de un periodo local anterior no afectan a un cruce nuevo. La corrección es com�
 a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
 la ruta de los callbacks que se procesan al momento.
 
+La validación ampliada de 0.5.19 añade 24 casos por plataforma: 64 reconexiones
+repetidas y ocho cortes de TLS en un solo sentido. Comprueba que se sueltan
+teclas y arrastres, se recupera una liberación rechazada temporalmente y funciona
+el siguiente cruce. Los trabajadores y observadores de entrada terminan al cerrar
+el enlace; sus avisos tardíos no borran pulsaciones de la conexión nueva.
+También se comprueba por UDP real que un paquete cifrado de un enlace anterior
+se rechaza durante un foco nuevo. Las APIs de entrada siguen simuladas.
+Esta ampliación no detectó otro fallo ni cambia el código o los paquetes 0.5.19;
+la fluidez y el consumo físicos siguen pendientes.
+Véase la [validación de reconexiones](docs/validation/input-0.5.19-reconnect.json).
+
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
 Si la pulsación llegó a la aplicación local antes de empezar la captura,
 su repetición y su liberación siguen llegando allí aunque la captura ya haya
@@ -184,7 +195,7 @@ conserva las acciones ya encoladas al volver al equipo de origen. Mantiene la
 recuperación del teclado tras Easy-Switch, los avisos de cambios de pantalla,
 la liberación de teclas y botones y la reconexión finita por eventos.
 
-Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+Pasan 1.806 pruebas por plataforma, Ruff y ambas compilaciones. La corrección inicial tiene
 22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
 quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
 pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
