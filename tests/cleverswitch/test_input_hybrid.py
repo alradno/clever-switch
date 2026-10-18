@@ -481,3 +481,45 @@ def test_normal_leave_preserves_actions_already_queued_at_their_position(hybrid,
         (Kind.BUTTON, (0, 1), (400, 500)), (Kind.BUTTON, (0, 0), (400, 500)),
     ]
     assert not receiver.session.keys and not receiver.session.buttons
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_delayed_receiver_uses_latest_udp_position_without_replaying_a_burst(hybrid, source):
+    sender, receiver = hybrid[source], hybrid[1 - source]
+    enter(sender)
+    held, release, emitted = threading.Event(), threading.Event(), threading.Event()
+    original_receiver_tick = receiver.channel.on_tick
+    original_sender_tick = sender.channel.on_tick
+    before = len(receiver.backend.events)
+
+    def hold_receiver():
+        if not held.is_set():
+            held.set()
+            assert release.wait(1)
+        original_receiver_tick()
+
+    def burst_on_owner():
+        if not emitted.is_set():
+            # Use the TLS owner for every nonce and sender-state mutation.
+            for index in range(32):
+                sender.channel.lane.outgoing(
+                    Packet(Kind.MOVE, sender.session.epoch, (100 + index, 400)), time.monotonic()
+                )
+            emitted.set()
+        original_sender_tick()
+
+    receiver.channel.on_tick = hold_receiver
+    receiver.channel._wake()
+    try:
+        assert held.wait(1)
+        sender.channel.on_tick = burst_on_owner
+        sender.channel._wake()
+        assert emitted.wait(1)
+        until(lambda: len(receiver.channel.inbox.queue) >= 32, timeout=0.3)
+    finally:
+        release.set()
+    until(lambda: receiver.backend.events[-1].values == (131, 400))
+    assert [(p.kind, p.values) for p in receiver.backend.events[before:]] == [(Kind.MOVE, (131, 400))]
+    until(lambda: sender.channel.lane.sender.latest is None)
+    assert sender.channel.lane.deadline is None
+    assert all(p.channel.failure is None for p in hybrid)
