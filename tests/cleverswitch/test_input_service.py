@@ -54,7 +54,7 @@ def services(paired_tls):
 
 def connected(services):
     assert services[0].connect()
-    until(lambda: services[1].channel is not None)
+    until(lambda: all(peer._available() for peer in services))
 
 
 def enter(peer):
