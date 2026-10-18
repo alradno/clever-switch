@@ -26,6 +26,12 @@ empezado. El cruce se cancela y puede repetirse después, sobre el mismo enlace.
 Conserva el destino de las nuevas pulsaciones capturadas. La corrección es común
 a Mac y Windows y no añade esperas, sondeos, hilos ni consultas nativas.
 
+Se añaden 24 escenarios de red variable por plataforma, con confirmaciones UDP
+retrasadas, pérdida del 10 % y retenciones de 40 ms. Conservan posición y orden
+de las acciones, sin retrocesos; las pausas impuestas por la red siguen presentes.
+Esta ampliación no cambia los paquetes de la app ni prueba la fluidez física.
+Véase la [validación de red variable](docs/validation/input-0.5.18-datagram-jitter.json).
+
 La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
 último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
 un estado antiguo y alterar las mayúsculas o minúsculas al escribir.
