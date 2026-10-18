@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.15, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.16, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,25 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.16
+La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
+En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
+aunque WindowServer todavía no lo haya aplicado. Evita desplazar la zona donde
+estaba antes el cursor. Conserva ambas direcciones de rueda, sus fracciones y
+las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
+eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
+No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
+
+Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+22 casos: 12 reproducían el fallo anterior y 10 controles ya pasaban. También
+pasan 186 pruebas focalizadas. Se comprueba cada destino de rueda en eventos
+nativos simulados, con movimientos intercalados, ambas direcciones y ráfagas
+de 24 desplazamientos. TLS/UDP son reales en loopback; las APIs de entrada y
+la aplicación tardía del movimiento por el sistema están simuladas.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.16-scroll-position.json. Candidata sin instalar.
 
 REVISIÓN 0.5.15
 La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
@@ -22,7 +41,7 @@ También despierta la comprobación de limpieza después de liberar el callback
 nativo si quedó una liberación fallida; evita aparcarla hasta el siguiente
 intervalo de reposo. Este aviso adicional sólo se emite si queda limpieza pendiente.
 
-Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+La validación de 0.5.15 registró 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
 48 casos y pasan 200 pruebas focalizadas. Se reprodujeron 24 fallos previos:
 16 al preparar la captura y ocho al completar una liberación fallida.
 Se comprueban teclas, clics, rueda y movimiento durante la preparación del cruce,
