@@ -3,8 +3,59 @@
 La 0.5.5 incorporó el transporte a `Service`, `Channel` y `Discovery`.
 Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 `input_hybrid.py`. Los archivos equivalentes de `experiments/` los reutilizan;
-ya no mantienen una segunda implementación. No se ha instalado la candidata.
+ya no mantienen una segunda implementación. La candidata 0.5.24 no está instalada.
 La validación utiliza entrada sintética y sockets reales en loopback.
+
+## Pausas y tiempos por etapa en 0.5.24
+
+La 0.5.24 evita reproducir posiciones antiguas después de una pausa aunque
+entre ellas haya mensajes de mantenimiento del enlace. Conserva las fronteras
+de teclas, botones, rueda y foco. Calcula la espera siguiente con el reloj actual,
+sin añadir de nuevo el tiempo ya consumido al procesar la cola.
+También corrige el reloj de los clics en Mac: un evento Quartz recién creado
+puede tener fecha cero, por lo que ahora se usa el reloj nativo de actividad.
+Windows conserva su conversión con el contador de milisegundos del sistema.
+
+Añade medidas agregadas de captura, cola, recepción, entrega y permisos para
+localizar pausas. Las mediciones ceden ante la entrada: si su bloqueo está
+ocupado, se omite la muestra. No guardan teclas, posiciones ni eventos individuales,
+y no añaden sondeos, hilos ni esperas. El movimiento pendiente se sustituye por
+el más reciente cuando es seguro; los clics y modificadores conservan su orden.
+
+Pasan 2.094 pruebas en Mac, Ruff y la compilación ARM64 con firma, fuentes y
+vista previa comprobadas. La validación nativa de Windows está pendiente.
+Se reproducen 24 fallos con la fuente anterior y se conservan 11 controles.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; estas pruebas
+no demuestran fluidez física ni la causa del vídeo.
+Se acumulan las mejoras sin instalar esta candidata. El 18/10/2026 se comprobó
+0.5.23 instalada en Mac y disponible en Windows mediante el enlace autenticado.
+
+En el vídeo doméstico se observaron pausas de 83–142 ms y algunos tramos con
+separación aproximada de 520 ms. Eso no identifica al router, al capturador o al
+compositor como causa. Las regresiones de cola y de espera se reproducen sin
+teclado activo. Los mensajes PING/PONG no requieren conservar una posición vieja;
+una tecla, clic, rueda, cambio de foco o acción híbrida diferente sí es una frontera.
+
+El ensayo periódico impone tres pausas de 140 ms separadas por 520 ms en el emisor
+o receptor, a 125/1.000 informes por segundo, en ambos sentidos y con TLS/híbrido.
+Comprueba posición final, ausencia de retrocesos, conservación del enlace,
+liberación y escritura posterior. La pausa impuesta permanece.
+
+`network_input.performance` aparece en «Ver diagnóstico…» con contador, media,
+máximo y nueve intervalos fijos por medida. `motion_interval` incluye pausas
+voluntarias: no equivale a Hz del ratón ni a latencia física. `os_motion_age`
+resta la marca de tiempo del SO al recibir un movimiento; descarta fechas
+inexistentes/futuras y en Windows trata el desbordamiento de DWORD. Tampoco
+incluye Bluetooth o presentación en pantalla. `native_delivery` mide la llamada
+a la API, no el trabajo posterior de WindowServer/Windows ni la aplicación.
+Los tiempos de transporte incluyen el procesamiento local señalado en su nombre;
+no son una medida aislada de Wi-Fi. El TTL de permisos sigue siendo 500 ms.
+
+El modelo `benchmarks/input_refresh.py` barre 60–1.000 Hz de informes y 60–240 Hz
+de pantalla con 64 desfases. Bajo esas hipótesis, el desfase por sí solo no
+produce pausas de 80–140 ms. No mide frecuencias reales, ProMotion ni grabación.
+`benchmarks/input_timing.py` mide sólo el coste CPU de los agregados, sin entrada
+nativa. Evidencia: [validación 0.5.24](validation/input-0.5.24-cursor-stutter.json).
 
 ## Recuperación de ráfagas de callbacks en 0.5.23
 
@@ -94,7 +145,8 @@ versiones anteriores siguen comunicándose con sus tramas originales, aunque
 la mejora temporal requiere ambos extremos actualizados.
 
 Mac calcula el contador de clics desde esas fechas y asigna al evento Quartz
-su edad respecto de un evento recién creado. Windows convierte esa edad al
+su edad respecto del reloj nativo (corregido en 0.5.24: el evento nuevo puede
+tener fecha cero). Windows convierte esa edad al
 contador de milisegundos del sistema y conserva el desbordamiento de DWORD,
 evitando el cero que pediría fechar el evento al entregarlo. Ninguno fecha
 un evento nativo en el futuro. Movimiento y rueda no consultan estos relojes.

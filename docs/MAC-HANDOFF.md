@@ -13,7 +13,15 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.23 experimental**, protocolo de control 2 y entrada 1.
+- Candidata conjunta actual: **0.5.24 experimental**, protocolo de control 2 y entrada 1.
+  Selecciona movimiento reciente a través de heartbeats, corrige esperas calculadas
+  con tiempo antiguo y fecha los clics desde el reloj nativo de Mac. Añade medidas
+  agregadas que ceden ante la entrada. Pasan 2.094 pruebas en Mac, Ruff y la
+  compilación ARM64; Windows pendiente. No instalar aún.
+  Evidencia: `validation/input-0.5.24-cursor-stutter.json`. La investigación no
+  demuestra todavía qué causó las pausas del vídeo doméstico. El 18/10/2026 se
+  comprobó 0.5.23 instalada en Mac y disponible por TLS en Windows.
+- Candidata anterior: **0.5.23 experimental**, protocolo de control 2 y entrada 1.
   Recupera ráfagas de callbacks sin llenar prematuramente la cola y cerrar el enlace.
   La cola sigue acotada; cada lote cede turno a la red y continúa si queda trabajo.
   Conserva trayectorias, posiciones de acciones, prioridad local y liberaciones.
@@ -38,8 +46,8 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   16 fallos anteriores reproducidos y 220 pruebas focalizadas en ambos sentidos.
   APIs de sistema simuladas y TLS/UDP reales en loopback; aceptación física pendiente.
   Véanse `validation/input-0.5.21-display-recovery.json` y [MOTION-LAB.md](MOTION-LAB.md).
-  No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
-  0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
+  No instalar candidatas intermedias ni pedir pruebas al usuario ausente. En esa revisión, Mac conservaba
+  0.5.1 y el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
 - La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
   entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos
