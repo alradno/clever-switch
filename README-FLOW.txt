@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.11, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.12, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,28 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.12
+La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
+al centro del rango que representa su píxel: algunas coordenadas anteriores
+caían en el píxel vecino. Al recuperar control local, el primer desplazamiento
+parte de la posición física redondeada y evita un pequeño salto. El punto donde
+se mantiene el cursor mientras controla el otro equipo también usa un píxel
+exacto en pantallas de dimensiones impares. No añade consultas de pantalla por
+movimiento. Mac conserva sus coordenadas fraccionarias y ambos sistemas
+comparten la misma edición y las pruebas de entrada en ambos sentidos.
+
+Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+90 casos y pasan 231 pruebas focalizadas. De las 26 regresiones de precisión,
+22 fallaban antes y cuatro ya protegían el comportamiento del Mac. El banco
+recorre 53.000 posiciones de ocho geometrías: pasa de 453 coordenadas incorrectas
+a ninguna en el modelo de rangos de píxel de Windows. Otros 64 casos mezclan
+19.200 operaciones de movimiento, teclas, botones y rueda con ambos sentidos,
+TLS e híbrido, y un receptor inmediato o con coste simulado de 1 ms.
+Las APIs de entrada están simuladas y TLS/UDP usan loopback. La aceptación
+física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.12-pointer-precision.json. Candidata sin instalar.
 
 REVISIÓN 0.5.11
 La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
@@ -24,7 +46,7 @@ Conserva además el movimiento local que quedó en cola durante un bloqueo breve
 de sesión: entrar al interior y volver al borde sigue iniciando el cruce. Un
 movimiento anterior a otra sesión no se reproduce al recuperar el control.
 
-Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
+La validación de 0.5.11 registró 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
 diez fallos antes de corregirlos; hay 30 casos nuevos y 333 pruebas focalizadas.
 El banco recorre 36 escenarios y conserva las 144 acciones, con duplicados,
 desorden, alteraciones, pérdidas y pausas. Tras una pausa inicial de 150 ms,
