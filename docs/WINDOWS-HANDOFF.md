@@ -1,7 +1,15 @@
-# Continuación en Windows — candidata conjunta 0.5.9 experimental
+# Continuación en Windows — candidata conjunta 0.5.10 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
+anuncia su llegada o retirada, libera los botones cuyo evento de soltar pudo
+perderse y conserva el teclado, el control remoto y el enlace. Windows renueva
+sólo el capturador del dispositivo afectado; Mac observa teclado y ratón por
+separado. Los avisos tardíos de una sesión cerrada se descartan. No añade
+búsquedas periódicas ni hilos. Un cambio de ratón en el receptor no interrumpe
+un arrastre enviado desde el otro equipo.
 
 La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
 remota. Una tecla, clic, rueda o movimiento que quedó en cola durante la
@@ -67,14 +75,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Los 20 casos
-nuevos simulan la carrera durante la aceptación: 16 reproducían pérdida de
-prioridad local y cuatro comprueban que un cursor quieto no interrumpe el cruce.
-También verifican que no se reproduzcan teclas remotas pendientes y que el
-siguiente cruce funcione sobre el mismo enlace. Las 78 pruebas focalizadas usan
-APIs simuladas y TLS/UDP reales en loopback. La aceptación física sigue pendiente. La comprobación
+Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Hay 40 casos
+nuevos: recuperación de los cinco botones, conservación del teclado y del control,
+avisos en cola al terminar un cruce, aislamiento del receptor y vida de los
+observadores. Las 233 pruebas focalizadas usan APIs de entrada simuladas y
+TLS/UDP reales en loopback. También se comprueba el registro y cierre nativos
+de los observadores pasivos, sin abrir HID ni leer informes. La aceptación
+física sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.9-takeover.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.10-mouse-recovery.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 

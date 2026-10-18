@@ -1,8 +1,17 @@
-CLEVERSWITCH 0.5.9 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.10 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.9-takeover.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.10-mouse-recovery.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.10
+La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
+anuncia su llegada o retirada, libera los botones cuyo evento de soltar pudo
+perderse y conserva el teclado, el control remoto y el enlace. Windows renueva
+sólo el capturador del dispositivo afectado; Mac observa teclado y ratón por
+separado. Los avisos tardíos de una sesión cerrada se descartan. No añade
+búsquedas periódicas ni hilos. Un cambio de ratón en el receptor no interrumpe
+un arrastre enviado desde el otro equipo.
 
 MEJORAS 0.5.9
 La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada

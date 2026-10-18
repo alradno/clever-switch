@@ -6,6 +6,34 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Recuperación del ratón por eventos en 0.5.10
+
+La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
+anuncia su llegada o retirada, libera los botones cuyo evento de soltar pudo
+perderse y conserva el teclado, el control remoto y el enlace. Windows renueva
+sólo el capturador del dispositivo afectado; Mac observa teclado y ratón por
+separado. Los avisos tardíos de una sesión cerrada se descartan. No añade
+búsquedas periódicas ni hilos. Un cambio de ratón en el receptor no interrumpe
+un arrastre enviado desde el otro equipo.
+
+Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Hay 40 casos
+nuevos: recuperación de los cinco botones, conservación del teclado y del control,
+avisos en cola al terminar un cruce, aislamiento del receptor y vida de los
+observadores. Las 233 pruebas focalizadas usan APIs de entrada simuladas y
+TLS/UDP reales en loopback. También se comprueba el registro y cierre nativos
+de los observadores pasivos, sin abrir HID ni leer informes. La aceptación
+física sigue pendiente.
+
+Los 28 casos de recuperación con sockets cubren ambos sentidos, TLS e híbrido.
+Se retira el ratón con una tecla y uno de sus cinco botones pulsados: el botón
+se libera, la tecla permanece y después vuelven a funcionar clics y movimiento.
+También se comprueba que no quede inhibido el cruce local y que el receptor
+conserve un arrastre remoto. Dos casos adicionales verifican el aviso en cola
+sin foco o tras retirarlo. No se registró una ejecución funcional previa a
+esta corrección; estos resultados corresponden a la candidata corregida.
+
+Evidencia: [validación 0.5.10](validation/input-0.5.10-mouse-recovery.json).
+
 ## Uso local simultáneo a una llegada en 0.5.9
 
 La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
