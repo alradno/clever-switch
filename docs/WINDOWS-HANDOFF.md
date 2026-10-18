@@ -1,7 +1,14 @@
-# Continuación en Windows — candidata conjunta 0.5.20 experimental
+# Continuación en Windows — candidata conjunta 0.5.21 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
+durante un cambio de configuración. Mac y Windows detienen la comprobación de
+entrada en segundo plano aunque falle la restauración del cursor, conservan
+el cierre pendiente y lo completan cuando vuelve una pantalla válida.
+La suspensión mantiene la espera de disponibilidad existente y el siguiente
+cruce vuelve a registrar sus capturadores. No añade búsquedas periódicas.
 
 La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.
 Si una aplicación lo mueve sin generar un evento de movimiento, el siguiente
@@ -184,15 +191,14 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.836 pruebas por plataforma, Ruff y ambas compilaciones. Hay 30 casos
-nuevos: 12 reproducen el cruce involuntario anterior y 18 controles ya pasaban.
-Las 243 pruebas focalizadas comprueban ambos orígenes, TLS/híbrido, clics primarios
-y adicionales, ambas ruedas y callbacks inmediatos o en cola. Conservan el
-control local, el enlace, el siguiente cruce intencionado y la escritura.
-Las APIs de entrada son simuladas; TLS/UDP usan loopback real. La fluidez,
-Easy-Switch y el consumo físicos siguen pendientes de aceptación conjunta. La comprobación
+Pasan 1.876 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+40 casos con los adaptadores de producción y APIs de sistema simuladas:
+16 reproducen fallos de cierre y recuperación; 24 verifican cambios de tamaño,
+origen y número de pantallas. Pasan 220 pruebas focalizadas. Ambos sentidos
+se comprueban con TLS y transporte híbrido reales en loopback. La fluidez,
+Easy-Switch, pantallas y consumo físicos siguen pendientes de aceptación conjunta. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.20-pointer-baseline.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.21-display-recovery.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 

@@ -6,6 +6,48 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Recuperación tras cambios de pantalla en 0.5.21
+
+La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
+durante un cambio de configuración. Mac y Windows detienen la comprobación de
+entrada en segundo plano aunque falle la restauración del cursor, conservan
+el cierre pendiente y lo completan cuando vuelve una pantalla válida.
+La suspensión mantiene la espera de disponibilidad existente y el siguiente
+cruce vuelve a registrar sus capturadores. No añade búsquedas periódicas.
+
+Pasan 1.876 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+40 casos con los adaptadores de producción y APIs de sistema simuladas:
+16 reproducen fallos de cierre y recuperación; 24 verifican cambios de tamaño,
+origen y número de pantallas. Pasan 220 pruebas focalizadas. Ambos sentidos
+se comprueban con TLS y transporte híbrido reales en loopback. La fluidez,
+Easy-Switch, pantallas y consumo físicos siguen pendientes de aceptación conjunta.
+
+El caso fallido retira temporalmente todas las pantallas de la API simulada
+con Ctrl y un botón pulsados en el destino. El cierre libera esa entrada y
+muestra el cursor, pero no puede restaurar su posición sin una pantalla válida.
+Antes, esa excepción dejaba vivo el trabajador de comprobación de disponibilidad;
+el servicio olvidaba el cierre y la geometría seguía invalidada aunque volvieran
+las pantallas. Ahora conserva el cierre como pendiente, notifica al runtime
+y lo termina antes de preparar otro enlace. Una excepción de suspensión mantiene
+la espera existente; no introduce un sondeo ni una nueva ventana infinita.
+
+Los 40 casos recorren los lectores de geometría y adaptadores de producción,
+con APIs de Windows/Quartz y observadores de pantalla simulados. Veinticuatro
+comprueban redimensionado, coordenadas negativas y un monitor adicional,
+el cambio en cualquiera de los extremos, liberaciones, avisos tardíos y otro
+cruce con movimiento y teclado. Dieciséis comprueban ausencia temporal de
+pantallas, cierre del trabajador y recuperación por disponibilidad o negociación.
+Los mismos 16 fallan con los fuentes de `e6f3991900cf387e12fef06cacefa2eee601102c`; los otros 24 ya pasan.
+
+La vista previa de Mac y la comprobación del ejecutable de Windows no capturan
+entrada. Windows pasa también los bancos existentes de red, ráfagas,
+recuperación, UDP variable y precisión. El reinicio del CFRunLoop falso se hace
+explícitamente en el banco: no prueba un reinicio nativo de Quartz. La prueba
+física conjunta debe incluir conectar y retirar monitores durante el control,
+recuperar teclado y ratón y comprobar reposo, fluidez y consumo.
+
+Evidencia: [validación 0.5.21](validation/input-0.5.21-display-recovery.json).
+
 ## Posición local después de clics y rueda en 0.5.20
 
 La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.

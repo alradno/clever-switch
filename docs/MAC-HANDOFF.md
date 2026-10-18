@@ -13,14 +13,14 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.20 experimental**, protocolo de control 2 y entrada 1.
-  Los clics y ruedas locales actualizan el origen del siguiente movimiento en Mac.
-  Recolocar el cursor sin un evento de movimiento ya no provoca un cruce falso
-  al moverlo verticalmente en el borde. Windows conserva su comportamiento.
-  Pasan 1.836 pruebas por plataforma, Ruff y ambas compilaciones; 30 casos nuevos,
-  12 fallos anteriores reproducidos y 243 pruebas focalizadas en ambos sentidos.
-  APIs de entrada simuladas y TLS/UDP reales en loopback; sin consultas nativas nuevas.
-  Véanse `validation/input-0.5.20-pointer-baseline.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.21 experimental**, protocolo de control 2 y entrada 1.
+  Mac y Windows conservan y completan el cierre si desaparecen temporalmente
+  las pantallas, deteniendo la comprobación de entrada en segundo plano.
+  La disponibilidad o la preparación del enlace permiten recuperar la entrada.
+  Pasan 1.876 pruebas por plataforma, Ruff y ambas compilaciones; 40 casos nuevos,
+  16 fallos anteriores reproducidos y 220 pruebas focalizadas en ambos sentidos.
+  APIs de sistema simuladas y TLS/UDP reales en loopback; aceptación física pendiente.
+  Véanse `validation/input-0.5.21-display-recovery.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
