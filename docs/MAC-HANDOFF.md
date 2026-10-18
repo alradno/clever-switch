@@ -13,7 +13,15 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.22 experimental**, protocolo de control 2 y entrada 1.
+- Candidata conjunta actual: **0.5.23 experimental**, protocolo de control 2 y entrada 1.
+  Recupera ráfagas de callbacks sin llenar prematuramente la cola y cerrar el enlace.
+  La cola sigue acotada; cada lote cede turno a la red y continúa si queda trabajo.
+  Conserva trayectorias, posiciones de acciones, prioridad local y liberaciones.
+  Pasan 2.019 pruebas por plataforma, Ruff y ambas compilaciones; 34 casos nuevos,
+  26 fallos reproducidos con la fuente anterior y ocho controles conservados.
+  APIs nativas simuladas y TLS/UDP reales en loopback. Paquetes sin instalar;
+  aceptación física pendiente. Véase `validation/input-0.5.23-callback-bursts.json`.
+- Candidata anterior: **0.5.22 experimental**, protocolo de control 2 y entrada 1.
   Conserva los tiempos de clic mediante una extensión negociada, en ambos sentidos.
   Los clics en cola y las liberaciones tras reconectar el ratón conservan su orden.
   No añade otro intercambio al cruce ni sincronización periódica de relojes.

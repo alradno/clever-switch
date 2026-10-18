@@ -6,6 +6,57 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Recuperación de ráfagas de callbacks en 0.5.23
+
+La 0.5.23 conserva el enlace al recuperar una ráfaga de entrada pendiente.
+Amplía la cola acotada para cubrir un ratón de 1.000 informes por segundo
+dentro del plazo de actividad existente. El trabajo se procesa por lotes que
+ceden turno a la red y continúan sin esperar al siguiente temporizador.
+Conserva el recorrido del cursor, la posición de clics y rueda, el orden de
+las teclas y la prioridad de la entrada que ya llegó a las aplicaciones locales.
+Mac y Windows comparten la corrección; no añade sondeos ni alarga los plazos.
+
+Pasan 2.019 pruebas por plataforma, Ruff y ambas compilaciones. Las 34 pruebas
+nuevas reproducen 26 fallos con la fuente anterior y conservan ocho controles.
+Incluyen ambos sentidos, TLS e híbrido, entrada a 125/1.000 informes por segundo,
+trayectorias recortadas, acciones intercaladas y exceso de cola con liberación.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real. La pausa impuesta
+sigue existiendo; la fluidez física y la causa de los microcortes domésticos
+siguen pendientes de la prueba conjunta. Candidata preparada sin instalar.
+
+Una sección de sesión ocupada durante 320 ms, con 1.000 informes por segundo,
+llenaba la cola anterior de 256 callbacks y cerraba el enlace con `backpressure`.
+Ocurría antes del plazo de actividad de 600 ms. La cola ahora admite 1.024
+callbacks, con margen para los aproximadamente 600 movimientos de ese intervalo
+y acciones intercaladas. Los plazos del enlace conservan su valor.
+
+Cada drenaje sigue procesando como máximo 256 callbacks. Si quedan más, vuelve
+a avisar al canal antes de devolverle el turno; así no depende de que queden
+avisos del productor ni del siguiente temporizador. La cola vacía no genera
+ese aviso. No se fusionan deltas antes del encaminamiento: llegar a un borde,
+recortarse y retroceder no equivale a sumar todos los desplazamientos.
+
+Las mismas 34 pruebas producen 26 fallos y ocho controles correctos con la
+fuente anterior; todas pasan con la corrección. Doce fallos son recuperación
+de ráfagas, dos son continuación del drenaje y doce son prioridad local tras
+un borde en una cola larga. Los controles comprueban 125 Hz y el cierre seguro
+al superar la capacidad, con teclas y botones pulsados.
+
+Los casos integrados recorren ambos orígenes y TLS/híbrido con adaptadores de
+producción y APIs nativas simuladas. Incluyen 320 movimientos en ráfaga o a
+1.000 Hz, 1.000 movimientos con recorte y vuelta desde el borde lejano, y un
+receptor con coste artificial de 2 ms. Verifican la posición exacta de clics,
+teclas y rueda, las liberaciones y el siguiente cruce sobre el mismo enlace.
+Otra serie conserva la prioridad de entrada ya entregada localmente cuando
+el borde anterior estaba en cola. El exceso sigue limitado y limpia el canal.
+
+La pausa de origen sigue siendo perceptible. Los tiempos del recibo empiezan
+al liberar la sección simulada y terminan al llamar a la API falsa del receptor;
+no miden el periférico, la red doméstica, WindowServer ni la aplicación real.
+No se atribuye a este fallo la causa de los microcortes domésticos. Fluidez,
+Easy-Switch, doble clic, pantallas, reposo/DHCP y consumo quedan para la prueba
+conjunta. Evidencia: [validación 0.5.23](validation/input-0.5.23-callback-bursts.json).
+
 ## Tiempo de clic conservado en 0.5.22
 
 La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
