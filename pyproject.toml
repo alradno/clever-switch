@@ -32,7 +32,7 @@ where = ["src"]
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "experiments"]
 # Import cleverswitch from the working tree. Without this, a non-editable install in the venv
 # shadows src/ and the suite silently tests the installed copy instead of local changes.
 pythonpath = ["src"]
