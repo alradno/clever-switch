@@ -13,16 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.13 experimental**, protocolo de control 2 y entrada 1.
-  Conserva la posición local al cancelar un arrastre remoto en ambos sistemas,
-  incluso con movimiento remoto en curso. Suelta botones y modificadores antes
-  de restaurarla; una liberación pendiente impide recolocar el cursor.
-  El historial de clics del Mac incluye los clics locales y sus contadores nativos.
-  Mantiene precisión de píxeles, recuperación finita de UDP, teclado y ratón.
-  Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones; 70 casos nuevos,
-  44 fallos previos entre 56 casos comparados y 293 pruebas focalizadas.
+- Candidata conjunta actual: **0.5.14 experimental**, protocolo de control 2 y entrada 1.
+  Un estado antiguo de compañero no disponible ya no cierra un canal de entrada
+  nuevo y preparado. Conserva canal y observadores en ambos sistemas; la falta
+  de disponibilidad local sigue liberando ambos dispositivos. Sin canal preparado,
+  mantiene la espera y los límites existentes. No añade sondeos ni hilos.
+  Mantiene precisión, posición local, secuencias de clics y recuperación de UDP,
+  teclado y ratón. Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones;
+  26 casos nuevos, 16 fallos previos reproducidos y 110 pruebas focalizadas.
   Las APIs de entrada están simuladas; TLS/UDP son reales en loopback.
-  Véanse `validation/input-0.5.13-local-pointer.json` y [MOTION-LAB.md](MOTION-LAB.md).
+  Véanse `validation/input-0.5.14-readiness.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

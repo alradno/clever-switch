@@ -1,8 +1,17 @@
-CLEVERSWITCH 0.5.13 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.14 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.13-local-pointer.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.14-readiness.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.14
+La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
+una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
+la disponibilidad, conserva ese canal y sus observadores en Mac y Windows.
+La sesión y los permisos locales siguen comprobándose; un fallo local libera
+la entrada. Sin un canal preparado, el estado no disponible sigue impidiendo
+iniciar la captura o reintentar la conexión. No añade sondeos, hilos ni cambios
+de protocolo y conserva la espera pasiva cuando el compañero está ausente.
 
 MEJORAS 0.5.13
 La 0.5.13 conserva la posición del ratón local cuando recupera el control

@@ -6,6 +6,44 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Disponibilidad actual después de recuperar el enlace en 0.5.14
+
+La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
+una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
+la disponibilidad, conserva ese canal y sus observadores en Mac y Windows.
+La sesión y los permisos locales siguen comprobándose; un fallo local libera
+la entrada. Sin un canal preparado, el estado no disponible sigue impidiendo
+iniciar la captura o reintentar la conexión. No añade sondeos, hilos ni cambios
+de protocolo y conserva la espera pasiva cuando el compañero está ausente.
+
+Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+26 casos y pasan 110 pruebas focalizadas. De los 26 casos, 16 fallaban con 0.5.13.
+Se comprueba el estado antiguo en cualquiera de los extremos, con el control
+local o remoto, en ambos sentidos y con TLS o transporte híbrido. Se conservan
+las teclas, el arrastre, el canal y los observadores; la indisponibilidad local
+sigue liberando ambos dispositivos. Las APIs de entrada están simuladas y TLS/UDP
+usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+El estado del compañero recibido por el canal de control es una instantánea.
+Puede describir una sesión o configuración anterior mientras el canal de entrada
+ya ha completado su negociación autenticada. El runtime consultaba esa instantánea
+antes de reconocer el canal actual y lo suspendía aunque pudiera usarlo.
+
+Las pruebas recorren el runtime y los adaptadores de producción con APIs nativas
+simuladas y TLS/UDP reales en loopback. Fuerzan el estado antiguo en cada extremo,
+antes o durante un foco remoto, comprueban que Shift y un arrastre permanecen
+activos, envían más teclas y movimiento y vuelven al foco local sobre el mismo canal.
+También comprueban que una indisponibilidad local actual libera teclas, botones,
+captura y visibilidad, y que sin canal preparado no comienza una conexión nueva.
+
+La comparación utiliza 0.5.13 (`5f7af7c2d8f923e467d3fc9a1ad4d6339bdace7e`).
+Los bancos de red, ráfagas, recuperación UDP y precisión de píxeles vuelven a pasar
+en Windows. No se captura ni inyecta entrada real y no se alteran pantallas,
+permisos, protecciones ni ajustes de red. Reposo, DHCP y fluidez física siguen
+pendientes de la prueba conjunta con los periféricos y la red doméstica.
+
+Evidencia: [validación 0.5.14](validation/input-0.5.14-readiness.json).
+
 ## Posición local y secuencias de clics en 0.5.13
 
 La 0.5.13 conserva la posición del ratón local cuando recupera el control

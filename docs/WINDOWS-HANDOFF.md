@@ -1,7 +1,15 @@
-# Continuación en Windows — candidata conjunta 0.5.13 experimental
+# Continuación en Windows — candidata conjunta 0.5.14 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
+una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
+la disponibilidad, conserva ese canal y sus observadores en Mac y Windows.
+La sesión y los permisos locales siguen comprobándose; un fallo local libera
+la entrada. Sin un canal preparado, el estado no disponible sigue impidiendo
+iniciar la captura o reintentar la conexión. No añade sondeos, hilos ni cambios
+de protocolo y conserva la espera pasiva cuando el compañero está ausente.
 
 La 0.5.13 conserva la posición del ratón local cuando recupera el control
 durante un arrastre remoto. Si había un movimiento remoto en curso, primero
@@ -106,16 +114,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
-70 casos y pasan 293 pruebas focalizadas. De 56 casos comparados con 0.5.12,
-44 fallaban antes y 12 ya pasaban. Otros 12 casos comprueban fallos de preparación,
-restauración y liberación. Se prueba movimiento, clic y rueda locales durante
-un arrastre remoto, incluso con un movimiento remoto en curso, en ambos sentidos
-y con TLS o transporte híbrido. También se verifica que teclas y movimiento
-usan la misma cola al recuperar el teclado. Las APIs de entrada están simuladas y TLS/UDP
+Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+26 casos y pasan 110 pruebas focalizadas. De los 26 casos, 16 fallaban con 0.5.13.
+Se comprueba el estado antiguo en cualquiera de los extremos, con el control
+local o remoto, en ambos sentidos y con TLS o transporte híbrido. Se conservan
+las teclas, el arrastre, el canal y los observadores; la indisponibilidad local
+sigue liberando ambos dispositivos. Las APIs de entrada están simuladas y TLS/UDP
 usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.13-local-pointer.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.14-readiness.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
