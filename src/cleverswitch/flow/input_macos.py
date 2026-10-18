@@ -298,7 +298,7 @@ class MacInput:
     def restore(self, point):
         if self.q.CGWarpMouseCursorPosition(point) != 0:
             raise OSError("No se pudo colocar el cursor")
-        self.previous = None
+        self.previous = tuple(point)
 
     def capture(self, enabled):
         if bool(enabled) == self.captured and not (not enabled and (self.hidden or self.restore_pending is not None)):

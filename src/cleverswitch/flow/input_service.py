@@ -213,9 +213,16 @@ class Service:
             return
         self._drain()
         session = self.session
-        if session.unreleased or session.pending_locks is not None or session.pending_capture:
-            self.fail("cleanup")
-            return
+        # A native return can still be restoring lock keys/capture. Inspect
+        # its outcome only after the transition releases its lock; transient
+        # recovery fields do not mean cleanup failed. Never wait on the hook.
+        if session.lock.acquire(blocking=False):
+            try:
+                if session.unreleased or session.pending_locks is not None or session.pending_capture:
+                    self.fail("cleanup")
+                    return
+            finally:
+                session.lock.release()
         now = time.monotonic()
         if now >= self.next_check:
             self.next_check = now + 0.1
@@ -318,14 +325,20 @@ class Service:
             return False
         if session.phase in ("sending", "requesting"):
             px, py = self.remote_position
-            px, py = px + dx, py + dy
-            fraction = self.remote.crossing(self.other_side, px, py, dx)
-            if fraction is not None and not self.keys and not self.buttons:
+            crossing = self.remote.crossing_motion(self.other_side, px, py, dx, dy)
+            if crossing is not None and not self.keys and not self.buttons:
+                fraction, remaining_x, remaining_y = crossing
+                x, y = self.local.entry(self.side, fraction)
+                point = self.local.clamp(x + remaining_x, y + remaining_y)
                 session.leave()
-                self.backend.restore(self.local.entry(self.side, fraction))
-                self.armed = False
+                self.backend.restore(point)
+                # Real motion that already travelled into the local screen can
+                # reverse immediately. A tiny return still requires rearming;
+                # a parked cursor or an arrival warp must not bounce back.
+                inward = self.local.right - point[0] if self.side == "right" else point[0] - self.local.left
+                self.armed = inward >= 8
                 return True  # This movement was consumed by the focus transition.
-            self.remote_position = self.remote.clamp(px, py)
+            self.remote_position = self.remote.clamp(px + dx, py + dy)
             return session.input(Kind.MOVE, *self.remote_position)
         desktop = self.local
         inward = desktop.right - x if self.side == "right" else x - desktop.left

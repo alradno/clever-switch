@@ -84,3 +84,23 @@ class Desktop:
         ):
             return None
         return max(0.0, min(1.0, (y - self.top) / max(1, self.bottom - self.top)))
+
+    def crossing_motion(self, side, x, y, dx, dy):
+        """Locate a segment's edge crossing and preserve motion beyond it.
+
+        Captured input has an unclamped destination. Its final y can lie outside
+        a display even when the trajectory crossed a real edge earlier (or the
+        opposite, across a gap). Use the intersection, not that final y.
+        """
+        if side not in ("left", "right"):
+            raise ValueError("Borde inválido")
+        if not dx:
+            return None
+        boundary = self.left if side == "left" else self.right
+        portion = (boundary - x) / dx
+        if not 0 <= portion <= 1:
+            return None
+        fraction = self.crossing(side, boundary, y + dy * portion, dx)
+        if fraction is None:
+            return None
+        return fraction, dx * (1 - portion), dy * (1 - portion)

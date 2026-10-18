@@ -380,6 +380,7 @@ class WindowsInput:
         x = round((point[0] - desktop.left) * 65535 / (desktop.right - desktop.left))
         y = round((point[1] - desktop.top) * 65535 / (desktop.bottom - desktop.top))
         self._mouse_input(0x8000 | 0x4000 | 0x2000 | 1, x=max(0, min(65535, x)), y=max(0, min(65535, y)))
+        self.previous = tuple(point)
 
     def capture(self, enabled):
         # ShowCursor uses the calling thread's counter. Hide and show must run
