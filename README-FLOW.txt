@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.18, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.19, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,26 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.19
+La 0.5.19 conserva el control local si un cruce quedó en cola y después
+llegó una tecla, clic, rueda o movimiento a la aplicación local antes de empezar
+la captura. Al procesar esa entrada cancela el cruce que acaba de iniciarse,
+sin reenviarla al otro equipo. Conserva la posición local, las liberaciones y
+el enlace para el siguiente cruce. Un cursor quieto no lo cancela y los eventos
+de un periodo local anterior no afectan a un cruce nuevo. La corrección es común
+a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
+la ruta de los callbacks que se procesan al momento.
+
+Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
+quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
+pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
+Las APIs nativas y la entrega a aplicaciones están simuladas; TLS/UDP usan
+loopback real. La aceptación física de fluidez, recuperación y consumo
+sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.19-queued-edge.json. Candidata sin instalar.
 
 REVISIÓN 0.5.18
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
