@@ -274,7 +274,7 @@
   ],
   "remaining": [
     "Physical joint acceptance and effective permissions of the final installed signature",
-    "Measure input transport jitter and already submitted TCP backlog under network stalls before choosing further transport changes",
+    "Measure physical Wi-Fi/native input jitter and packet retransmission beyond the separately recorded ordered ciphertext relay experiment",
     "Verify keyboard Easy-Switch, monitors, sleep/wake and DHCP in both directions"
   ],
   "unchanged": [
@@ -285,5 +285,6 @@
     "permissions and security software",
     "control protocol 2 and input protocol 1"
   ],
-  "prior_display_evidence": "docs/validation/input-0.5.3-displays.json"
+  "prior_display_evidence": "docs/validation/input-0.5.3-displays.json",
+  "network_delay_evidence": "docs/validation/input-0.5.4-network-delay.json"
 }
