@@ -40,8 +40,10 @@ pérdida de paquetes. La coalescencia no puede eliminar una pausa de transporte.
 
 El [laboratorio de movimiento](docs/MOTION-LAB.md) estudia una vía cifrada que
 tolera pérdidas sin detener los movimientos posteriores y conserva las posiciones
-de las acciones. Es un prototipo independiente; todavía no está incluido en la
-candidata 0.5.4 ni en las apps instaladas.
+de las acciones. Ya prueba claves por conexión mediante TLS real, una cola UDP
+limitada y compatibilidad con el servicio fiable actual. Es un prototipo
+independiente; todavía no está incluido en la candidata 0.5.4 ni en las apps
+instaladas. Queda conectar las piezas al circuito completo de entrada.
 
 Se conserva la recuperación de pantallas de 0.5.3, que responde a los avisos
 nativos de cambio de pantalla en ambos equipos.
