@@ -13,15 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.5 experimental**, protocolo de control 2 y entrada 1.
-  Movimiento UDP cifrado integrado con acciones fiables y posición exacta en TLS.
-  La capacidad se negocia; sin UDP o con un compañero anterior, continúa por TLS.
-  Conserva puertos, configuración, recuperación del teclado, pantallas y espera pasiva.
-  Pruebas: 1.191 por plataforma, ambas compilaciones y Ruff correctos. Mac tiene
-  cobertura 92,56 %; Windows, 92,79 %. El banco integrado recorre
-  52 casos, ambos sentidos, retención de TLS y pérdida artificial de UDP.
-  Véanse `validation/input-0.5.5-hybrid.json` y [MOTION-LAB.md](MOTION-LAB.md) para
-  commits, compilaciones, CI y límites. `experiments/` reutiliza los módulos de producción.
+- Candidata conjunta actual: **0.5.6 experimental**, protocolo de control 2 y entrada 1.
+  Aplica la posición más reciente de cada ráfaga UDP autenticada, respetando las
+  fronteras de clics, teclas y foco. Una ráfaga de 64 movimientos requiere una
+  aplicación y un ACK; no añade temporizadores ni búsquedas.
+  Conserva el transporte híbrido de 0.5.5, recuperación del teclado, pantallas y espera pasiva.
+  Pasan 1.205 pruebas por plataforma, Ruff y ambas compilaciones; cobertura Mac
+  92,59 % y Windows 92,79 %. Se verifican 54 casos de ráfagas y 52 de red
+  por plataforma. El fallo inicial de CI fue una carrera reproducida en la espera
+  de arranque de la fixture; el banco espera ahora ambos canales listos.
+  Véanse `validation/input-0.5.6-bursts.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

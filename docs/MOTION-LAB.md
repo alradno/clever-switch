@@ -1,10 +1,39 @@
 # Movimiento cifrado integrado en la entrada continua
 
-La candidata 0.5.5 incorpora el transporte a `Service`, `Channel` y `Discovery`.
+La 0.5.5 incorporó el transporte a `Service`, `Channel` y `Discovery`.
 Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 `input_hybrid.py`. Los archivos equivalentes de `experiments/` los reutilizan;
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
+
+## Recepción de ráfagas en 0.5.6
+
+La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
+juntos. Autentica todo el lote y aplica la posición más reciente entre cada clic,
+tecla o cambio de foco. No añade espera para agrupar. Los mensajes alterados,
+repetidos o antiguos no sustituyen una posición válida; cancelar el control
+descarta los movimientos pendientes. Se aplica igual en ambos sentidos.
+
+En el banco local de Mac, una ráfaga de 64 movimientos con un coste simulado
+de 1 ms por aplicación pasa de unos 86 ms a 1,5 ms hasta la posición final.
+Son medianas de recuperación del receptor en loopback, no latencia física.
+La ráfaga necesita una aplicación y una confirmación, frente a 64 antes.
+El banco recorre 54 casos por versión, con 1/16/64 movimientos y tres costes.
+Reproducir con benchmarks/input_bursts.py.
+
+Pasan 1.205 pruebas por plataforma, Ruff y ambas compilaciones. Hay 14 casos
+nuevos: dos regresiones de servicio fallaban antes de la corrección y doce
+casos adicionales cubren autenticación, orden y cancelación. La cola sigue
+limitada a 64; se preservan el orden de sondas y recibos y el mayor serial
+dentro de cada frontera. El diagnóstico añade `received_moves_coalesced`
+dentro del transporte de movimiento, sin conservar datos de entrada.
+
+El primer CI de Windows detectó una carrera de la fixture compartida: esperaba
+que existiera el canal, pero no que ambos trabajadores estuvieran listos.
+Se reprodujo reteniendo cada trabajador y se corrigió la espera del banco.
+Las aserciones de disponibilidad y de ausencia de sondeo se conservan.
+
+Evidencia actual: [validación 0.5.6](validation/input-0.5.6-bursts.json).
 
 ## Qué se ha construido
 

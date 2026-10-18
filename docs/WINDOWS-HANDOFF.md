@@ -1,9 +1,22 @@
-# Continuación en Windows — candidata conjunta 0.5.5 experimental
+# Continuación en Windows — candidata conjunta 0.5.6 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
+juntos. Autentica todo el lote y aplica la posición más reciente entre cada clic,
+tecla o cambio de foco. No añade espera para agrupar. Los mensajes alterados,
+repetidos o antiguos no sustituyen una posición válida; cancelar el control
+descarta los movimientos pendientes. Se aplica igual en ambos sentidos.
+
+En el banco local de Mac, una ráfaga de 64 movimientos con un coste simulado
+de 1 ms por aplicación pasa de unos 86 ms a 1,5 ms hasta la posición final.
+Son medianas de recuperación del receptor en loopback, no latencia física.
+La ráfaga necesita una aplicación y una confirmación, frente a 64 antes.
+El banco recorre 54 casos por versión, con 1/16/64 movimientos y tres costes.
+Reproducir con benchmarks/input_bursts.py.
+
+Desde 0.5.5, la app envía movimiento cifrado por UDP y mantiene teclas, clics,
 rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
 cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
 rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
@@ -16,8 +29,8 @@ se vuelve a probar con cada cruce. Las claves
 son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
 transporte y contadores agregados, sin guardar teclas ni historial del cursor.
 
-En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
-artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+La validación de 0.5.5 recorrió 52 casos por plataforma con TLS mutuo y UDP
+locales. Una retención artificial de 80 ms en TLS produjo pausas de movimiento de 81–88 ms con el
 transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
 Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
 artificial de uno de cada diez datagramas. Son medidas locales con entrada
@@ -25,9 +38,9 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.191 pruebas por plataforma, Ruff y ambas compilaciones. La comprobación
+Pasan 1.205 pruebas por plataforma, Ruff y ambas compilaciones. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.5-hybrid.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.6-bursts.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
