@@ -48,6 +48,13 @@ def native_callback(method):
         finally:
             if session is not None:
                 session.lock.release()
+                # The idle worker may have consumed the reset wake while this
+                # callback still owned the lock and could not inspect cleanup.
+                # Wake it after unlock only when a native release needs attention.
+                if session is self.session and self.channel is not None and (
+                    session.unreleased or session.pending_locks is not None or session.pending_capture
+                ):
+                    self.channel._wake()
 
     return bounded
 
