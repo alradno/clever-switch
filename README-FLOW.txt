@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.4, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.5, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,37 +10,34 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
-REVISIÓN 0.5.4
-La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
-escribir. Así evita enviar primero una posición antigua al terminar una espera
-de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
-bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
-parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+REVISIÓN 0.5.5
+La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
+cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
+rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
+Si UDP falla o el compañero es una versión anterior, continúa por TLS.
 
-En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
-escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
-a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
-no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
-benchmarks/input_freshness.py.
+Se reutiliza UDP 47655, junto a TCP 47654 y la vinculación existente. No hay
+puertos nuevos ni cambios de firewall. La confirmación de la última posición
+detiene sus reintentos; si se pierde, tienen plazo finito. Una vía fallida no
+se vuelve a probar con cada cruce. Las claves
+son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
+transporte y contadores agregados, sin guardar teclas ni historial del cursor.
 
-Se conservan las mejoras de pantallas de 0.5.3:
-La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
-Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
-a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
-pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
-entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
-hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
-Un cambio local de pantalla permite una nueva ventana finita de reconexión;
-los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
+En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
+artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
+Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
+artificial de uno de cada diez datagramas. Son medidas locales con entrada
+sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
+frenando el movimiento que la sucede para conservar su significado.
+Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado.
-Se conservan las mejoras 0.5.1/0.5.2 de teclado, permisos, transporte y diagnóstico.
-La candidata se prepara para probar ambos equipos juntos al volver el usuario.
-No se instala ahora: Mac conserva 0.5.1 y el último estado comprobado del Windows
-doméstico es 0.5.0. La aceptación física sigue pendiente, incluidos cambios de
-pantalla, fluidez y recuperación del teclado. Véase docs/INPUT-LAN.txt y
-la evidencia docs/validation/input-0.5.4-freshness.json.
+Pasan 1.191 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+docs/validation/input-0.5.5-hybrid.json. Conserva las mejoras de recuperación de
+teclado, pantallas, permisos y ahorro. La candidata no se instala ahora:
+Mac conserva 0.5.1 y el último Windows observado tenía 0.5.0. La aceptación
+con periféricos reales en ambos sentidos queda para la prueba conjunta.
 
 HISTORIAL DEL MODO FÍSICO
 REVISIÓN 0.4.6: borde de 80 ms; cursor colocado tras la primera prueba nueva del
