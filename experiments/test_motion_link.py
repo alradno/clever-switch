@@ -17,7 +17,7 @@ def agreements():
 @pytest.mark.parametrize("capabilities", [None, {}, [], {CAPABILITY: True}, {CAPABILITY: 1.0}, {CAPABILITY: 2}])
 def test_legacy_capability_needs_no_entropy_or_keys(capabilities, monkeypatch):
     entropy = Mock(side_effect=AssertionError("No entropy needed for old peers"))
-    monkeypatch.setattr("experiments.motion_link.secrets.token_hex", entropy)
+    monkeypatch.setattr("cleverswitch.flow.input_motion_link.secrets.token_hex", entropy)
     client = Negotiation("windows", "lab-link")
     assert not supports_motion(capabilities)
     assert client.offer(capabilities) is None

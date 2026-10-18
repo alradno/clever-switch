@@ -259,7 +259,7 @@ def test_bootstrap_read_failure_retires_state(role, monkeypatch):
         retired.append(item)
 
     monkeypatch.setattr(Negotiation, "close", close)
-    monkeypatch.setattr("experiments.motion_link.receive", Mock(side_effect=TimeoutError))
+    monkeypatch.setattr("cleverswitch.flow.input_motion_link.receive", Mock(side_effect=TimeoutError))
     with pytest.raises(TimeoutError):
         bootstrap(connection, link)
     assert len(retired) == 1 and retired[0].state == "closed" and retired[0].codec is None
@@ -279,7 +279,7 @@ def test_failed_reply_write_retires_server_key(monkeypatch):
         codecs.append(item.codec)
 
     monkeypatch.setattr(Negotiation, "_codec", track)
-    monkeypatch.setattr("experiments.motion_link.receive", lambda *_: {"version": 1, "challenge": "a" * 32})
+    monkeypatch.setattr("cleverswitch.flow.input_motion_link.receive", lambda *_: {"version": 1, "challenge": "a" * 32})
     connection.sendall.side_effect = OSError
     with pytest.raises(OSError):
         bootstrap(connection, link)
