@@ -193,6 +193,25 @@ def test_windows_mouse_callback_uses_anchor_and_filters_own_warps(win):
     backend.captured = False
 
 
+@pytest.mark.parametrize("platform", ["win", "mac"])
+@pytest.mark.parametrize("warp_notification", [False, True])
+def test_first_physical_motion_after_restore_uses_the_restored_position(platform, warp_notification, request):
+    backend, api = request.getfixturevalue(platform)
+    backend.previous = (500, 300)
+    backend.restore((100, 100))
+    if platform == "win":
+        if warp_notification:
+            warp = MouseHook(Point(100, 100), 0, 0, 0, EVENT_TAG)
+            backend._mouse(0, 0x200, c.addressof(warp))
+        physical = MouseHook(Point(120, 105), 0, 0, 0, 0)
+        backend._mouse(0, 0x200, c.addressof(physical))
+    else:
+        if warp_notification:
+            backend._physical(api.kCGEventMouseMoved, {"position": (100, 100)})
+        backend._physical(api.kCGEventMouseMoved, {"position": (120, 105)})
+    backend.sink.motion.assert_called_with(120, 105, 20, 5)
+
+
 def test_windows_hide_restore_and_unhook_run_on_same_owner_thread(win):
     backend, api = win
     backend.start(backend.sink)

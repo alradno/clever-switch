@@ -80,10 +80,11 @@ def test_continuous_border_cross_and_return_without_bluetooth_or_dwell(services,
     until(lambda: target.session.phase == "local")
     assert peer.session.phase == "local"
     assert len(peer.backend.restored) == 1
-    # A parked cursor or the arrival warp cannot immediately bounce back.
-    x = peer.backend.desktop.right if peer.role == "windows" else 0
-    assert not peer.motion(x, 250, 0, 0)
-    assert not peer.motion(x, 250, 1 if peer.role == "windows" else -1, 0)
+    # Check the actual return position, which now includes the remaining motion.
+    x, y = peer.backend.restored[-1]
+    step = 1 if peer.role == "windows" else -1
+    assert not peer.motion(x, y, 0, 0)
+    assert not peer.motion(x + step, y, step, 0)
 
 
 def test_held_mouse_button_or_key_does_not_start_a_remote_drag(services):
@@ -280,3 +281,55 @@ def test_deferred_epoch_is_checked_after_acquiring_the_session_lock():
     service.deferred.put((motion, (1, 2, 3, 4), session, 10))
     service._drain()
     assert not delivered
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_health_check_does_not_abort_focus_during_normal_lock_restoration(role):
+    backend = DesktopBackend()
+    backend.lock_state = lambda: (0, 7)
+    service = Service(Mock(config={"role": role}), backend)
+    service.session = Session(role, backend.desktop, backend, lambda packet: None)
+    service.channel = Mock(failure=None)
+    service.next_check = service.next_geometry = float("inf")
+    entered, release = threading.Event(), threading.Event()
+
+    def locks(state, mask):
+        entered.set()
+        assert release.wait(1)
+        return ()
+
+    backend.lock_keys = locks
+    assert service.session.enter(100, 200)
+    worker = threading.Thread(target=service.session.leave)
+    worker.start()
+    try:
+        assert entered.wait(1)
+        start = time.monotonic()
+        service._tick()
+        assert time.monotonic() - start < 0.1
+        service.channel.request_close.assert_not_called()
+    finally:
+        release.set()
+        worker.join(1)
+    assert not worker.is_alive()
+    service._tick()
+    assert service.session.phase == "local" and service.session.pending_locks is None
+    assert not backend.captured
+    service.channel.request_close.assert_not_called()
+
+
+@pytest.mark.parametrize("role", ["windows", "mac"])
+def test_health_check_cancels_after_lock_restoration_actually_fails(role):
+    backend = DesktopBackend()
+    backend.lock_state = lambda: (0, 7)
+    backend.lock_keys = Mock(side_effect=OSError("synthetic failure"))
+    service = Service(Mock(config={"role": role}), backend)
+    service.session = Session(role, backend.desktop, backend, lambda packet: None)
+    service.channel = Mock(failure=None)
+    service.next_check = service.next_geometry = float("inf")
+    assert service.session.enter(100, 200)
+    service.session.leave()
+    service._tick()
+    assert service.session.pending_locks == (0, 7)
+    assert service.channel.failure == "cleanup"
+    service.channel.request_close.assert_called_once()

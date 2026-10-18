@@ -14,7 +14,7 @@ from cleverswitch.flow.input_keys import MAC
 from cleverswitch.flow.input_macos import MacInput
 from cleverswitch.flow.input_service import Service
 from cleverswitch.flow.input_windows import KeyHook, MouseHook, Point, WindowsInput
-from cleverswitch.flow.network import Link
+from cleverswitch.flow.network import Discovery, Link
 
 from .test_flow import paired as paired
 from .test_flow import paired_tls as paired_tls
@@ -22,8 +22,8 @@ from .test_input_native import Quartz, User32
 from .test_input_stream import until
 
 
-@pytest.fixture
-def native_peers(paired_tls):
+@pytest.fixture(params=[False, True], ids=["reliable", "hybrid"])
+def native_peers(paired_tls, request):
     windows_api, mac_api = User32(), Quartz()
     windows_api.CallNextHookEx.return_value = 0
     kernel = Mock()
@@ -36,16 +36,25 @@ def native_peers(paired_tls):
     ]
     links = [Link(pairing, lambda op, args: {}, 0) for pairing in paired_tls]
     peers = [Service(link, backend, enabled=True) for link, backend in zip(links, backends, strict=True)]
+    discoveries = [Discovery(link, 0) for link in links] if request.param else []
     try:
         for link in links:
             link.start()
+        for discovery in discoveries:
+            discovery.start()
+        if discoveries:
+            discoveries[0].peer_port, discoveries[1].peer_port = discoveries[1].port, discoveries[0].port
         links[0].port, links[1].port = links[1].port, links[0].port
-        peers[0].connect()
-        until(lambda: peers[1].channel is not None)
+        peers[0].connect(peers[1].capabilities() if request.param else None)
+        until(lambda: all(peer._available() for peer in peers))
+        if request.param:
+            until(lambda: all(peer.channel.lane.probe.state == "ready" for peer in peers))
         yield peers, windows_api, mac_api
     finally:
         for peer in peers:
             peer.close()
+        for discovery in discoveries:
+            discovery.close()
         for link in links:
             link.close()
 
@@ -108,6 +117,32 @@ def test_full_public_api_adapters_cross_type_click_and_return_over_tls(native_pe
     until(lambda: all(peer.session.phase == "local" for peer in peers))
     assert all(not peer.backend.captured and not peer.backend.hidden for peer in peers)
     assert all(not peer.session.keys and not peer.session.buttons for peer in peers)
+
+
+@pytest.mark.parametrize("source", [0, 1])
+def test_rapid_round_trips_preserve_first_physical_report_after_return(native_peers, source):
+    peers, _, _ = native_peers
+    sender, receiver = peers[source], peers[1 - source]
+    enter(sender)
+    direction = 1 if source == 0 else -1
+    edge = 1919 if source == 0 else 0
+    for _ in range(16):
+        epoch = sender.session.epoch
+        x, y = sender.backend.anchor
+        motion(sender, int(x + direction * 100), int(y))
+        motion(sender, int(x - direction * 300), int(y))
+        until(lambda: receiver.session.phase == "local")
+        assert sender.backend.previous == pytest.approx((1719 if source == 0 else 200, 400))
+        assert not sender.backend.captured and not sender.backend.hidden
+        # This is the first native physical callback after the programmatic
+        # placement: no extra report or inward detour may be needed to cross.
+        motion(sender, edge, 400)
+        until(lambda: sender.session.phase == "sending")
+        assert sender.session.epoch != epoch
+        assert receiver.session.phase == "receiving"
+    sender.session.leave()
+    until(lambda: receiver.session.phase == "local")
+    assert all(not peer.backend.captured and not peer.backend.hidden for peer in peers)
 
 
 def test_full_path_secure_input_change_releases_modifier_and_restores_windows_cursor(native_peers):
