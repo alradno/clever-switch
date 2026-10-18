@@ -312,6 +312,9 @@ class Quartz:
         x, y = value.get("position", self.position)
         return SimpleNamespace(x=x, y=y)
 
+    def CGEventSetLocation(self, value, point):
+        value["position"] = tuple(point)
+
     def CGWarpMouseCursorPosition(self, point):
         self.position = point
         self.warps.append(point)
@@ -343,7 +346,10 @@ class Quartz:
         return {"kind": kind, "position": point, 3: button, "flags": self.flags}
 
     def CGEventCreateScrollWheelEvent(self, source, units, axes, vertical, horizontal):
-        return {"kind": self.kCGEventScrollWheel, 93: vertical, 94: horizontal, "flags": self.flags}
+        return {
+            "kind": self.kCGEventScrollWheel, 93: vertical, 94: horizontal,
+            "flags": self.flags, "position": self.position,
+        }
 
     def CGEventPost(self, tap, value):
         self.events.append(value.copy())
