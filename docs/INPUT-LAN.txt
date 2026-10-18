@@ -1,8 +1,15 @@
 CLEVERSWITCH 0.5.16 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
 validation/input-0.5.16-scroll-position.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+VALIDACIÓN DE CONTINUIDAD
+64 secuencias nuevas mezclan 6.144 operaciones con reconexiones de teclado y
+ratón, escritura, arrastre, rueda y movimiento. Conservan orden, posiciones,
+liberaciones, enlace y siguiente cruce, en ambos sentidos y con entrada en
+cola. Las APIs nativas están simuladas; falta la prueba física conjunta.
+El código operativo de la candidata 0.5.16 se conserva.
 
 MEJORAS 0.5.16
 La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.

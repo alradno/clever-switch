@@ -19,9 +19,12 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   enseguida. Windows conserva su orden nativo; se prueban ambos sentidos con TLS
   y transporte híbrido. Sin nuevas esperas, consultas del cursor, sondeos ni hilos.
   Mantiene prioridad local y recuperación de enlace, UDP, teclado y ratón.
-  Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones; 22 casos nuevos,
-  12 fallos previos reproducidos y 186 pruebas focalizadas. Las APIs de entrada y
-  la aplicación tardía del movimiento son simuladas; TLS/UDP usan loopback real.
+  Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. Conserva los
+  22 casos de rueda y añade 64 secuencias de continuidad con 6.144 operaciones
+  generadas: reconexiones, escritura, arrastre, rueda y movimiento, con entrega
+  inmediata o en cola. Preservan orden, posiciones, liberaciones y siguiente
+  cruce. No se detectó otro fallo ni se cambió el código operativo. Las APIs
+  de entrada son simuladas; TLS/UDP usan loopback real.
   Véanse `validation/input-0.5.16-scroll-position.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,

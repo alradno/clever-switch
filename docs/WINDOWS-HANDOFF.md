@@ -133,12 +133,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
-22 casos: 12 reproducían el fallo anterior y 10 controles ya pasaban. También
-pasan 186 pruebas focalizadas. Se comprueba cada destino de rueda en eventos
-nativos simulados, con movimientos intercalados, ambas direcciones y ráfagas
-de 24 desplazamientos. TLS/UDP son reales en loopback; las APIs de entrada y
-la aplicación tardía del movimiento por el sistema están simuladas.
+Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
+de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
+Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
+reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.
+Se comprueban ambos orígenes, TLS/híbrido y entrega inmediata o en cola. Cada
+acción conserva orden y posición; las teclas y botones pendientes se liberan,
+el canal sigue abierto y funciona el siguiente cruce. La prueba ampliada no
+detectó otro fallo y no cambió el código operativo de 0.5.16.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real.
 La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
 en `validation/input-0.5.16-scroll-position.json`. `experiments/` reutiliza los módulos de

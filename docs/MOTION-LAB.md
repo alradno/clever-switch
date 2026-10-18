@@ -6,6 +6,40 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Continuidad de teclado y ratón durante reconexiones en 0.5.16
+
+Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
+de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
+Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
+reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.
+Se comprueban ambos orígenes, TLS/híbrido y entrega inmediata o en cola. Cada
+acción conserva orden y posición; las teclas y botones pendientes se liberan,
+el canal sigue abierto y funciona el siguiente cruce. La prueba ampliada no
+detectó otro fallo y no cambió el código operativo de 0.5.16.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+La nueva prueba usa ocho semillas deterministas, dos orígenes, dos transportes
+y ejecución inmediata o con el bloqueo de sesión ocupado. Cada caso ejecuta
+seis ráfagas de 16 operaciones. Las notificaciones recorren los observadores
+y adaptadores de producción con APIs falsas; Windows procesa su mensaje de
+reconexión y renueva el hook antes del siguiente evento de la prueba.
+
+Tras cada ráfaga compara el estado físico observado por el adaptador, el
+registro del emisor y las teclas/botones del receptor. Compara además cada
+acción con su posición y orden esperados. Termina soltando los dispositivos,
+regresando al control local y escribiendo después de un cruce nuevo sobre el
+mismo canal. También comprueba que el caso diferido realmente dejó eventos
+en cola y que la pausa controlada no venció su plazo.
+
+Los 64 casos pasan ya con el código operativo publicado en
+`4b802ea19fbda557fc7a67008aa8d134b14268a1`. La evidencia amplía la cobertura de
+recuperación; no demuestra el comportamiento físico de Easy-Switch ni mide
+fluidez de Wi-Fi, pantalla o consumo. Los paquetes se reconstruyen desde el
+commit de la validación ampliada y siguen sin instalarse.
+
+Evidencia: [validación ampliada 0.5.16](validation/input-0.5.16-scroll-position.json).
+
 ## Destino de la rueda con movimiento nativo pendiente en 0.5.16
 
 La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
@@ -16,7 +50,7 @@ las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
 eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
 No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
 
-Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+La validación inicial registró 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
 22 casos: 12 reproducían el fallo anterior y 10 controles ya pasaban. También
 pasan 186 pruebas focalizadas. Se comprueba cada destino de rueda en eventos
 nativos simulados, con movimientos intercalados, ambas direcciones y ráfagas
