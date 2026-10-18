@@ -156,7 +156,7 @@ class ObservedInput(MemoryInput):
 
 
 @contextlib.contextmanager
-def connected(directory, *, hybrid=False):
+def connected(directory, *, hybrid=False, prepare_transport=None):
     pairings = [Pairing(directory / role, testing=True) for role in ("windows", "mac")]
     invitation, response = directory / "invitation.json", directory / "response.json"
     pairings[0].create_invitation(invitation, "127.0.0.1", "127.0.0.0/8")
@@ -177,6 +177,8 @@ def connected(directory, *, hybrid=False):
             discovery.start()
         if discoveries:
             discoveries[0].peer_port, discoveries[1].peer_port = discoveries[1].port, discoveries[0].port
+            if prepare_transport is not None:
+                prepare_transport(discoveries)
         relay = Relay(links[1].port)
         links[1].port, links[0].port = links[0].port, relay.port
         services[0].connect(services[1].capabilities())
@@ -197,8 +199,11 @@ def connected(directory, *, hybrid=False):
             relay.close()
 
 
-def run_case(directory, rate, source, profile, include_actions, *, hybrid=False, drop_every=0, configure=None):
-    with connected(directory, hybrid=hybrid) as (services, relay):
+def run_case(
+    directory, rate, source, profile, include_actions, *, hybrid=False, drop_every=0,
+    configure=None, prepare_transport=None,
+):
+    with connected(directory, hybrid=hybrid, prepare_transport=prepare_transport) as (services, relay):
         sender, receiver = services[source], services[1 - source]
         fault_report = configure(services) if configure is not None else None
         datagrams = {"attempted": 0, "dropped": 0}
