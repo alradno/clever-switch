@@ -1,8 +1,26 @@
-CLEVERSWITCH 0.5.18 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.19 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.18-press-ownership.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.19-queued-edge.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.19
+La 0.5.19 conserva el control local si un cruce quedó en cola y después
+llegó una tecla, clic, rueda o movimiento a la aplicación local antes de empezar
+la captura. Al procesar esa entrada cancela el cruce que acaba de iniciarse,
+sin reenviarla al otro equipo. Conserva la posición local, las liberaciones y
+el enlace para el siguiente cruce. Un cursor quieto no lo cancela y los eventos
+de un periodo local anterior no afectan a un cruce nuevo. La corrección es común
+a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
+la ruta de los callbacks que se procesan al momento.
+
+Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
+quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
+pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
+Las APIs nativas y la entrega a aplicaciones están simuladas; TLS/UDP usan
+loopback real. La aceptación física de fluidez, recuperación y consumo
+sigue pendiente.
 
 MEJORAS 0.5.18
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
