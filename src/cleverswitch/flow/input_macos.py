@@ -455,6 +455,11 @@ class MacInput:
                 None, q.kCGScrollEventUnitLine, 2, round(vertical), -round(horizontal)
             )
             if event is not None:
+                # A posted move may still be waiting in WindowServer. Wheel
+                # hit testing must use its ordered position, not the cursor
+                # snapshot inherited while this event was being created.
+                if self.injected_point is not None:
+                    q.CGEventSetLocation(event, self.injected_point)
                 q.CGEventSetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis1, vertical)
                 q.CGEventSetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis2, -horizontal)
             self._post(event)
