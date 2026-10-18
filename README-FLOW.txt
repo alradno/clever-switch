@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.22, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.23, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,25 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.23
+La 0.5.23 conserva el enlace al recuperar una ráfaga de entrada pendiente.
+Amplía la cola acotada para cubrir un ratón de 1.000 informes por segundo
+dentro del plazo de actividad existente. El trabajo se procesa por lotes que
+ceden turno a la red y continúan sin esperar al siguiente temporizador.
+Conserva el recorrido del cursor, la posición de clics y rueda, el orden de
+las teclas y la prioridad de la entrada que ya llegó a las aplicaciones locales.
+Mac y Windows comparten la corrección; no añade sondeos ni alarga los plazos.
+
+Pasan 2.019 pruebas por plataforma, Ruff y ambas compilaciones. Las 34 pruebas
+nuevas reproducen 26 fallos con la fuente anterior y conservan ocho controles.
+Incluyen ambos sentidos, TLS e híbrido, entrada a 125/1.000 informes por segundo,
+trayectorias recortadas, acciones intercaladas y exceso de cola con liberación.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real. La pausa impuesta
+sigue existiendo; la fluidez física y la causa de los microcortes domésticos
+siguen pendientes de la prueba conjunta. Candidata preparada sin instalar.
+
+Evidencia: docs/validation/input-0.5.23-callback-bursts.json.
 
 REVISIÓN 0.5.22
 La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre

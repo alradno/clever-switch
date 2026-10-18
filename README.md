@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.22 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.23 experimental**, protocolo de control **2**.
 Los paquetes de Mac y Windows incorporan las mismas fuentes de aplicación;
 las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -18,6 +18,24 @@ TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de tec
 El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.23 conserva el enlace al recuperar una ráfaga de entrada pendiente.
+Amplía la cola acotada para cubrir un ratón de 1.000 informes por segundo
+dentro del plazo de actividad existente. El trabajo se procesa por lotes que
+ceden turno a la red y continúan sin esperar al siguiente temporizador.
+Conserva el recorrido del cursor, la posición de clics y rueda, el orden de
+las teclas y la prioridad de la entrada que ya llegó a las aplicaciones locales.
+Mac y Windows comparten la corrección; no añade sondeos ni alarga los plazos.
+
+Pasan 2.019 pruebas por plataforma, Ruff y ambas compilaciones. Las 34 pruebas
+nuevas reproducen 26 fallos con la fuente anterior y conservan ocho controles.
+Incluyen ambos sentidos, TLS e híbrido, entrada a 125/1.000 informes por segundo,
+trayectorias recortadas, acciones intercaladas y exceso de cola con liberación.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real. La pausa impuesta
+sigue existiendo; la fluidez física y la causa de los microcortes domésticos
+siguen pendientes de la prueba conjunta. Candidata preparada sin instalar.
+
+Véase la [validación de ráfagas](docs/validation/input-0.5.23-callback-bursts.json).
 
 La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
 Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
