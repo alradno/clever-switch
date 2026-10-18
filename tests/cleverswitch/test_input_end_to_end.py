@@ -22,6 +22,22 @@ from .test_input_native import Quartz, User32
 from .test_input_stream import until
 
 
+class DeviceObserver:
+    def __init__(self, changed):
+        self.changed = changed
+        self.active = False
+
+    def start(self):
+        self.active = True
+
+    def close(self):
+        self.active = False
+
+    def notify(self, kind):
+        if self.active:
+            self.changed(kind)
+
+
 @pytest.fixture(params=[False, True], ids=["reliable", "hybrid"])
 def native_peers(paired_tls, request):
     windows_api, mac_api = User32(), Quartz()
@@ -31,8 +47,10 @@ def native_peers(paired_tls, request):
     kernel.GetModuleHandleW.return_value = 100
     desktop = Desktop([Display(0, 0, 1920, 1080)])
     backends = [
-        WindowsInput(windows_api, kernel, ready=lambda: True, desktop=desktop),
-        MacInput(mac_api, ready=lambda: True, secure_input=lambda: False, desktop=desktop),
+        WindowsInput(windows_api, kernel, ready=lambda: True, desktop=desktop, monitor_factory=DeviceObserver),
+        MacInput(
+            mac_api, ready=lambda: True, secure_input=lambda: False, desktop=desktop, monitor_factory=DeviceObserver
+        ),
     ]
     links = [Link(pairing, lambda op, args: {}, 0) for pairing in paired_tls]
     peers = [Service(link, backend, enabled=True) for link, backend in zip(links, backends, strict=True)]

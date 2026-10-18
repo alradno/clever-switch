@@ -562,6 +562,47 @@ def test_windows_device_notification_renews_only_keyboard_hook_on_owner_thread(w
     assert api.SetWindowsHookExW.call_count == calls
 
 
+def test_windows_mouse_notification_renews_only_mouse_hook_and_preserves_keyboard(win):
+    from .test_input_stream import until
+
+    backend, api = win
+    backend.monitor_factory = Mock(return_value=Mock())
+    backend.start(backend.sink)
+    backend.held_keys.add(4)
+    backend.held_buttons.add(0)
+    changed = backend.monitor_factory.call_args.args[0]
+    changed("mouse")
+    until(lambda: backend.sink.mouse_changed.called)
+    assert [call.args[0] for call in api.SetWindowsHookExW.call_args_list] == [14, 13, 14]
+    assert not backend.held_buttons and backend.held_keys == {4}
+    backend.sink.keyboard_changed.assert_not_called()
+    backend.close()
+    calls = api.SetWindowsHookExW.call_count
+    changed("mouse")
+    assert api.SetWindowsHookExW.call_count == calls
+
+
+@pytest.mark.parametrize("platform", ["win", "mac"])
+def test_retired_device_observer_cannot_clear_new_physical_input(platform, request):
+    backend, api = request.getfixturevalue(platform)
+    backend.monitor_factory = Mock(side_effect=lambda changed: Mock())
+    backend.start(backend.sink)
+    old_callback = backend.monitor_factory.call_args.args[0]
+    backend.close()
+    if platform == "mac":
+        api.stop.clear()
+    backend.start(backend.sink)
+    backend.held_keys.add(4)
+    backend.held_buttons.add(0)
+    old_callback("mouse")
+    old_callback("keyboard")
+    if platform == "win":
+        backend.dispatch.call(lambda: None)
+    assert backend.held_keys == {4} and backend.held_buttons == {0}
+    backend.sink.mouse_changed.assert_not_called()
+    backend.sink.keyboard_changed.assert_not_called()
+
+
 def test_mac_observer_lifetime_follows_enabled_tap(mac):
     backend, api = mac
     monitor = Mock()
