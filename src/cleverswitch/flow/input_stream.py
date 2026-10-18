@@ -191,10 +191,10 @@ class Channel:
                 if self.stop.is_set():
                     break
                 if self.lane is not None:
-                    for raw in self.inbox.take():
+                    for message in self.lane.decode_datagrams(self.inbox.take()):
                         if self.stop.is_set():
                             break
-                        self.lane.receive_datagram(raw, time.monotonic())
+                        self.lane.receive_message(message, time.monotonic())
                     self.lane.tick(time.monotonic())
                     for packet in self.outbox.take():
                         self.lane.outgoing(packet, time.monotonic())

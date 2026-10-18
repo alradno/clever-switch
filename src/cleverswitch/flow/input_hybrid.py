@@ -17,6 +17,7 @@ class MotionLane:
         self.sender = None
         self.fast_sender = False
         self.sent = self.received = 0
+        self.received_coalesced = 0
 
     def _datagram(self, raw):
         self.datagram(raw)
@@ -95,12 +96,38 @@ class MotionLane:
                     self.receiver.begin(epoch, packet.values)
             self.sync()
 
+    def decode_datagrams(self, packets):
+        """Select fresh motion from one already available, bounded inbox batch.
+
+        Authenticate every datagram before comparing its motion metadata. Keep
+        action/epoch boundaries and probe/receipt order. No timer gathers input.
+        """
+        messages = []
+        for raw in packets:
+            message = self.codec.open(raw)
+            if message is None:
+                continue
+            self.received += 1
+            if (
+                isinstance(message, Motion)
+                and messages
+                and isinstance(messages[-1], Motion)
+                and message.epoch == messages[-1].epoch
+                and message.after_action == messages[-1].after_action
+            ):
+                if message.serial > messages[-1].serial:
+                    messages[-1] = message
+                self.received_coalesced += 1
+            else:
+                messages.append(message)
+        return messages
+
     def receive_datagram(self, raw, now):
+        for message in self.decode_datagrams((raw,)):
+            self.receive_message(message, now)
+
+    def receive_message(self, message, now):
         self.sync()
-        message = self.codec.open(raw)
-        if message is None:
-            return
-        self.received += 1
         if isinstance(message, Probe):
             if message.response:
                 self.probe.receive_message(message, now)
@@ -136,6 +163,7 @@ class MotionLane:
             "sending": self.sender.mode if self.sender is not None else "idle",
             "datagrams_sent": self.sent,
             "datagrams_received": self.received,
+            "received_moves_coalesced": self.received_coalesced,
         }
 
     def close(self):
