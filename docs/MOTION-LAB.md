@@ -6,6 +6,51 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Posición local después de clics y rueda en 0.5.20
+
+La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.
+Si una aplicación lo mueve sin generar un evento de movimiento, el siguiente
+clic o rueda conserva esa posición como origen del próximo desplazamiento.
+Así, un movimiento vertical junto al borde no se interpreta como uno horizontal
+desde la posición anterior. Windows ya conservaba esa referencia y se comprueba
+con los mismos casos. Los eventos propios marcados no alteran la referencia
+física. No añade esperas, sondeos, hilos ni consultas nativas.
+
+Pasan 1.836 pruebas por plataforma, Ruff y ambas compilaciones. Hay 30 casos
+nuevos: 12 reproducen el cruce involuntario anterior y 18 controles ya pasaban.
+Las 243 pruebas focalizadas comprueban ambos orígenes, TLS/híbrido, clics primarios
+y adicionales, ambas ruedas y callbacks inmediatos o en cola. Conservan el
+control local, el enlace, el siguiente cruce intencionado y la escritura.
+Las APIs de entrada son simuladas; TLS/UDP usan loopback real. La fluidez,
+Easy-Switch y el consumo físicos siguen pendientes de aceptación conjunta.
+
+La reproducción parte de un movimiento local en el interior y de un clic
+o rueda con el cursor ya recolocado en el borde, sin un evento de movimiento
+intermedio. El siguiente informe sólo cambia la altura. El adaptador Mac usaba
+todavía la posición interior para calcular su delta horizontal y empezaba un
+cruce no solicitado. Ahora toma la posición del clic o rueda antes de procesar
+ese informe. La captura activa sigue usando su ancla y los eventos marcados
+se descartan antes de actualizar las observaciones físicas.
+
+Los 24 casos integrados cubren clic primario, botón adicional y ambas ruedas,
+los dos orígenes, TLS/híbrido y el procesamiento inmediato o en cola. Exigen
+que ambos equipos sigan locales, que no queden botones pulsados y que el
+siguiente cruce y la escritura funcionen sobre el mismo enlace. Seis controles
+comprueban que los eventos marcados no reemplacen la posición física.
+
+Con los fuentes de `ac50f8f6673ebb9d318fdbc6889ce3bacd09e14d`, 12 de estos 30 casos fallan: los de origen Mac.
+Los 12 del origen Windows y los seis controles de eventos marcados ya pasan.
+La corrección cambia sólo el adaptador Mac y la edición compartida; los dos
+paquetes incluyen la misma fuente y las mismas regresiones. No se infiere que
+ésta sea la causa de los microcortes observados en la red doméstica.
+
+Windows vuelve a pasar sus bancos de red, ráfagas, recuperación, UDP variable
+y precisión. La candidata no se instala. La aceptación física debe comprobar
+también una recolocación del cursor seguida de clic/rueda y movimiento vertical
+junto al borde, en ambos equipos.
+
+Evidencia: [validación 0.5.20](validation/input-0.5.20-pointer-baseline.json).
+
 ## Reconexiones y paquetes tardíos en 0.5.19
 
 La validación ampliada de 0.5.19 añade 24 casos por plataforma: 64 reconexiones
