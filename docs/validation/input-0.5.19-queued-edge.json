@@ -1,0 +1,124 @@
+{
+  "edition": "0.5.19",
+  "source_commit": "c3a7a33a91d6e11b66990ed67a4aa366482d2854",
+  "observed_at": "2026-10-18T09:42:38.672803+00:00",
+  "scope": "shared_input_routing_with_simulated_native_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Local key, button, wheel or real movement queued after a local edge cancels the outgoing capture that edge starts later",
+    "The original local period identifies reports that predate the outgoing epoch without replaying them to the peer",
+    "Stationary reports preserve the crossing; reports from an earlier local period cannot cancel a later outgoing focus",
+    "The same channel and next crossing remain usable; local pointer position and press releases are preserved",
+    "No new waits, polling, threads, native calls or changes to immediate callback routing"
+  ],
+  "regression": {
+    "reference_commit": "00f79dfcae77c843c7acce819d7c3736d4532983",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_service_sha256": "3e06bb24a88b5905235cfe03f3ca129a370d927688a8785ce45d2fea27c5aabb",
+    "baseline": {
+      "tests": 22,
+      "failures": 16,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 257,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 22,
+    "reproduced_failures": 16,
+    "stationary_controls": 4,
+    "retired_local_period_controls": 2,
+    "tests": "Both source roles, reliable/hybrid transport and native callbacks delivered before the queued edge starts capture",
+    "native_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1782,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.92570677186062,
+    "mac_build": {
+      "edition": "0.5.19",
+      "built_at": "2026-10-18T09:30:44.515795+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "9362579af11e09e53d28da91d2993d4d677fabc703f5daf161f8107bb47d8a54",
+      "application_source_matches_validated_commit": "c3a7a33a91d6e11b66990ed67a4aa366482d2854"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39115763289",
+    "head_sha": "c3a7a33a91d6e11b66990ed67a4aa366482d2854",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1782,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.11197916666667,
+    "packaged_native_check": {
+      "edition": "0.5.19",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "jitter_cases": 24,
+      "ordered_jitter_actions": 48,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-c3a7a33a91d6e11b66990ed67a4aa366482d2854",
+      "id": 12132128959,
+      "sha256": "f74c31b39073997b8b4cbb9a4b632d30dc4996f059046f781e3885d3cd85abfe"
+    },
+    {
+      "name": "Windows-validation-c3a7a33a91d6e11b66990ed67a4aa366482d2854",
+      "id": 12131994991,
+      "sha256": "8609197c7d5dfede2913a347f9f5950cdc7961fbd100756d9f60380c291c7f86"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and local application delivery are simulated; TLS/UDP loopback is real",
+    "The reproduced local-queue race is verified; this does not establish physical Wi-Fi latency or cable-equivalent fluency",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.19.zip",
+      "sha256": "fc794aa98feac01aa0fea7d15d0ba4d6f35dfa6edf7b3abdb5b3bcd79016919c"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.19.zip",
+      "sha256": "f74c31b39073997b8b4cbb9a4b632d30dc4996f059046f781e3885d3cd85abfe"
+    }
+  }
+}
