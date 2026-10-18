@@ -1,15 +1,28 @@
-# Continuación en Windows — candidata conjunta 0.5.3 experimental
+# Continuación en Windows — candidata conjunta 0.5.4 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-Fuentes de la candidata: `717c09daa9a48f1f908f4431c082c81137147437`.
-Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+Fuentes de la candidata: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
+Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
 firma y vista previa; Windows comprueba el ejecutable empaquetado.
-CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39080156597).
-Evidencia: `validation/input-0.5.3-displays.json`.
+CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39081183118).
+Evidencia: `validation/input-0.5.4-freshness.json`.
 
-La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
+escribir. Así evita enviar primero una posición antigua al terminar una espera
+de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
+bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
+parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+
+En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
+escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
+a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
+no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
+benchmarks/input_freshness.py.
+
+Se conservan las mejoras de 0.5.3, que responden a los avisos nativos de cambio
+de pantalla en ambos equipos.
 Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
 a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
 pantalla que siga conectada. También rechaza una conexión si las pantallas cambian

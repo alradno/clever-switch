@@ -13,15 +13,19 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual `0.5.3`, protocolo de control `2` y entrada `1`.
-  Fuentes: `717c09daa9a48f1f908f4431c082c81137147437`.
-  Avisos nativos de pantallas, rechazo de coordenadas desfasadas durante el enlace,
+- Candidata conjunta actual `0.5.4`, protocolo de control `2` y entrada `1`.
+  Fuentes: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
+  Movimiento pendiente actualizable hasta el primer envío; conserva posición
+  de los clics y bytes de los reintentos TLS, sin añadir espera o suavizado.
+  Banco local reproducible: `benchmarks/input_freshness.py`.
+  Se conservan avisos nativos de pantallas y rechazo de coordenadas desfasadas
+  durante el enlace,
   liberación de entrada y restauración del cursor en pantallas restantes. Se retiran
   los observadores al desconectar y se rechazan avisos de una instancia anterior.
   Conserva recuperación de teclado y mejoras de eficiencia de 0.5.1/0.5.2.
-  Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+  Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
   firma y vista previa; Windows comprueba el ejecutable empaquetado.
-  Véase `validation/input-0.5.3-displays.json`.
+  Véase `validation/input-0.5.4-freshness.json`.
   No instalar versiones intermedias ni pedir pruebas al usuario ausente; probar
   ambas plataformas juntas al volver. Aplicaciones conserva 0.5.1, cuyos permisos
   estaban pendientes en la comprobación anterior. Último Windows comprobado: 0.5.0.

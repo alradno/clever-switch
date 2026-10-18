@@ -1,10 +1,23 @@
-CLEVERSWITCH 0.5.3 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.4 — ENTRADA POR LAN EXPERIMENTAL
 Candidata del 18 de octubre de 2026 para la prueba conjunta al volver el usuario.
-Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
 firma y vista previa; Windows comprueba el ejecutable empaquetado.
 No instalada: Mac conserva 0.5.1; el último estado comprobado del Windows doméstico
 es 0.5.0. La aceptación física sigue pendiente.
-Evidencia: validation/input-0.5.3-displays.json.
+Evidencia: validation/input-0.5.4-freshness.json.
+
+MEJORAS 0.5.4
+La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
+escribir. Así evita enviar primero una posición antigua al terminar una espera
+de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
+bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
+parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+
+En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
+escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
+a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
+no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
+benchmarks/input_freshness.py.
 
 MEJORAS 0.5.3
 La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
