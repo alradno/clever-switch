@@ -16,6 +16,8 @@ class MotionLane:
         self.receiver = Receiver(codec, self._datagram, deliver)
         self.sender = None
         self.fast_sender = False
+        self.recovery_candidate = self.recovering_epoch = None
+        self.recovery_used = False
         self.sent = self.received = 0
         self.received_coalesced = 0
 
@@ -34,13 +36,42 @@ class MotionLane:
         phase, epoch = self.focus()
         if phase != "receiving" or self.receiver.epoch != epoch:
             self.receiver.end()
+        sending = phase in ("requesting", "sending")
+        if self.recovery_candidate is not None and (not sending or self.recovery_candidate[0] != epoch):
+            self.recovery_candidate = None
+        if self.recovering_epoch is not None and (not sending or self.recovering_epoch != epoch):
+            if self.probe.state == "pending":
+                self.probe.state = "unavailable"
+            self.recovering_epoch = None
 
     def _fallback(self):
         if self.fast_sender and self.sender.mode == "reliable":
-            # A known failed path stays reliable until a new authenticated
-            # connection. A later focus must not repeat a failed UDP search.
+            # Stay reliable after failure. Only a new authenticated receipt of
+            # previously unacknowledged UDP can justify one finite recheck.
+            # A new focus alone never repeats the failed path search.
+            if not self.recovery_used:
+                self.recovery_candidate = (self.sender.epoch, self.sender.acknowledged, self.sender.serial)
             self.probe.state = "unavailable"
             self.fast_sender = False
+
+    def _recover(self, receipt, now):
+        candidate = self.recovery_candidate
+        if candidate is None or self.recovery_used:
+            return
+        epoch, acknowledged, sent = candidate
+        if receipt.epoch != epoch or not acknowledged < receipt.serial <= sent:
+            return
+        self.recovery_used = True
+        self.recovery_candidate = None
+        self.recovering_epoch = epoch
+        self.probe = PathProbe(self.codec, self._datagram)
+        self.probe.start(now)
+
+    def _use_ready_path(self):
+        phase, epoch = self.focus()
+        if self.sender is not None and phase in ("requesting", "sending") and self.sender.epoch == epoch:
+            if self.sender.enable_datagrams(self.probe):
+                self.fast_sender = True
 
     def outgoing(self, packet, now):
         self.sync()
@@ -131,10 +162,12 @@ class MotionLane:
         if isinstance(message, Probe):
             if message.response:
                 self.probe.receive_message(message, now)
+                self._use_ready_path()
             else:
                 self.receiver.receive_message(message)
         elif isinstance(message, Receipt):
             if self.sender is not None:
+                self._recover(message, now)
                 self.sender.receive_message(message, now)
         elif isinstance(message, Motion):
             self.receiver.receive_message(message)
@@ -164,6 +197,7 @@ class MotionLane:
             "datagrams_sent": self.sent,
             "datagrams_received": self.received,
             "received_moves_coalesced": self.received_coalesced,
+            "path_recheck_used": self.recovery_used,
         }
 
     def close(self):
@@ -171,4 +205,5 @@ class MotionLane:
         if self.sender is not None:
             self.sender.stop()
         self.probe.state = "closed"
+        self.recovery_candidate = self.recovering_epoch = None
         self.codec.close()

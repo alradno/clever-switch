@@ -160,10 +160,10 @@ class Codec:
 
 
 class PathProbe:
-    """One finite check after TLS authentication, before selecting the fast path.
+    """One finite reachability check on an authenticated TLS connection.
 
     A failed check leaves input on the reliable path. No periodic retry is
-    scheduled; a later connection/lifecycle event may create a new probe.
+    scheduled; the owner decides whether fresh evidence permits a new check.
     """
 
     offsets = (0, 0.016, 0.048)
@@ -251,6 +251,12 @@ class Sender:
             self.datagram(self.codec.seal(self.latest))
         except OSError:
             self._fallback()
+
+    def enable_datagrams(self, probe):
+        if self.mode == "reliable" and probe.codec is self.codec and probe.state == "ready":
+            self.mode = "datagram"
+            return True
+        return False
 
     def move(self, position, now, *, reliable=False):
         if self.mode == "closed":
