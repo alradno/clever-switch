@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.19, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.20, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,25 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.20
+La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.
+Si una aplicación lo mueve sin generar un evento de movimiento, el siguiente
+clic o rueda conserva esa posición como origen del próximo desplazamiento.
+Así, un movimiento vertical junto al borde no se interpreta como uno horizontal
+desde la posición anterior. Windows ya conservaba esa referencia y se comprueba
+con los mismos casos. Los eventos propios marcados no alteran la referencia
+física. No añade esperas, sondeos, hilos ni consultas nativas.
+
+Pasan 1.836 pruebas por plataforma, Ruff y ambas compilaciones. Hay 30 casos
+nuevos: 12 reproducen el cruce involuntario anterior y 18 controles ya pasaban.
+Las 243 pruebas focalizadas comprueban ambos orígenes, TLS/híbrido, clics primarios
+y adicionales, ambas ruedas y callbacks inmediatos o en cola. Conservan el
+control local, el enlace, el siguiente cruce intencionado y la escritura.
+Las APIs de entrada son simuladas; TLS/UDP usan loopback real. La fluidez,
+Easy-Switch y el consumo físicos siguen pendientes de aceptación conjunta.
+
+Evidencia: docs/validation/input-0.5.20-pointer-baseline.json. Candidata sin instalar.
 
 REVISIÓN 0.5.19
 La 0.5.19 conserva el control local si un cruce quedó en cola y después
