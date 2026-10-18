@@ -1,0 +1,2093 @@
+{
+  "edition": "0.5.13",
+  "source_commit": "22a37a4a5d12b3ba2816f38e5b1eb3c713b24c5d",
+  "observed_at": "2026-10-18T05:54:13.255091+00:00",
+  "scope": "production_native_adapters_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Preserve the latest physical pointer position when local motion, click or wheel cancels a remote focus in either direction",
+    "Restore a pointer displaced by an in-flight remote movement only after releasing remote buttons and modifiers; skip restoration when release ownership remains unresolved",
+    "Mac remote button releases use the current physical event position instead of an old remote point",
+    "Mac click history includes delivered local click counts, excludes tagged and forwarded input, and expires with one monotonic clock",
+    "Discard click history and physical pointer snapshots when native observation closes"
+  ],
+  "regressions": {
+    "reference_commit": "a42ed74dd2966a36b74eb83e18a21843997ff434",
+    "reference_source_edition": "0.5.12",
+    "before": {
+      "tests": 56,
+      "failures": 44,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted_after": {
+      "tests": 293,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases_in_complete_suite": 70,
+    "new_recovery_failure_cases_not_in_baseline": 12,
+    "keyboard_callback_ordering": {
+      "before": {
+        "tests": 4,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      },
+      "after": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "first_ci_run": "https://github.com/alradno/clever-switch/actions/runs/39101413676",
+      "first_ci_result": "1516_passed_1_failed_test_mixed_callback_and_session_APIs",
+      "correction": "Both devices use Service callbacks; assert key down, key up and final motion order, including queued callbacks; production unchanged"
+    },
+    "cases": [
+      "five mouse buttons; local click elsewhere; native double/triple counts; forwarded/tagged events and clock expiry",
+      "local motion, button or wheel during remote dragging; both directions and transports",
+      "physical callbacks queued behind an in-flight remote movement; position restored after button and modifier release",
+      "preparation/restoration failure and refused button-up; cleanup releases remote input without dragging during uncertain ownership"
+    ],
+    "directions": [
+      "Windows source / Mac target",
+      "Mac source / Windows target"
+    ]
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1519,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.81746031746032,
+    "mac_build": {
+      "edition": "0.5.13",
+      "built_at": "2026-10-18T05:36:00.741033+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "73d40f71ed354fe997bfd9895b9999b27c8a32abd06002f1074da32bb9b9036f"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39101772899",
+    "head_sha": "22a37a4a5d12b3ba2816f38e5b1eb3c713b24c5d",
+    "conclusion": "success",
+    "tests": {
+      "tests": 1519,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.00589390962672,
+    "packaged_native_check": {
+      "edition": "0.5.13",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_actions": 104,
+      "burst_cases": 54,
+      "final_positions_and_releases_verified": true
+    },
+    "path_recovery_benchmark": {
+      "scope": "production_Service_real_loopback_TLS_UDP_with_synthetic_input",
+      "seconds_per_case": 1,
+      "expected_path_after_pause": "datagram",
+      "excludes": [
+        "physical_input",
+        "Wi-Fi",
+        "display",
+        "native_input_API"
+      ],
+      "cases": [
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.167,
+            "p99": 0.736,
+            "max": 1.184
+          },
+          "delivery_gap_ms": {
+            "p99": 8.661,
+            "max": 8.918
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 873,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 125,
+            "dropped": 0,
+            "duplicates": 125,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "duplicate"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.174,
+            "p99": 0.867,
+            "max": 1.008
+          },
+          "delivery_gap_ms": {
+            "p99": 8.8,
+            "max": 8.828
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 125,
+            "dropped": 0,
+            "duplicates": 125,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "duplicate"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 988,
+          "sender_coalesced": 12,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.154,
+            "p99": 0.257,
+            "max": 1.251
+          },
+          "delivery_gap_ms": {
+            "p99": 1.984,
+            "max": 2.159
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 988,
+            "dropped": 0,
+            "duplicates": 988,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "duplicate"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 984,
+          "sender_coalesced": 15,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.147,
+            "p99": 0.805,
+            "max": 1.344
+          },
+          "delivery_gap_ms": {
+            "p99": 1.994,
+            "max": 2.309
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 986,
+            "dropped": 0,
+            "duplicates": 986,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 1,
+            "path_recheck_used": false
+          },
+          "fault": "duplicate"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 68,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.159,
+            "p99": 8.577,
+            "max": 8.856
+          },
+          "delivery_gap_ms": {
+            "p99": 16.5,
+            "max": 16.781
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 128,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 64,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "reverse_pairs"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 68,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.2,
+            "p99": 8.313,
+            "max": 9.703
+          },
+          "delivery_gap_ms": {
+            "p99": 16.605,
+            "max": 17.615
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 877,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 128,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 64,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "reverse_pairs"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 512,
+          "sender_coalesced": 8,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.149,
+            "p99": 1.28,
+            "max": 20.954
+          },
+          "delivery_gap_ms": {
+            "p99": 2.269,
+            "max": 21.816
+          },
+          "samples_older_than_16_7ms": 1,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 917,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 1020,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 510,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "reverse_pairs"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 504,
+          "sender_coalesced": 22,
+          "receiver_coalesced": 0,
+          "scheduler_late": 1,
+          "sample_age_ms": {
+            "p50": 0.145,
+            "p99": 1.281,
+            "max": 9.756
+          },
+          "delivery_gap_ms": {
+            "p99": 4.013,
+            "max": 10.646
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 1002,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 501,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "reverse_pairs"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.208,
+            "p99": 0.359,
+            "max": 0.435
+          },
+          "delivery_gap_ms": {
+            "p99": 8.547,
+            "max": 8.646
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 917,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 125,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 125,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "altered_before_valid"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.194,
+            "p99": 0.389,
+            "max": 0.494
+          },
+          "delivery_gap_ms": {
+            "p99": 8.548,
+            "max": 8.578
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 125,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 125,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "altered_before_valid"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 972,
+          "sender_coalesced": 23,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.158,
+            "p99": 1.61,
+            "max": 3.148
+          },
+          "delivery_gap_ms": {
+            "p99": 2.034,
+            "max": 3.675
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 917,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 978,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 978,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 6,
+            "path_recheck_used": false
+          },
+          "fault": "altered_before_valid"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 990,
+          "sender_coalesced": 10,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.157,
+            "p99": 0.307,
+            "max": 0.569
+          },
+          "delivery_gap_ms": {
+            "p99": 1.941,
+            "max": 2.102
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 990,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 990,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "altered_before_valid"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 119,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.153,
+            "p99": 0.424,
+            "max": 8.49
+          },
+          "delivery_gap_ms": {
+            "p99": 8.598,
+            "max": 32.161
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 877,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 129,
+            "dropped": 12,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_60ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 119,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.151,
+            "p99": 0.743,
+            "max": 8.332
+          },
+          "delivery_gap_ms": {
+            "p99": 8.873,
+            "max": 16.146
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 129,
+            "dropped": 11,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 1,
+            "path_recheck_used": false
+          },
+          "fault": "loss_60ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 921,
+          "sender_coalesced": 21,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.12,
+            "p99": 0.242,
+            "max": 1.742
+          },
+          "delivery_gap_ms": {
+            "p99": 2.012,
+            "max": 31.055
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 873,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 983,
+            "dropped": 64,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_60ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 919,
+          "sender_coalesced": 23,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.118,
+            "p99": 0.261,
+            "max": 1.296
+          },
+          "delivery_gap_ms": {
+            "p99": 2.013,
+            "max": 31.266
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 981,
+            "dropped": 64,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_60ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 115,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.155,
+            "p99": 8.245,
+            "max": 8.432
+          },
+          "delivery_gap_ms": {
+            "p99": 15.709,
+            "max": 31.951
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 19,
+            "dropped": 19,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 114,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.16,
+            "p99": 7.764,
+            "max": 8.328
+          },
+          "delivery_gap_ms": {
+            "p99": 32.015,
+            "max": 32.157
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 20,
+            "dropped": 20,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 894,
+          "sender_coalesced": 9,
+          "receiver_coalesced": 0,
+          "scheduler_late": 2,
+          "sample_age_ms": {
+            "p50": 0.129,
+            "p99": 0.23,
+            "max": 2.392
+          },
+          "delivery_gap_ms": {
+            "p99": 1.975,
+            "max": 31.429
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 917,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 106,
+            "dropped": 106,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 888,
+          "sender_coalesced": 12,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.13,
+            "p99": 0.358,
+            "max": 1.272
+          },
+          "delivery_gap_ms": {
+            "p99": 2.013,
+            "max": 31.934
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 109,
+            "dropped": 109,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 0,
+            "path_recheck_used": false
+          },
+          "fault": "loss_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.169,
+            "p99": 0.368,
+            "max": 0.386
+          },
+          "delivery_gap_ms": {
+            "p99": 8.609,
+            "max": 8.675
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 19,
+            "dropped": 19,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 1,
+            "path_recheck_used": false
+          },
+          "fault": "receipt_loss_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 125,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.159,
+            "p99": 0.349,
+            "max": 1.345
+          },
+          "delivery_gap_ms": {
+            "p99": 8.591,
+            "max": 9.207
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 16,
+            "dropped": 16,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 3,
+            "path_recheck_used": false
+          },
+          "fault": "receipt_loss_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 989,
+          "sender_coalesced": 11,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.129,
+            "p99": 0.229,
+            "max": 0.389
+          },
+          "delivery_gap_ms": {
+            "p99": 1.971,
+            "max": 2.06
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 110,
+            "dropped": 110,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 4,
+            "path_recheck_used": false
+          },
+          "fault": "receipt_loss_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 1000,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.129,
+            "p99": 0.224,
+            "max": 0.573
+          },
+          "delivery_gap_ms": {
+            "p99": 1.554,
+            "max": 1.605
+          },
+          "samples_older_than_16_7ms": 0,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 873,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "reliable",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 101,
+            "dropped": 101,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 0,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 2,
+            "path_recheck_used": false
+          },
+          "fault": "receipt_loss_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 121,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.143,
+            "p99": 12.835,
+            "max": 44.57
+          },
+          "delivery_gap_ms": {
+            "p99": 8.605,
+            "max": 67.917
+          },
+          "samples_older_than_16_7ms": 2,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 129,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 8,
+            "path_recheck_used": false
+          },
+          "fault": "receiver_pause_60ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 122,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.145,
+            "p99": 20.683,
+            "max": 44.546
+          },
+          "delivery_gap_ms": {
+            "p99": 8.568,
+            "max": 68.64
+          },
+          "samples_older_than_16_7ms": 3,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 917,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 129,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 8,
+            "path_recheck_used": false
+          },
+          "fault": "receiver_pause_60ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 920,
+          "sender_coalesced": 25,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.119,
+            "p99": 0.239,
+            "max": 43.011
+          },
+          "delivery_gap_ms": {
+            "p99": 2.012,
+            "max": 61.92
+          },
+          "samples_older_than_16_7ms": 3,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 877,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 979,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 60,
+            "path_recheck_used": false
+          },
+          "fault": "receiver_pause_60ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 922,
+          "sender_coalesced": 24,
+          "receiver_coalesced": 0,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.119,
+            "p99": 0.264,
+            "max": 42.877
+          },
+          "delivery_gap_ms": {
+            "p99": 2.015,
+            "max": 61.623
+          },
+          "samples_older_than_16_7ms": 4,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 980,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 60,
+            "path_recheck_used": false
+          },
+          "fault": "receiver_pause_60ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 113,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 6,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.156,
+            "p99": 119.804,
+            "max": 134.8
+          },
+          "delivery_gap_ms": {
+            "p99": 8.564,
+            "max": 158.651
+          },
+          "samples_older_than_16_7ms": 6,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 126,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 14,
+            "path_recheck_used": true
+          },
+          "fault": "receiver_pause_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 113,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 5,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.153,
+            "p99": 110.725,
+            "max": 134.097
+          },
+          "delivery_gap_ms": {
+            "p99": 8.581,
+            "max": 157.848
+          },
+          "samples_older_than_16_7ms": 6,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 127,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 15,
+            "path_recheck_used": true
+          },
+          "fault": "receiver_pause_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 841,
+          "sender_coalesced": 14,
+          "receiver_coalesced": 50,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.121,
+            "p99": 1.248,
+            "max": 148.094
+          },
+          "delivery_gap_ms": {
+            "p99": 1.786,
+            "max": 158.999
+          },
+          "samples_older_than_16_7ms": 7,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 943,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 42,
+            "receiver_udp_coalesced": 64,
+            "path_recheck_used": true
+          },
+          "fault": "receiver_pause_150ms"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "no_delay",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 856,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 51,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.115,
+            "p99": 0.31,
+            "max": 134.662
+          },
+          "delivery_gap_ms": {
+            "p99": 1.551,
+            "max": 152.885
+          },
+          "samples_older_than_16_7ms": 7,
+          "held_ciphertext_bytes": 0,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 955,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 43,
+            "receiver_udp_coalesced": 61,
+            "path_recheck_used": true
+          },
+          "fault": "receiver_pause_150ms"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "stall_after_recovery_80ms",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 112,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 7,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.131,
+            "p99": 103.263,
+            "max": 134.342
+          },
+          "delivery_gap_ms": {
+            "p99": 8.531,
+            "max": 158.503
+          },
+          "samples_older_than_16_7ms": 5,
+          "held_ciphertext_bytes": 46,
+          "relay_peak_queued_bytes": 874,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 126,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 14,
+            "path_recheck_used": true
+          },
+          "post_recovery_window_seconds": [
+            0.5,
+            0.9
+          ],
+          "post_recovery_delivery_gap_ms": {
+            "p99": 8.317,
+            "max": 8.411
+          },
+          "fault": "receiver_pause_150ms_then_tls_stall"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "stall_after_recovery_80ms",
+          "includes_click_and_key": true,
+          "rate_hz": 125,
+          "offered": 125,
+          "delivered": 114,
+          "sender_coalesced": 0,
+          "receiver_coalesced": 7,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.142,
+            "p99": 119.193,
+            "max": 134.27
+          },
+          "delivery_gap_ms": {
+            "p99": 8.566,
+            "max": 158.368
+          },
+          "samples_older_than_16_7ms": 7,
+          "held_ciphertext_bytes": 138,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 125,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 0,
+            "receiver_udp_coalesced": 13,
+            "path_recheck_used": true
+          },
+          "post_recovery_window_seconds": [
+            0.5,
+            0.9
+          ],
+          "post_recovery_delivery_gap_ms": {
+            "p99": 8.561,
+            "max": 8.583
+          },
+          "fault": "receiver_pause_150ms_then_tls_stall"
+        },
+        {
+          "direction": "windows_to_mac",
+          "profile": "stall_after_recovery_80ms",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 842,
+          "sender_coalesced": 14,
+          "receiver_coalesced": 50,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.119,
+            "p99": 0.237,
+            "max": 134.95
+          },
+          "delivery_gap_ms": {
+            "p99": 2.007,
+            "max": 153.204
+          },
+          "samples_older_than_16_7ms": 7,
+          "held_ciphertext_bytes": 138,
+          "relay_peak_queued_bytes": 876,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 943,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 44,
+            "receiver_udp_coalesced": 61,
+            "path_recheck_used": true
+          },
+          "post_recovery_window_seconds": [
+            0.5,
+            0.9
+          ],
+          "post_recovery_delivery_gap_ms": {
+            "p99": 1.573,
+            "max": 2.429
+          },
+          "fault": "receiver_pause_150ms_then_tls_stall"
+        },
+        {
+          "direction": "mac_to_windows",
+          "profile": "stall_after_recovery_80ms",
+          "includes_click_and_key": true,
+          "rate_hz": 1000,
+          "offered": 1000,
+          "delivered": 855,
+          "sender_coalesced": 1,
+          "receiver_coalesced": 48,
+          "scheduler_late": 0,
+          "sample_age_ms": {
+            "p50": 0.119,
+            "p99": 0.282,
+            "max": 143.13
+          },
+          "delivery_gap_ms": {
+            "p99": 1.556,
+            "max": 153.113
+          },
+          "samples_older_than_16_7ms": 7,
+          "held_ciphertext_bytes": 138,
+          "relay_peak_queued_bytes": 875,
+          "actions_order_and_position_verified": 4,
+          "pressed_input_released": true,
+          "final_position_delivered": true,
+          "end_to_end_tls": "TLSv1.3",
+          "transport": "hybrid",
+          "synthetic_datagram_loss": {
+            "attempted": 0,
+            "dropped": 0
+          },
+          "motion_mode": "datagram",
+          "idle_motion_deadline": null,
+          "fault_observations": {
+            "attempted": 958,
+            "dropped": 0,
+            "duplicates": 0,
+            "corrupted": 0,
+            "reordered": 0,
+            "receiver_pauses": 1,
+            "receiver_inbox_dropped": 46,
+            "receiver_udp_coalesced": 61,
+            "path_recheck_used": true
+          },
+          "post_recovery_window_seconds": [
+            0.5,
+            0.9
+          ],
+          "post_recovery_delivery_gap_ms": {
+            "p99": 1.565,
+            "max": 1.629
+          },
+          "fault": "receiver_pause_150ms_then_tls_stall"
+        }
+      ]
+    },
+    "pointer_precision_benchmark": {
+      "scope": "production_WindowsInput_with_fake_SendInput_and_documented_pixel_range_decoder",
+      "native_input": false,
+      "cases": [
+        {
+          "geometry": [
+            0,
+            0,
+            1280,
+            720
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 1280,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            1280,
+            720
+          ],
+          "axis": "vertical",
+          "pixels_checked": 720,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            1920,
+            1080
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 1920,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            1920,
+            1080
+          ],
+          "axis": "vertical",
+          "pixels_checked": 1080,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            2560,
+            1440
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 2560,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            2560,
+            1440
+          ],
+          "axis": "vertical",
+          "pixels_checked": 1440,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            3840,
+            2160
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 3840,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            3840,
+            2160
+          ],
+          "axis": "vertical",
+          "pixels_checked": 2160,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            5120,
+            2880
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 5120,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            5120,
+            2880
+          ],
+          "axis": "vertical",
+          "pixels_checked": 2880,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            7680,
+            4320
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 7680,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            0,
+            0,
+            7680,
+            4320
+          ],
+          "axis": "vertical",
+          "pixels_checked": 4320,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            -1920,
+            -1080,
+            3840,
+            2160
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 3840,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            -1920,
+            -1080,
+            3840,
+            2160
+          ],
+          "axis": "vertical",
+          "pixels_checked": 2160,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            -3840,
+            -2160,
+            7680,
+            4320
+          ],
+          "axis": "horizontal",
+          "pixels_checked": 7680,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        },
+        {
+          "geometry": [
+            -3840,
+            -2160,
+            7680,
+            4320
+          ],
+          "axis": "vertical",
+          "pixels_checked": 4320,
+          "incorrect_pixels": 0,
+          "maximum_error_pixels": 0,
+          "previous_position_mismatches": 0,
+          "native_input": false,
+          "geometry_queries_per_report": 0
+        }
+      ],
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-22a37a4a5d12b3ba2816f38e5b1eb3c713b24c5d",
+      "id": 12127310973,
+      "sha256": "a0db3a38ee097ab2e8288f4d1bcf543e4b2d939eec46e38aa49d15bc4e609afd"
+    },
+    {
+      "name": "CleverSwitch-Windows-22a37a4a5d12b3ba2816f38e5b1eb3c713b24c5d",
+      "id": 12127271012,
+      "sha256": "aa688adb9c4b84ebfb888abc4ab987bf5b9d753b5857abfd67989ba6fc2a6e94"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Mouse callbacks, event taps and native injection APIs are simulated; no real input is captured or injected",
+    "Native compilation and loopback tests do not establish physical smoothness or Wi-Fi/display latency",
+    "Home Windows, Easy-Switch recovery, displays, sleep, DHCP and energy still require joint physical acceptance",
+    "No protections, permissions, firewall, router, VPN, pairing or login settings changed"
+  ],
+  "remaining": [
+    "Joint physical acceptance in both directions from the same candidate",
+    "Easy-Switch, display changes, sleep, DHCP and energy measurements"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.13.zip",
+      "sha256": "5445354bb39046b1621fbb72d3037d43f5abb3564c69ad603cdc0fb6271f1592"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.13.zip",
+      "sha256": "aa688adb9c4b84ebfb888abc4ab987bf5b9d753b5857abfd67989ba6fc2a6e94"
+    }
+  }
+}
