@@ -12,6 +12,7 @@ from .input_geometry import Desktop, Display
 from .input_health import Readiness
 from .input_keys import EVENT_TAG, MAC, MAC_DEVICE_FLAGS, MAC_MODIFIER_FLAGS, MAC_REVERSE
 from .input_protocol import Kind
+from .input_timing import Duration
 
 
 class MacInput:
@@ -25,6 +26,7 @@ class MacInput:
         double_click=None,
         monitor_factory=None,
         display_monitor_factory=None,
+        event_clock=time.monotonic_ns,
     ):
         if api is None:
             import ctypes
@@ -46,6 +48,10 @@ class MacInput:
             display_monitor_factory = MacDisplayMonitor
         self.q, self._ready, self.secure_input = api, ready, secure_input
         self.clock = clock
+        # CPython on macOS uses mach_absolute_time for monotonic_ns. Quartz
+        # timestamps use that uptime in nanoseconds; a new CGEvent can be zero.
+        self.event_clock = event_clock
+        self.capture_age = Duration()
         self.health = Readiness(self._check_ready, lambda: self.clock())
         self.double_click = double_click or (lambda: 0.5)
         self._desktop = desktop
@@ -282,6 +288,7 @@ class MacInput:
             q.kCGEventRightMouseDragged,
             q.kCGEventOtherMouseDragged,
         ):
+            self._motion_age(event)
             point = self._mouse_point(event)
             previous = self.anchor if self.captured else self.previous or point
             self.previous = point
@@ -312,6 +319,14 @@ class MacInput:
                 self.last_click = self.clock(), button, point, max(1, min(3, count))
             return swallowed
         return False
+
+    def _motion_age(self, event):
+        try:
+            stamp = self.q.CGEventGetTimestamp(event)
+            if stamp > 0:
+                self.capture_age.observe((self.event_clock() - stamp) / 1_000_000_000)
+        except Exception:
+            pass  # A missing diagnostic must never reject native input.
 
     def _mouse_point(self, event):
         location = self.q.CGEventGetLocation(event)
@@ -453,10 +468,10 @@ class MacInput:
                 now = self.clock()
                 clicked = now if packet.stamp is None else packet.stamp / 1_000_000
                 if packet.stamp is not None:
-                    # Quartz and Python need not share a clock origin. Backdate
-                    # a newly created event by its age, never post a future time.
+                    # Backdate from the native clock, not the new event's
+                    # timestamp: Quartz may leave that field at zero.
                     age = int(max(0, now - clicked) * 1_000_000_000)
-                    q.CGEventSetTimestamp(event, max(0, q.CGEventGetTimestamp(event) - age))
+                    q.CGEventSetTimestamp(event, max(1, self.event_clock() - age))
                 if down:
                     if self.last_click is not None:
                         previous_time, previous_button, previous_point, previous_count = self.last_click

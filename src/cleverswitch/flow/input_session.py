@@ -19,7 +19,7 @@ LOCK_KEYS = {57: 1, 83: 2, 71: 4}
 class Session:
     def __init__(
         self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None, can_receive=None,
-        *, timed_clicks=False,
+        *, timed_clicks=False, injection_timing=None,
     ):
         if role not in ("windows", "mac"):
             raise ValueError("Equipo inválido")
@@ -45,6 +45,7 @@ class Session:
         self.pending_capture = False
         self.timed_clicks = timed_clicks
         self.click_offset = self.last_click_stamp = None
+        self.injection_timing = injection_timing
 
     def _phase(self, value):
         if value == "local":
@@ -222,8 +223,13 @@ class Session:
                 held.add(code)
             elif code not in held:
                 return  # Never release input this session did not press.
+        started = self.clock() if self.injection_timing is not None else None
         try:
-            self.backend.inject(packet)
+            try:
+                self.backend.inject(packet)
+            finally:
+                if self.injection_timing is not None:
+                    self.injection_timing.observe(self.clock() - started)
         except Exception:
             self.cancel("injection")
             raise ConnectionError("No se pudo entregar la entrada") from None

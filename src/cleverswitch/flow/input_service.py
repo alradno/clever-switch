@@ -18,6 +18,7 @@ from .input_motion_link import CAPABILITY, supports_motion
 from .input_protocol import TIMING_CAPABILITY, VERSION, Kind, supports_timing
 from .input_session import Session
 from .input_stream import Channel
+from .input_timing import RoutingTiming
 
 
 def native_input():
@@ -59,6 +60,20 @@ def native_callback(method):
                 ):
                     self.channel._wake()
 
+    @functools.wraps(method)
+    def measured(self, *args):
+        started = time.monotonic()
+        timing = self.performance
+        if method.__name__ == "motion":
+            timing.motion(started)
+            duration = timing.motion_callback
+        else:
+            duration = timing.action_callback
+        try:
+            return bounded(self, *args)
+        finally:
+            duration.observe(time.monotonic() - started)
+
     # Track what actually reached local apps at callback time, independently
     # of the routing worker's queue. This wrapper is absent from mouse motion.
     owner = {
@@ -66,16 +81,16 @@ def native_callback(method):
         "keyboard_changed": "local_keys", "mouse_changed": "local_buttons",
     }.get(method.__name__)
     if owner is None:
-        return bounded
+        return measured
 
     @functools.wraps(method)
     def physical(self, *args):
         held = getattr(self, owner)
         if not args:  # Device notification, in native order rather than replay order.
             held.clear()
-            return bounded(self, *args)
+            return measured(self, *args)
         code, down = args
-        swallowed = bounded(self, *args)
+        swallowed = measured(self, *args)
         if not down:
             held.discard(code)
         elif not swallowed:
@@ -109,6 +124,7 @@ class Service:
         self.can_start = can_start or (lambda: True)
         self.next_check = 0
         self.next_geometry = 0
+        self.performance = RoutingTiming()
         # A 1000 Hz source can queue ~600 reports within the channel's normal
         # liveness budget. Leave room for actions without extending that budget
         # or dropping path segments that can cross an edge or surround a click.
@@ -236,6 +252,7 @@ class Service:
                 lambda p: channel.send(p),
                 can_receive=lambda: not self.keys and not self.buttons,
                 timed_clicks=timed,
+                injection_timing=self.performance.native_delivery,
             )
             channel = Channel(
                 connection,
@@ -310,7 +327,9 @@ class Service:
             swallowed = False
         try:
             generation = session.local_generation if session else 0
-            self.deferred.put_nowait((method, args, session, session.epoch if session else 0, generation, swallowed))
+            self.deferred.put_nowait((
+                method, args, session, session.epoch if session else 0, generation, swallowed, time.monotonic(),
+            ))
             if self.channel is not None:
                 self.channel._wake()
         except queue.Full:
@@ -327,12 +346,13 @@ class Service:
     def _drain_ordered(self):
         for _ in range(256):
             try:
-                method, args, session, epoch, generation, swallowed = self.deferred.get_nowait()
+                method, args, session, epoch, generation, swallowed, queued_at = self.deferred.get_nowait()
             except queue.Empty:
                 return
             delivered = False
             if session is not None and session is self.session:
                 with session.lock:
+                    self.performance.deferred_wait.observe(time.monotonic() - queued_at)
                     # A native cancel can retire the epoch while this worker
                     # waits for the lock. Validate ownership inside the lock.
                     same_focus = epoch and epoch == session.epoch
@@ -415,6 +435,7 @@ class Service:
             self.buttons.clear()
             self.local_keys.clear()
             self.local_buttons.clear()
+            self.performance.previous_motion = None
             while not self.deferred.empty():
                 try:
                     self.deferred.get_nowait()
@@ -592,4 +613,11 @@ class Service:
             "write_calls": channel.writes if channel else 0,
             "round_trip": channel.timing() if channel else None,
             "motion": channel.lane.diagnostic() if channel and channel.lane else {"negotiated": False},
+            "performance": {
+                "routing": self.performance.snapshot(),
+                "transport": channel.performance() if channel else None,
+                "readiness": self.backend.health.duration.snapshot() if hasattr(self.backend, "health") else None,
+                "os_motion_age": self.backend.capture_age.snapshot() if hasattr(self.backend, "capture_age") else None,
+                "scope": "local_stage_durations; motion_interval_includes_user_pauses; not_hardware_or_screen_latency",
+            },
         }

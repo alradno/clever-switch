@@ -12,7 +12,8 @@ import time
 
 from .input_hybrid import MotionLane
 from .input_motion_link import bootstrap
-from .input_protocol import Decoder, Kind, Outbox, Packet, Routed
+from .input_protocol import Decoder, Kind, Outbox, Packet, replace_motion
+from .input_timing import Duration
 
 
 class Channel:
@@ -46,6 +47,9 @@ class Channel:
         self._timing = None
         self._finalized = False
         self._finalize_lock = threading.Lock()
+        self.routing_duration = Duration()
+        self.receiving_duration = Duration()
+        self.write_duration = Duration()
 
     def start(self):
         with self._start_lock:
@@ -150,21 +154,21 @@ class Channel:
                 raise ConnectionError
             total += len(raw)
             for packet in decoder.feed(raw):
-                if (
-                    packet.kind == Kind.MOVE
-                    and packets
-                    and packets[-1].kind == Kind.MOVE
-                    and packet.epoch == packets[-1].epoch
-                    and type(packet) is type(packets[-1])
-                    and (not isinstance(packet, Routed) or packet.action == packets[-1].action)
-                ):
-                    packets[-1] = packet
+                if replace_motion(packets, packet):
                     self.received_coalesced += 1
                 else:
                     packets.append(packet)
             if total >= 16384:
                 break
         return packets, needs_write
+
+    def performance(self):
+        return {
+            "routing_and_datagrams": self.routing_duration.snapshot(),
+            "tls_read_and_delivery": self.receiving_duration.snapshot(),
+            "tls_write": self.write_duration.snapshot(),
+            "datagrams_dropped_at_receiver": self.inbox.dropped if self.inbox is not None else 0,
+        }
 
     def _run(self):
         decoder = Decoder(routed=self.lane is not None, timed=self.timed_clicks)
@@ -199,6 +203,12 @@ class Channel:
                     self.lane.tick(time.monotonic())
                     for packet in self.outbox.take():
                         self.lane.outgoing(packet, time.monotonic())
+                # Routing, decoding and native delivery can consume this turn.
+                # A retry deadline is absolute: do not add that work's duration
+                # again to the socket wait or grant a stale liveness deadline.
+                completed = time.monotonic()
+                self.routing_duration.observe(completed - now)
+                now = completed
                 if (pending_ping and now >= pending_ping[1]) or (
                     active and now - max(last_rx, active_since) >= self.timeout
                 ):
@@ -217,7 +227,7 @@ class Channel:
                         deadlines.append(self.lane.deadline)
                     if self.outbox.pending():
                         deadlines.append(now)
-                timeout = max(0, min(deadlines) - now)
+                timeout = max(0, min(deadlines) - time.monotonic())
                 pending = self.connection.pending() if hasattr(self.connection, "pending") else 0
                 wants_write = (tx or self.wirebox.pending()) and not write_waits_read
                 readable, writable, _ = select.select(
@@ -233,6 +243,7 @@ class Channel:
                         pass
                 can_read = self.connection in readable or pending or (read_waits_write and self.connection in writable)
                 if can_read:
+                    reading_started = time.monotonic()
                     try:
                         packets, read_waits_write = self._read_packets(decoder)
                         for packet in packets:
@@ -255,6 +266,8 @@ class Channel:
                         read_waits_write = False
                     except ssl.SSLWantWriteError:
                         read_waits_write = True
+                    finally:
+                        self.receiving_duration.observe(time.monotonic() - reading_started)
                 if self.stop.is_set():
                     break
                 if not tx and self.connection in writable:
@@ -266,6 +279,7 @@ class Channel:
                     tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
                     sequence += tx_count
                 if tx and (self.connection in writable or (write_waits_read and self.connection in readable)):
+                    write_started = time.monotonic()
                     try:
                         count = self.connection.send(tx)
                         if not count:
@@ -279,6 +293,8 @@ class Channel:
                         write_waits_read = True
                     except (ssl.SSLWantWriteError, BlockingIOError):
                         write_waits_read = False
+                    finally:
+                        self.write_duration.observe(time.monotonic() - write_started)
         except TimeoutError:
             self.failure = "timeout"
         except (ValueError, BufferError):

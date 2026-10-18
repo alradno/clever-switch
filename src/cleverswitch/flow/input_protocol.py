@@ -218,11 +218,39 @@ class Decoder:
         self.buffer.clear()
 
 
+def replace_motion(items, packet):
+    """Replace unsent motion across heartbeats, never across an input action.
+
+    PING/PONG do not observe a pointer position or change focus. Keeping an old
+    move merely because a heartbeat follows it replays that position after a
+    scheduler/network stall. Preserve every heartbeat and its relative order.
+    The caller owns this bounded list/deque or holds its queue lock.
+    """
+    if packet.kind != Kind.MOVE:
+        return False
+    for index in range(len(items) - 1, -1, -1):
+        previous = items[index]
+        if previous.kind in (Kind.PING, Kind.PONG):
+            continue
+        if (
+            previous.kind == Kind.MOVE
+            and previous.epoch == packet.epoch
+            and type(previous) is type(packet)
+            and (not isinstance(packet, Routed) or previous.action == packet.action)
+        ):
+            if not isinstance(packet, Routed) or packet.serial >= previous.serial:
+                items[index] = packet
+            return True
+        break
+    return False
+
+
 class Outbox:
-    """Nonblocking producer; bounded reliable actions, adjacent motion coalesced.
+    """Nonblocking producer; bounded reliable actions, obsolete motion coalesced.
 
     Coalescing across a click, key, wheel or focus boundary would change its
-    meaning, so only the last unsent motion of the same focus can be replaced.
+    meaning. Link heartbeats preserve those boundaries without retaining stale
+    motion of the same focus.
     """
 
     def __init__(self, capacity=256):
@@ -241,15 +269,7 @@ class Outbox:
             if self.closed:
                 raise ConnectionError("Canal de entrada cerrado")
             empty = not self.items
-            if (
-                packet.kind == Kind.MOVE
-                and self.items
-                and self.items[-1].kind == Kind.MOVE
-                and self.items[-1].epoch == packet.epoch
-                and type(self.items[-1]) is type(packet)
-                and (not isinstance(packet, Routed) or self.items[-1].action == packet.action)
-            ):
-                self.items[-1] = packet
+            if replace_motion(self.items, packet):
                 self.coalesced += 1
             elif len(self.items) < self.capacity:
                 self.items.append(packet)

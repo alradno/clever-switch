@@ -7,6 +7,8 @@ cannot keep granting input indefinitely, and no worker survives a disconnect.
 import threading
 import time
 
+from .input_timing import Duration
+
 
 class Readiness:
     def __init__(self, check, clock=time.monotonic):
@@ -16,6 +18,7 @@ class Readiness:
         self.active = threading.Event()
         self.wake, self.stop = threading.Event(), threading.Event()
         self.worker = None
+        self.duration = Duration()
 
     def _refresh(self):
         started = self.clock()
@@ -23,6 +26,7 @@ class Readiness:
             value = bool(self.check())
         except Exception:
             value = False
+        self.duration.observe(self.clock() - started)
         # Age starts before the OS call: a late result is not fresh evidence.
         self.sample = value, started
 

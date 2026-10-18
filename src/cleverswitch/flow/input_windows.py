@@ -13,6 +13,7 @@ from .input_geometry import Desktop, Display
 from .input_health import Readiness
 from .input_keys import EVENT_TAG, WINDOWS, WINDOWS_REVERSE
 from .input_protocol import Kind
+from .input_timing import Duration
 
 DWORD, LONG, WORD, PTR = c.c_uint32, c.c_int32, c.c_uint16, c.c_size_t
 
@@ -85,6 +86,7 @@ class WindowsInput:
             display_monitor_factory = WindowsDisplayMonitor
         self.api, self.kernel, self._ready = api, kernel, ready
         self.clock = clock
+        self.capture_age = Duration()
         self.health = Readiness(lambda: self._ready(), lambda: self.clock())
         self._desktop = desktop
         self.pointer_desktop = None
@@ -365,6 +367,7 @@ class WindowsInput:
                     self.previous = self.physical_position
             swallowed = False
             if message == 0x200:
+                self._motion_age(event.time)
                 point = event.point.x, event.point.y
                 previous = self.anchor if self.captured else self.previous or point
                 self.previous = point
@@ -387,6 +390,19 @@ class WindowsInput:
             self.sink.fail()
             return 1 if self.captured else self._next(code, message, raw)
         return self._next(code, message, raw)
+
+    def _motion_age(self, stamp):
+        if not stamp:
+            return
+        try:
+            # MSLLHOOKSTRUCT.time is a DWORD uptime in milliseconds. Handle
+            # its wrap, excluding future/ambiguous values instead of inventing
+            # a multi-day input delay. This never changes delivery decisions.
+            age = (self.kernel.GetTickCount64() - stamp) & 0xFFFFFFFF
+            if age < 0x80000000:
+                self.capture_age.observe(age / 1000)
+        except Exception:
+            pass  # A missing diagnostic must never reject native input.
 
     def _submit(self, event):
         # UIPI failures are terminal for this focus. Never retry in a busy loop.
