@@ -56,7 +56,30 @@ def native_callback(method):
                 ):
                     self.channel._wake()
 
-    return bounded
+    # Track what actually reached local apps at callback time, independently
+    # of the routing worker's queue. This wrapper is absent from mouse motion.
+    owner = {
+        "key": "local_keys", "button": "local_buttons",
+        "keyboard_changed": "local_keys", "mouse_changed": "local_buttons",
+    }.get(method.__name__)
+    if owner is None:
+        return bounded
+
+    @functools.wraps(method)
+    def physical(self, *args):
+        held = getattr(self, owner)
+        if not args:  # Device notification, in native order rather than replay order.
+            held.clear()
+            return bounded(self, *args)
+        code, down = args
+        swallowed = bounded(self, *args)
+        if not down:
+            held.discard(code)
+        elif not swallowed:
+            held.add(code)
+        return swallowed
+
+    return physical
 
 
 class Service:
@@ -76,6 +99,7 @@ class Service:
         self.closed = False
         self.armed = False
         self.keys, self.buttons = set(), set()
+        self.local_keys, self.local_buttons = set(), set()
         self.lock = threading.RLock()
         self.on_change = on_change or (lambda: None)
         self.can_start = can_start or (lambda: True)
@@ -121,6 +145,8 @@ class Service:
             self.backend.start(self)
             self.keys = set(getattr(self.backend, "held_keys", ()))
             self.buttons = set(getattr(self.backend, "held_buttons", ()))
+            self.local_keys = self.keys.copy()
+            self.local_buttons = self.buttons.copy()
             self.started = True
 
     def accept(self, value):
@@ -251,6 +277,10 @@ class Service:
         # section. Never block a native hook or close a healthy stream merely
         # because an acknowledgement is being processed concurrently.
         swallowed = bool(self.backend.captured)
+        if method.__name__ == "key" and args[0] in self.local_keys:
+            swallowed = False
+        elif method.__name__ == "button" and args[0] in self.local_buttons:
+            swallowed = False
         try:
             generation = session.local_generation if session else 0
             self.deferred.put_nowait((method, args, session, session.epoch if session else 0, generation, swallowed))
@@ -335,6 +365,8 @@ class Service:
             self.backend.close()
         self.keys.clear()
         self.buttons.clear()
+        self.local_keys.clear()
+        self.local_buttons.clear()
         while not self.deferred.empty():
             try:
                 self.deferred.get_nowait()
