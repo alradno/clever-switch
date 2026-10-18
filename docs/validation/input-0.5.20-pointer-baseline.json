@@ -1,0 +1,123 @@
+{
+  "edition": "0.5.20",
+  "source_commit": "b21a8e964ce74c569bb4bdfbb4a3d2af6bca62a9",
+  "observed_at": "2026-10-18T10:29:53.590722+00:00",
+  "scope": "native_pointer_origin_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Mac local clicks and wheels retain their observed cursor position as the next physical motion origin",
+    "A vertical movement at the edge after native cursor relocation cannot invent a horizontal crossing",
+    "Tagged events cannot replace the physical origin; subsequent deliberate crossings and keyboard input remain usable",
+    "Windows already retains this origin and is verified through the same bidirectional cases",
+    "No new waits, polling, threads, native queries or protocol changes"
+  ],
+  "regression": {
+    "reference_commit": "ac50f8f6673ebb9d318fdbc6889ce3bacd09e14d",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_mac_backend_sha256": "b991a61c2318aa38ba37430dff6fc69a91635648a5c155bbc0953e198a343c74",
+    "baseline": {
+      "tests": 30,
+      "failures": 12,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 243,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 30,
+    "reproduced_failures": 12,
+    "preexisting_successful_controls": 18,
+    "tests": "Both source roles and transports, primary/extra clicks and both wheel axes, immediate/deferred local callbacks; six tagged-event controls",
+    "native_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1836,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.92942568011566,
+    "mac_build": {
+      "edition": "0.5.20",
+      "built_at": "2026-10-18T10:23:51.351118+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "8c77deac41efd64f932cfc628b0290ad2e8fb560b79ad7e4504fe8fd4ddb34c4",
+      "application_source_matches_validated_commit": "b21a8e964ce74c569bb4bdfbb4a3d2af6bca62a9"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39119011651",
+    "head_sha": "b21a8e964ce74c569bb4bdfbb4a3d2af6bca62a9",
+    "conclusion": "success",
+    "tests": {
+      "tests": 1836,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.1025507548152,
+    "packaged_native_check": {
+      "edition": "0.5.20",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "jitter_cases": 24,
+      "ordered_jitter_actions": 48,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-b21a8e964ce74c569bb4bdfbb4a3d2af6bca62a9",
+      "id": 12134075323,
+      "sha256": "649673d258cadfa1dc4f1495e9c5662d08993029975d03b17d0cc6122e0b6885"
+    },
+    {
+      "name": "CleverSwitch-Windows-b21a8e964ce74c569bb4bdfbb4a3d2af6bca62a9",
+      "id": 12133861207,
+      "sha256": "f781cc30311b50e8ddbbfb303501e7682fdf76b1fb9371c7aa64dc65645861a6"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and local application delivery are simulated; TLS/UDP loopback is real",
+    "The reproduced pointer-origin error is verified; it does not attribute the reported home microcuts or prove physical Wi-Fi latency or cable-equivalent fluency",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.20.zip",
+      "sha256": "00a4b0195369acdf1bdb0afa77ded426e4d965e2cb551a72631081dec65a3f5b"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.20.zip",
+      "sha256": "f781cc30311b50e8ddbbfb303501e7682fdf76b1fb9371c7aa64dc65645861a6"
+    }
+  }
+}
