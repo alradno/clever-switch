@@ -57,10 +57,11 @@ class Relay:
         start, source, profile = setting
         if direction != source:
             return received
-        if profile == "stall_80ms":
-            if start + 0.2 <= received < start + 0.28:
+        if profile in ("stall_80ms", "stall_after_recovery_80ms"):
+            offset = 0.6 if profile == "stall_after_recovery_80ms" else 0.2
+            if start + offset <= received < start + offset + 0.08:
                 self.held_bytes += size
-                return start + 0.28
+                return start + offset + 0.08
         elif profile == "variable_2_to_18ms":
             # Delay is assigned per ciphertext read, not per IP packet. FIFO
             # ordering holds faster later reads behind an earlier delayed one.
@@ -196,9 +197,10 @@ def connected(directory, *, hybrid=False):
             relay.close()
 
 
-def run_case(directory, rate, source, profile, include_actions, *, hybrid=False, drop_every=0):
+def run_case(directory, rate, source, profile, include_actions, *, hybrid=False, drop_every=0, configure=None):
     with connected(directory, hybrid=hybrid) as (services, relay):
         sender, receiver = services[source], services[1 - source]
+        fault_report = configure(services) if configure is not None else None
         datagrams = {"attempted": 0, "dropped": 0}
         if drop_every:
             transport = sender.channel.transport
@@ -240,6 +242,12 @@ def run_case(directory, rate, source, profile, include_actions, *, hybrid=False,
                 time.sleep(wait)
             elif wait < -1 / rate:
                 late += 1
+            if profile == "stall_after_recovery_80ms" and index == int(rate * 0.62):
+                # Guarantee ciphertext during the second stall, without an
+                # input action barrier that would intentionally pause motion.
+                from cleverswitch.flow.input_protocol import Packet
+
+                sender.channel.send(Packet(Kind.PING, 900000))
             position = round(first_position + direction * (index + 1))
             receiver.backend.pending[position] = time.perf_counter()
             if not sender.motion(500, 400, direction, 0):
@@ -264,6 +272,8 @@ def run_case(directory, rate, source, profile, include_actions, *, hybrid=False,
         # In the hybrid path a motion-only stream can bypass the relay entirely.
         if profile == "stall_80ms" and (not hybrid or include_actions) and relay.held_bytes == 0:
             raise RuntimeError("The relay did not exercise the requested stall")
+        if profile == "stall_after_recovery_80ms" and relay.held_bytes == 0:
+            raise RuntimeError("The post-recovery TLS stall was not exercised")
         result = {
             "direction": sender.role + "_to_" + receiver.role,
             "profile": profile,
@@ -294,6 +304,17 @@ def run_case(directory, rate, source, profile, include_actions, *, hybrid=False,
             until(lambda: sender.channel.lane.sender.latest is None)
             result["motion_mode"] = sender.channel.lane.sender.mode
             result["idle_motion_deadline"] = sender.channel.lane.deadline
+        if fault_report is not None:
+            result["fault_observations"] = fault_report()
+        if profile == "stall_after_recovery_80ms":
+            settled = [received for received, _ in samples if started + 0.5 <= received <= started + 0.9]
+            intervals = [(b - a) * 1000 for a, b in itertools.pairwise(settled)]
+            if not intervals:
+                raise RuntimeError("No samples in the post-recovery measurement window")
+            result["post_recovery_window_seconds"] = [0.5, 0.9]
+            result["post_recovery_delivery_gap_ms"] = {
+                "p99": percentile(intervals, 0.99), "max": round(max(intervals), 3),
+            }
         if not sender.session.leave():
             raise RuntimeError("Synthetic return to local input failed")
         until(lambda: receiver.session.phase == "local")
