@@ -42,6 +42,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python benchmarks/input_hybrid.py > windows-hybrid-network.json
+      - name: Check bounded recovery from queued motion bursts
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_bursts.py > windows-input-bursts.json
       - name: Build Windows candidate
         run: python build_tray.py
       - name: Check packaged executable without capturing input
@@ -87,4 +91,5 @@ jobs:
             windows-input-check.json
             windows-coverage.json
             windows-hybrid-network.json
+            windows-input-bursts.json
           retention-days: 14
