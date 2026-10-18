@@ -314,6 +314,11 @@ class Service:
             and not self.channel.stop.is_set()
         )
 
+    def _local_interior(self, x, y):
+        desktop = self.local
+        inward = desktop.right - x if self.side == "right" else x - desktop.left
+        return inward >= 8 and desktop.clamp(x, y) == (x, y)
+
     @native_callback
     def motion(self, x, y, dx, dy):
         """Called with accelerated desktop units, including when hidden/captured."""
@@ -326,6 +331,7 @@ class Service:
         if session.phase == "receiving":
             if dx or dy:
                 session.cancel("physical")
+                self.armed = self._local_interior(x, y)
             return False
         if session.phase in ("sending", "requesting"):
             px, py = self.remote_position
@@ -339,14 +345,12 @@ class Service:
                 # Real motion that already travelled into the local screen can
                 # reverse immediately. A tiny return still requires rearming;
                 # a parked cursor or an arrival warp must not bounce back.
-                inward = self.local.right - point[0] if self.side == "right" else point[0] - self.local.left
-                self.armed = inward >= 8
+                self.armed = self._local_interior(*point)
                 return True  # This movement was consumed by the focus transition.
             self.remote_position = self.remote.clamp(px + dx, py + dy)
             return session.input(Kind.MOVE, *self.remote_position)
         desktop = self.local
-        inward = desktop.right - x if self.side == "right" else x - desktop.left
-        if inward >= 8 and desktop.clamp(x, y) == (x, y):
+        if self._local_interior(x, y):
             self.armed = True
         fraction = desktop.crossing(self.side, x, y, dx)
         if fraction is None or not self.armed or self.keys or self.buttons:
