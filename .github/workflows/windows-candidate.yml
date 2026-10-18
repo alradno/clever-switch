@@ -58,6 +58,14 @@ jobs:
         env:
           PYTHONPATH: src
         run: python benchmarks/input_pointer_precision.py > windows-input-pointer-precision.json
+      - name: Measure bounded timing aggregates without native input
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_timing.py > windows-input-timing.json
+      - name: Check ideal report and display phase model
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_refresh.py > windows-input-refresh.json
       - name: Build Windows candidate
         run: python build_tray.py
       - name: Check packaged executable without capturing input
@@ -107,4 +115,6 @@ jobs:
             windows-input-path-recovery.json
             windows-input-datagram-jitter.json
             windows-input-pointer-precision.json
+            windows-input-timing.json
+            windows-input-refresh.json
           retention-days: 14
