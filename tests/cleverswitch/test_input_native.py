@@ -156,7 +156,10 @@ def test_windows_maps_virtual_desktop_and_preserves_fractional_wheel(win):
     backend, api = win
     backend.inject(event(Kind.MOVE, -1920, -100))
     backend.inject(event(Kind.MOVE, 1919, 1079))
-    assert [(entry.mouse.x, entry.mouse.y) for entry in api.inputs] == [(0, 0), (65535, 65535)]
+    # Normalized values describe pixel ranges; inspect the resulting physical
+    # points rather than requiring the extreme codes of those ranges.
+    points = [(-1920 + entry.mouse.x * 3840 // 65536, -100 + entry.mouse.y * 1180 // 65536) for entry in api.inputs]
+    assert points == [(-1920, -100), (1919, 1079)]
     assert all(entry.mouse.flags == 0xE001 for entry in api.inputs)
     for _ in range(4):
         backend.inject(event(Kind.WHEEL, -0.25, 0.25))

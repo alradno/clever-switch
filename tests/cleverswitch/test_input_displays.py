@@ -369,7 +369,8 @@ def test_monitor_removal_restores_pointer_inside_remaining_screen_using_new_geom
     backend.capture(False)
     assert not backend.captured and not backend.hidden and backend.restore_pending is None
     if platform == "win":
-        assert api.inputs[-1].mouse.x == 65535
+        mouse = api.inputs[-1].mouse
+        assert (-2000 + mouse.x * 1000 // 65536, mouse.y * 900 // 65536) == (-1001, 300)
         assert backend.pointer_desktop.displays == backend._desktop.displays
     else:
         assert api.warps[-1] == (-1001, 300)
