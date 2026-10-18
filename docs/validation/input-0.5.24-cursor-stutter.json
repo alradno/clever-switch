@@ -1,0 +1,801 @@
+{
+  "edition": "0.5.24",
+  "source_commit": null,
+  "reference_commit": "414e829f1f26dd75f90b1854a36ade22fdd34442",
+  "observed_at": "2026-10-18T18:26:02.491092+00:00",
+  "status": "mac_validated; Windows_native_CI_pending",
+  "scope": "simulated_native_input_and_real_TLS_UDP_loopback; read_only_native_clock_and_permission_probes",
+  "corrections": [
+    "Coalesce pending pointer positions across PING/PONG while preserving action, focus and hybrid serial boundaries.",
+    "Calculate socket wait from current time after routing/decoding/native delivery, without extending liveness deadlines.",
+    "Date Quartz button events from the macOS uptime clock instead of the newly constructed event timestamp, observed as zero."
+  ],
+  "instrumentation": {
+    "storage": "fixed aggregates only; no event payloads, keys, positions or history",
+    "nonblocking": true,
+    "new_timers_threads_polling": false,
+    "stages": [
+      "OS motion age at callback",
+      "motion callback duration and interval",
+      "action callback duration",
+      "deferred wait",
+      "native API delivery excluding cleanup",
+      "routing and datagrams",
+      "TLS read and delivery",
+      "TLS write",
+      "readiness checks"
+    ],
+    "limits": [
+      "Not hardware or screen latency.",
+      "Intervals include intentional pauses.",
+      "Native API completion excludes compositor/application work.",
+      "OS timestamp availability/granularity varies."
+    ]
+  },
+  "regressions": {
+    "baseline": {
+      "tests": 35,
+      "failures": 24,
+      "errors": 0,
+      "skipped": 0
+    },
+    "corrected": "all cases included in full passing suite",
+    "new_cases": 75
+  },
+  "mac": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "suite": {
+      "tests": 2094,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.49021614017138,
+    "ruff": "passed",
+    "diff_check": "passed",
+    "build": {
+      "edition": "0.5.24",
+      "built_at": "2026-10-18T18:26:05.413278+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 27,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.23",
+      "executable_sha256": "aefe21141f3cd24b61e904aabbc86eb6c50758ad8eb6c4ff82b6f2d14a23216e"
+    }
+  },
+  "windows": {
+    "status": "pending_native_CI",
+    "physical_acceptance": "pending"
+  },
+  "periodic_stalls": {
+    "cases": 16,
+    "directions": [
+      "windows_to_mac",
+      "mac_to_windows"
+    ],
+    "reports_hz": [
+      125,
+      1000
+    ],
+    "stages": [
+      "sender",
+      "receiver"
+    ],
+    "requested_pause_ms": 140,
+    "pause_interval_ms": 520,
+    "pauses_per_case": 3,
+    "outcome": "same_connection_final_position_no_backtracking_followed_by_typing_and_release",
+    "metrics": [
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 2.644,
+          "p50": 0.514,
+          "p99": 2.352
+        },
+        "delivered_moves": 121,
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 1.71,
+          "p50": 0.733,
+          "p99": 1.409
+        },
+        "delivered_moves": 120,
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 2.925,
+          "p50": 0.335,
+          "p99": 1.091
+        },
+        "delivered_moves": 955,
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 1.439,
+          "p50": 0.284,
+          "p99": 0.789
+        },
+        "delivered_moves": 965,
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 5.984,
+          "p50": 0.689,
+          "p99": 1.538
+        },
+        "delivered_moves": 125,
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 6.683,
+          "p50": 0.698,
+          "p99": 1.596
+        },
+        "delivered_moves": 124,
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 82.44,
+          "p50": 0.276,
+          "p99": 1.006
+        },
+        "delivered_moves": 963,
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 82.742,
+          "p50": 0.405,
+          "p99": 1.146
+        },
+        "delivered_moves": 957,
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 6.39,
+          "p50": 0.947,
+          "p99": 2.527
+        },
+        "delivered_moves": 122,
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 7.932,
+          "p50": 0.811,
+          "p99": 1.495
+        },
+        "delivered_moves": 122,
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 1.821,
+          "p50": 0.375,
+          "p99": 0.985
+        },
+        "delivered_moves": 970,
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "sender",
+        "completion_ms": {
+          "maximum": 2.27,
+          "p50": 0.396,
+          "p99": 0.934
+        },
+        "delivered_moves": 966,
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 49.513,
+          "p50": 0.73,
+          "p99": 6.494
+        },
+        "delivered_moves": 125,
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 49.382,
+          "p50": 0.82,
+          "p99": 7.359
+        },
+        "delivered_moves": 126,
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "offered_moves": 175,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 125,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 80.047,
+          "p50": 0.348,
+          "p99": 0.995
+        },
+        "delivered_moves": 962,
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      },
+      {
+        "blocked_stage": "receiver",
+        "completion_ms": {
+          "maximum": 80.272,
+          "p50": 0.387,
+          "p99": 1.126
+        },
+        "delivered_moves": 957,
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "offered_moves": 1400,
+        "pause_count": 3,
+        "pause_interval_ms": 520,
+        "report_rate_hz": 1000,
+        "requested_pause_ms": 140,
+        "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
+      }
+    ]
+  },
+  "frequency_model": {
+    "scope": "ideal_continuous_motion_sampled_by_two_unsynchronized_clocks",
+    "not_measured": [
+      "actual_device_report_rate",
+      "Wi-Fi",
+      "capture_scheduling",
+      "event_injection",
+      "compositor",
+      "variable_refresh",
+      "screen_recording"
+    ],
+    "interpretation": "At the modeled rates, phase mismatch alone does not generate an 80-140ms pause. It can change the movement increment per frame and repeat frames when reports are slower.",
+    "cases": [
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 26.667,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 22.222,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 20.833,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 18.182,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 60,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.333,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 11.111,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.889,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 12.121,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 90,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 12.5,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 3,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.333,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 11.111,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 8.333,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.889,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 12.121,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 125,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 8.333,
+        "maximum_reports_per_frame": 1,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 5,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.333,
+        "maximum_reports_per_frame": 4,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 11.111,
+        "maximum_reports_per_frame": 3,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 8.333,
+        "maximum_reports_per_frame": 3,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.944,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.061,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 250,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 4.167,
+        "maximum_reports_per_frame": 2,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 9,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.333,
+        "maximum_reports_per_frame": 7,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 11.111,
+        "maximum_reports_per_frame": 6,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 8.333,
+        "maximum_reports_per_frame": 5,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.944,
+        "maximum_reports_per_frame": 4,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.061,
+        "maximum_reports_per_frame": 4,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 500,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 4.167,
+        "maximum_reports_per_frame": 3,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 60,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 16.667,
+        "maximum_reports_per_frame": 17,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 75,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 13.333,
+        "maximum_reports_per_frame": 14,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 90,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 11.111,
+        "maximum_reports_per_frame": 12,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 120,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 8.333,
+        "maximum_reports_per_frame": 9,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 144,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.944,
+        "maximum_reports_per_frame": 7,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 165,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 6.061,
+        "maximum_reports_per_frame": 7,
+        "any_80ms_pause": false
+      },
+      {
+        "modeled_report_hz": 1000,
+        "modeled_display_hz": 240,
+        "phases": 64,
+        "maximum_presented_update_gap_ms": 4.167,
+        "maximum_reports_per_frame": 5,
+        "any_80ms_pause": false
+      }
+    ]
+  },
+  "timing_overhead": {
+    "scope": "aggregate_CPU_microbenchmark_including_loop_and_clock_cost",
+    "excludes": [
+      "native_API_cost",
+      "network",
+      "OS_scheduling",
+      "screen",
+      "physical_latency"
+    ],
+    "cases": [
+      {
+        "mode": "callback_aggregates",
+        "iterations": 100000,
+        "repeats": 5,
+        "median_microseconds_per_iteration": 0.499,
+        "maximum_run_average_microseconds": 0.501
+      },
+      {
+        "mode": "stage_aggregate",
+        "iterations": 100000,
+        "repeats": 5,
+        "median_microseconds_per_iteration": 0.261,
+        "maximum_run_average_microseconds": 0.266
+      },
+      {
+        "mode": "contended_stage_aggregate",
+        "iterations": 100000,
+        "repeats": 5,
+        "median_microseconds_per_iteration": 0.127,
+        "maximum_run_average_microseconds": 0.128
+      }
+    ]
+  },
+  "native_timing_overhead": {
+    "scope": "native_Quartz_timestamp_read_and_aggregate_only_no_tap_or_post",
+    "iterations_per_run": 100000,
+    "runs": 5,
+    "median_microseconds": 0.831,
+    "maximum_run_average_microseconds": 0.853
+  },
+  "native_event_clock": {
+    "scope": "read_only_event_construction_without_post_or_capture",
+    "rows": [
+      {
+        "kind": "generic",
+        "created": true,
+        "type": "CGEventRef",
+        "timestamp_ns": 0
+      },
+      {
+        "kind": "motion",
+        "created": true,
+        "type": "CGEventRef",
+        "timestamp_ns": 0
+      },
+      {
+        "kind": "button",
+        "created": true,
+        "type": "CGEventRef",
+        "timestamp_ns": 0
+      }
+    ],
+    "clock": "namespace(implementation='mach_absolute_time()', monotonic=True, adjustable=False, resolution=4.166666666666666e-08)"
+  },
+  "installed_observations": {
+    "mac": "0.5.23",
+    "windows": "0.5.23",
+    "windows_method": "existing_pinned_TLS_ready_RPC",
+    "changed_by_this_batch": false
+  },
+  "video_cause": "not_attributed; observed pauses of 83-142 ms and some ~520 ms repetitions",
+  "unresolved": [
+    "Actual report/display frequencies, scheduling, compositor and recording effects.",
+    "Router/Wi-Fi behavior during the video; no correlated network trace.",
+    "Physical end-to-end fluency, click interpretation, Easy-Switch recovery and energy use."
+  ],
+  "preserved": [
+    "pairing and identity",
+    "mutual TLS/pinning and packet protocol",
+    "600 ms active liveness and 500 ms readiness trust",
+    "bounded queues and passive absence behavior",
+    "local override, ordering and releases",
+    "existing firewall, permissions and protections"
+  ],
+  "installed": false
+}

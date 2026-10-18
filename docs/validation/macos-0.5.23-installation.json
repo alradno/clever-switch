@@ -1,0 +1,34 @@
+{
+  "edition": "0.5.23",
+  "previous_edition": "0.5.1",
+  "source_commit": "937951e4355115090eb0380011ab06853d5e871f",
+  "installed_at": "2026-10-18T17:31:46.945449+00:00",
+  "application_path": "/Applications/CleverSwitchTray.app",
+  "bundle_identifier": "local.cleverswitch.tray",
+  "package_sha256": "0270291e9abf5f7c91def406530b69d2efd0b9bf3f27b798086c4983348ed443",
+  "executable_sha256": "b21edbc628efd286bfd39054b11a5eef6a537a6b5f26605c17a73887e9f3e939",
+  "signature_valid": true,
+  "preserved": {
+    "identity.key": true,
+    "identity.pem": true,
+    "link.json": true,
+    "device_cache.json": true,
+    "local.cleverswitch.tray.plist": true
+  },
+  "permissions": {
+    "edition": "0.5.23",
+    "platform": "darwin",
+    "ready": true,
+    "checks": {
+      "listen_permission": true,
+      "post_permission": true,
+      "session_and_accessibility": true,
+      "secure_input_inactive": true
+    }
+  },
+  "launch_requested": true,
+  "physical_acceptance": "pending_user_joint_test",
+  "startup_error_report_present": false,
+  "windows_upgrade": "user_will_install; not verified in this turn",
+  "running_from_installed_path": true
+}
