@@ -1,7 +1,16 @@
-# Continuación en Windows — candidata conjunta 0.5.18 experimental
+# Continuación en Windows — candidata conjunta 0.5.19 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.19 conserva el control local si un cruce quedó en cola y después
+llegó una tecla, clic, rueda o movimiento a la aplicación local antes de empezar
+la captura. Al procesar esa entrada cancela el cruce que acaba de iniciarse,
+sin reenviarla al otro equipo. Conserva la posición local, las liberaciones y
+el enlace para el siguiente cruce. Un cursor quieto no lo cancela y los eventos
+de un periodo local anterior no afectan a un cruce nuevo. La corrección es común
+a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
+la ruta de los callbacks que se procesan al momento.
 
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
 Si la pulsación llegó a la aplicación local antes de empezar la captura,
@@ -14,7 +23,7 @@ La validación de red se amplía con 24 escenarios por plataforma: retrasos
 variables, reordenamiento, pérdida del 10 % y retención de 40 ms, también en
 las confirmaciones y la negociación inicial. Se conservan el orden y posición
 de 48 acciones por ejecución, la posición final y las liberaciones, sin retrocesos.
-El código y los paquetes de la app no cambian. La retención de red sigue
+Aquella ampliación conservó el código y los paquetes de la app 0.5.18. La retención de red sigue
 produciendo pausas; la fluidez física continúa pendiente. Véase
 [red variable 0.5.18](validation/input-0.5.18-datagram-jitter.json).
 
@@ -156,17 +165,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
-39 casos de pulsaciones: 32 reproducen la pérdida anterior de repetición o
-liberación y siete comprueban avisos de dispositivos, cola saturada, inicio
-y cierre. Pasan 227
-pruebas focalizadas. Además, 16 casos fuerzan la cola de movimiento y rueda
-sin cambiar sus posiciones esperadas. Se comprueban teclas, modificadores
-y botones en ambos sentidos, con TLS o transporte híbrido. Las APIs nativas y la entrega a las
-aplicaciones son simuladas; TLS/UDP usan loopback real. La aceptación física
-de fluidez, recuperación y consumo sigue pendiente. La comprobación
+Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
+quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
+pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
+Las APIs nativas y la entrega a aplicaciones están simuladas; TLS/UDP usan
+loopback real. La aceptación física de fluidez, recuperación y consumo
+sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.18-press-ownership.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.19-queued-edge.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
