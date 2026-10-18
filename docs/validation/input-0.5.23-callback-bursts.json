@@ -1,0 +1,351 @@
+{
+  "edition": "0.5.23",
+  "source_commit": "937951e4355115090eb0380011ab06853d5e871f",
+  "observed_at": "2026-10-18T12:43:33.305014+00:00",
+  "scope": "bounded_native_callback_backlogs_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Increase the bounded deferred callback queue from 256 to 1024, covering about 600 reports at 1000 Hz within the existing 600 ms liveness budget plus actions",
+    "Keep at most 256 callbacks per drain; rearm a consumed wake when more remain, yielding to socket work before continuation",
+    "Preserve raw movement path until routing; do not merge deltas across clipping, reversal, crossing or actions",
+    "Preserve local priority for input already delivered to local apps after a queued edge; the next intentional crossing uses the same connection",
+    "Overflow remains bounded and closes with backpressure, releasing held input and clearing pending callbacks",
+    "Shared correction for Mac and Windows; no added periodic polling, native calls, threads, protocol changes or extended timeouts"
+  ],
+  "regression": {
+    "reference_commit": "c1c59a187b18ed9e1b6c86d0e230ac649db652bb",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_source_sha256": "03cc696a4c421d7f18981a1d1c9dc6a2ada7e6f8d2a6541d22193926c1e8ccfe",
+    "baseline": {
+      "tests": 34,
+      "failures": 26,
+      "errors": 0,
+      "skipped": 0
+    },
+    "corrected": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 34,
+    "reproduced_failures": 26,
+    "previous_passing_controls": 8,
+    "identical_test_names_verified": true,
+    "native_input": false,
+    "reproduced_failures_by_kind": {
+      "backlog_recovery": 12,
+      "bounded_drain_continuation": 2,
+      "local_priority": 12
+    },
+    "controls": {
+      "reports_at_125_hz": 4,
+      "bounded_excess_and_releases": 4
+    },
+    "description": "Both directions and TLS/hybrid; 320 reports in a burst or at 1000 Hz during a 320 ms pause; 1000-report clipped/reversed path with a 2 ms fake receiver; 125 Hz control; local input and overflow cleanup"
+  },
+  "synthetic_metrics": {
+    "scope": "fake native APIs with real TLS/UDP loopback",
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "transport": "TLS",
+        "reports": 320,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 1.529,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 1.719,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "TLS",
+        "reports": 320,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 0.959,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 1.684,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "TLS",
+        "reports": 320,
+        "requested_rate_hz": 1000.0,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 320.203,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 1.823,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "TLS",
+        "reports": 320,
+        "requested_rate_hz": 1000.0,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 320.209,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 2.051,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "TLS",
+        "reports": 1000,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": true,
+        "source_pause_ms": 3.675,
+        "queued_callbacks": 1004,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 30.654,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "TLS",
+        "reports": 1000,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": true,
+        "source_pause_ms": 2.958,
+        "queued_callbacks": 1004,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 30.475,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "TLS",
+        "reports": 40,
+        "requested_rate_hz": 125.0,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 321.584,
+        "queued_callbacks": 44,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 25.932,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "TLS",
+        "reports": 40,
+        "requested_rate_hz": 125.0,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 322.003,
+        "queued_callbacks": 44,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 25.53,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "hybrid",
+        "reports": 320,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 1.253,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 2.471,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "hybrid",
+        "reports": 320,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 1.191,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 2.213,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "hybrid",
+        "reports": 320,
+        "requested_rate_hz": 1000.0,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 320.203,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 2.455,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "hybrid",
+        "reports": 320,
+        "requested_rate_hz": 1000.0,
+        "injection_cost_ms": 0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 320.218,
+        "queued_callbacks": 324,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 2.895,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "hybrid",
+        "reports": 1000,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": true,
+        "source_pause_ms": 3.932,
+        "queued_callbacks": 1004,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 28.227,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "hybrid",
+        "reports": 1000,
+        "requested_rate_hz": null,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": true,
+        "source_pause_ms": 3.014,
+        "queued_callbacks": 1004,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 28.687,
+        "native_input": false
+      },
+      {
+        "direction": "windows_to_mac",
+        "transport": "hybrid",
+        "reports": 40,
+        "requested_rate_hz": 125.0,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 321.23,
+        "queued_callbacks": 44,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 26.608,
+        "native_input": false
+      },
+      {
+        "direction": "mac_to_windows",
+        "transport": "hybrid",
+        "reports": 40,
+        "requested_rate_hz": 125.0,
+        "injection_cost_ms": 2.0,
+        "path_clipped_and_reversed": false,
+        "source_pause_ms": 321.606,
+        "queued_callbacks": 44,
+        "verified_actions": 5,
+        "resume_to_final_fake_injection_ms": 26.998,
+        "native_input": false
+      }
+    ]
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 2019,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 93.3981841763943,
+    "mac_build": {
+      "edition": "0.5.23",
+      "built_at": "2026-10-18T12:32:59.941992+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "b21edbc628efd286bfd39054b11a5eef6a537a6b5f26605c17a73887e9f3e939",
+      "application_source_matches_validated_commit": "937951e4355115090eb0380011ab06853d5e871f"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39127860741",
+    "head_sha": "937951e4355115090eb0380011ab06853d5e871f",
+    "conclusion": "success",
+    "tests": {
+      "tests": 2019,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_callback_burst_cases": 34,
+    "coverage_percent": 93.57739242132305,
+    "packaged_native_check": {
+      "edition": "0.5.23",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "jitter_cases": 24,
+      "ordered_jitter_actions": 48,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-937951e4355115090eb0380011ab06853d5e871f",
+      "id": 12137460624,
+      "sha256": "604d60f298127e2b5395e887f32f01aa12be1916859cb611d6e96fb52e89d3ea"
+    },
+    {
+      "name": "CleverSwitch-Windows-937951e4355115090eb0380011ab06853d5e871f",
+      "id": 12137375957,
+      "sha256": "5ac48849824fcceed81785f3ac80a5a7f7f8e90e89bdff61c55b282e9c2e31bf"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and application delivery are simulated; TLS/UDP loopback is real",
+    "The 320 ms source pause remains visible; this correction avoids premature queue overflow, not the pause itself",
+    "Recovery metrics begin when the simulated critical section is released and end at the final fake API injection; they are not physical input latency",
+    "The finite queue can still overflow with excessive input; the established failure path releases input and retires the channel",
+    "The verified callback overflow is not established as the cause of home-network microcuts",
+    "Fluency, Easy-Switch, double clicks, displays, long-focus clock drift, sleep/DHCP and battery require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.23.zip",
+      "sha256": "0270291e9abf5f7c91def406530b69d2efd0b9bf3f27b798086c4983348ed443"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.23.zip",
+      "sha256": "5ac48849824fcceed81785f3ac80a5a7f7f8e90e89bdff61c55b282e9c2e31bf"
+    }
+  }
+}
