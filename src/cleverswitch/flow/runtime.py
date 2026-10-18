@@ -522,7 +522,11 @@ class Runtime:
                 self.input_error = "Activa entrada por red en ambos equipos con la misma versión"
             return wait
         local_ready = service.backend.ready()
-        if not local_ready or not peer.get("available", True):
+        connected = service._available()
+        # A ready stream completed its own authenticated readiness handshake.
+        # An older control RPC may still describe a locked/reconfiguring peer;
+        # it must not tear down the newer stream. Local checks remain current.
+        if not local_ready or (not connected and not peer.get("available", True)):
             service.suspend()
             self.input_last_ready = False
             self.input_budget.suspend()
@@ -534,7 +538,7 @@ class Runtime:
             # session. No extra offline timer or repeated hook registration.
             self.input_budget.restart()
         self.input_last_ready = True
-        if service._available():
+        if connected:
             self.input_error = None
             if self.input_seen_channel is not service.channel:
                 self.input_online_since = time.monotonic()
