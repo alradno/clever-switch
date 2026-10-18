@@ -399,17 +399,42 @@ def test_cancel_discards_future_motion_and_late_actions(relayed_hybrid, source):
 
 
 @pytest.mark.parametrize("source", [0, 1])
-def test_keyboard_channel_change_recovers_held_keys_without_losing_mouse(hybrid, source):
+@pytest.mark.parametrize("queued", [False, True])
+def test_keyboard_channel_change_recovers_held_keys_without_losing_mouse(hybrid, source, queued):
     sender, receiver = hybrid[source], hybrid[1 - source]
     enter(sender)
     sender.key(0xE1, 1)
     until(lambda: receiver.session.keys == {0xE1})
     sender.keyboard_changed()
     until(lambda: not receiver.session.keys)
-    sender.key(4, 1)
-    sender.key(4, 0)
-    sender.session.input(Kind.MOVE, 222, 333)
+    blocked, release = threading.Event(), threading.Event()
+
+    def hold_session():
+        with sender.session.lock:
+            blocked.set()
+            release.wait(2)
+
+    worker = threading.Thread(target=hold_session) if queued else None
+    if worker is not None:
+        worker.start()
+    try:
+        if worker is not None:
+            assert blocked.wait(1)
+        assert sender.key(4, 1)
+        assert sender.key(4, 0)
+        x, y = sender.remote_position
+        # Mouse and keyboard must use the same callback queue. A direct
+        # Session.input could overtake deferred keys only in this test.
+        assert sender.motion(222, 333, 222 - x, 333 - y)
+    finally:
+        release.set()
+        if worker is not None:
+            worker.join(2)
+            assert not worker.is_alive()
     until(lambda: receiver.backend.events[-1].values == (222, 333))
+    assert [(p.kind, p.values) for p in receiver.backend.events[-3:]] == [
+        (Kind.KEY, (4, 1)), (Kind.KEY, (4, 0)), (Kind.MOVE, (222, 333))
+    ]
     assert not receiver.session.keys and sender.session.phase == "sending"
     assert sender.channel.lane.sender.mode == "datagram"
 
