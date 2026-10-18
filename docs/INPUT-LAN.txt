@@ -19,6 +19,13 @@ a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
 no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
 benchmarks/input_freshness.py.
 
+El banco adicional benchmarks/input_network.py retrasa tráfico cifrado ya
+aceptado por el transporte. Sus 24 casos locales conservan el orden y las
+posiciones de las acciones en ambos sentidos, pero una retención de 80 ms sigue
+causando pausas de 81–88 ms en la entrega. No mide la red doméstica ni reproduce
+pérdida de paquetes. La coalescencia no puede eliminar una pausa de transporte.
+Medidas y límites: validation/input-0.5.4-network-delay.json.
+
 MEJORAS 0.5.3
 La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
 Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
