@@ -6,6 +6,51 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Posición local y secuencias de clics en 0.5.13
+
+La 0.5.13 conserva la posición del ratón local cuando recupera el control
+durante un arrastre remoto. Si había un movimiento remoto en curso, primero
+suelta sus botones y modificadores y después restaura la posición física.
+Si alguna liberación falla, conserva su registro para recuperarla y evita
+recolocar el cursor mientras quede pendiente. Se aplica en Mac y Windows.
+También corrige el historial de clics del Mac: un clic local intermedio rompe
+la secuencia remota anterior, y un doble o triple clic local conserva el contador
+que entrega macOS. No añade sondeos, hilos ni consultas de pantalla por movimiento.
+
+Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+70 casos y pasan 293 pruebas focalizadas. De 56 casos comparados con 0.5.12,
+44 fallaban antes y 12 ya pasaban. Otros 12 casos comprueban fallos de preparación,
+restauración y liberación. Se prueba movimiento, clic y rueda locales durante
+un arrastre remoto, incluso con un movimiento remoto en curso, en ambos sentidos
+y con TLS o transporte híbrido. También se verifica que teclas y movimiento
+usan la misma cola al recuperar el teclado. Las APIs de entrada están simuladas y TLS/UDP
+usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+La comparación usa `test_input_click_sequence.py` contra los módulos de producción
+de 0.5.12 (`a42ed74dd2966a36b74eb83e18a21843997ff434`). Las nuevas pruebas cubren
+los cinco botones, posiciones distintas, contadores nativos, eventos propios o
+reenviados y caducidad de la secuencia con un reloj monotónico común.
+
+La prueba de concurrencia retiene deliberadamente un movimiento remoto mientras
+llega el evento físico. Comprueba que se libera el botón y Shift antes de restaurar
+la posición local y que el enlace permanece disponible. Los fallos simulados
+comprueban la limpieza y la conservación del registro de una liberación rechazada;
+el siguiente intento de limpieza la resuelve sin recolocar antes el cursor.
+
+Una primera ejecución de Windows detectó que la prueba del teclado mezclaba
+callbacks con llamadas directas a Session. El movimiento podía adelantarse a
+las teclas pendientes sólo por esa mezcla de rutas. Se reprodujo en ambos sentidos;
+la prueba corregida usa callbacks para los dos dispositivos y exige el orden
+tecla abajo, tecla arriba y movimiento final, también con eventos en cola.
+La corrección de esta prueba no modifica código de producción.
+
+El CI vuelve a comprobar los bancos anteriores: 52 escenarios de red y 104 acciones,
+54 ráfagas, 36 escenarios de recuperación con 144 acciones y 53.000 posiciones sin
+errores en el modelo de píxeles de Windows. Ninguna prueba captura o inyecta entrada
+real. Los paquetes quedan preparados para la aceptación conjunta con periféricos.
+
+Evidencia: [validación 0.5.13](validation/input-0.5.13-local-pointer.json).
+
 ## Precisión y entrada combinada en 0.5.12
 
 La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta

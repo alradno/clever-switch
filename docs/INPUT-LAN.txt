@@ -1,8 +1,18 @@
-CLEVERSWITCH 0.5.12 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.13 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.12-pointer-precision.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.13-local-pointer.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.13
+La 0.5.13 conserva la posición del ratón local cuando recupera el control
+durante un arrastre remoto. Si había un movimiento remoto en curso, primero
+suelta sus botones y modificadores y después restaura la posición física.
+Si alguna liberación falla, conserva su registro para recuperarla y evita
+recolocar el cursor mientras quede pendiente. Se aplica en Mac y Windows.
+También corrige el historial de clics del Mac: un clic local intermedio rompe
+la secuencia remota anterior, y un doble o triple clic local conserva el contador
+que entrega macOS. No añade sondeos, hilos ni consultas de pantalla por movimiento.
 
 MEJORAS 0.5.12
 La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
@@ -297,6 +307,10 @@ La aceptación debe comprobar teclado español, teclas muertas, atajos y ambos
 modificadores, repeticiones, bloqueos iniciales distintos, rueda natural/horizontal,
 clics y dobles clics con la preferencia del sistema, escalas y monitores múltiples,
 visibilidad del cursor Windows sin ratón físico, suspensión/despertar y DHCP.
+Para 0.5.13, con una entrada local disponible en el destino, cancelar un
+arrastre remoto mediante movimiento, clic o rueda: el cursor debe permanecer
+en la posición local y soltar los botones remotos. En Mac, alternar clics
+locales y remotos en posiciones distintas no debe abrir un doble clic falso.
 Las teclas multimedia/Fn y pantallas protegidas no están resueltas por el protocolo
 de teclas estándar. UAC, pantalla de acceso, Secure Input y aplicaciones que
 rechazan entrada sintética no se eluden. No es una promesa de compatibilidad

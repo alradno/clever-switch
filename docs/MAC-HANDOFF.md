@@ -13,15 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.12 experimental**, protocolo de control 2 y entrada 1.
-  Corrige la conversión absoluta a píxeles y el primer movimiento local en Windows,
-  incluidas anclas en pantallas impares. Mac conserva la precisión fraccionaria.
-  Mantiene la recuperación finita de UDP y la recuperación de teclado y ratón.
-  Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones; 90 casos nuevos,
-  22 fallos previos reproducidos y 231 pruebas focalizadas. En el modelo de Windows,
-  53.000 posiciones pasan de 453 coordenadas incorrectas a ninguna. Otros 64 casos
-  mezclan 19.200 operaciones en ambos sentidos con TLS/UDP reales en loopback.
-  Véanse `validation/input-0.5.12-pointer-precision.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.13 experimental**, protocolo de control 2 y entrada 1.
+  Conserva la posición local al cancelar un arrastre remoto en ambos sistemas,
+  incluso con movimiento remoto en curso. Suelta botones y modificadores antes
+  de restaurarla; una liberación pendiente impide recolocar el cursor.
+  El historial de clics del Mac incluye los clics locales y sus contadores nativos.
+  Mantiene precisión de píxeles, recuperación finita de UDP, teclado y ratón.
+  Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones; 70 casos nuevos,
+  44 fallos previos entre 56 casos comparados y 293 pruebas focalizadas.
+  Las APIs de entrada están simuladas; TLS/UDP son reales en loopback.
+  Véanse `validation/input-0.5.13-local-pointer.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
