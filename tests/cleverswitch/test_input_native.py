@@ -212,6 +212,25 @@ def test_first_physical_motion_after_restore_uses_the_restored_position(platform
     backend.sink.motion.assert_called_with(120, 105, 20, 5)
 
 
+@pytest.mark.parametrize("platform", ["win", "mac"])
+@pytest.mark.parametrize("notification", [False, True])
+def test_first_local_motion_after_remote_input_uses_the_injected_position(platform, notification, request):
+    backend, api = request.getfixturevalue(platform)
+    backend.previous = (500, 300)
+    backend.inject(event(Kind.MOVE, 100, 100))
+    if platform == "win":
+        if notification:
+            injected = MouseHook(Point(100, 100), 0, 1, 0, EVENT_TAG)
+            backend._mouse(0, 0x200, c.addressof(injected))
+        physical = MouseHook(Point(120, 105), 0, 0, 0, 0)
+        backend._mouse(0, 0x200, c.addressof(physical))
+    else:
+        if notification:
+            backend._callback(None, api.kCGEventMouseMoved, api.events[-1], None)
+        backend._callback(None, api.kCGEventMouseMoved, {"position": (120, 105)}, None)
+    backend.sink.motion.assert_called_once_with(120, 105, 20, 5)
+
+
 def test_windows_hide_restore_and_unhook_run_on_same_owner_thread(win):
     backend, api = win
     backend.start(backend.sink)

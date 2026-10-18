@@ -145,6 +145,31 @@ def test_rapid_round_trips_preserve_first_physical_report_after_return(native_pe
     assert all(not peer.backend.captured and not peer.backend.hidden for peer in peers)
 
 
+@pytest.mark.parametrize("source", [0, 1])
+@pytest.mark.parametrize("departure", ["return", "physical_cancel"])
+def test_remote_arrival_retires_previous_local_edge_arming(native_peers, source, departure):
+    peers, _, _ = native_peers
+    sender, receiver = peers[source], peers[1 - source]
+    motion(receiver, 900, 400)
+    assert receiver.armed
+    enter(sender)
+    if departure == "return":
+        x, y = sender.backend.anchor
+        motion(sender, int(x + (-2 if source == 0 else 2)), int(y))
+    else:
+        key(receiver, 4, 1)
+        key(receiver, 4, 0)
+    until(lambda: all(peer.session.phase == "local" for peer in peers))
+    # The remote cursor arrived one unit inside this edge. A tiny local
+    # movement must not reuse arming from before that arrival and seize back
+    # the other machine. A fresh trip through the interior must still work.
+    edge = 0 if receiver.role == "mac" else 1919
+    motion(receiver, edge, 400)
+    assert receiver.session.phase == "local" and not receiver.backend.captured
+    enter(receiver)
+    assert sender.session.phase == "receiving"
+
+
 def test_full_path_secure_input_change_releases_modifier_and_restores_windows_cursor(native_peers):
     peers, windows_api, mac_api = native_peers
     sender, receiver = peers
