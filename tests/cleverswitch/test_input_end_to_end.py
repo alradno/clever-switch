@@ -170,6 +170,20 @@ def test_remote_arrival_retires_previous_local_edge_arming(native_peers, source,
     assert sender.session.phase == "receiving"
 
 
+@pytest.mark.parametrize("source", [0, 1])
+def test_inward_physical_takeover_can_cross_back_on_the_next_report(native_peers, source):
+    peers, _, _ = native_peers
+    sender, receiver = peers[source], peers[1 - source]
+    enter(sender)
+    edge = 0 if receiver.role == "mac" else 1919
+    inward = 100 if receiver.role == "mac" else -100
+    motion(receiver, edge + inward, 400)
+    until(lambda: all(peer.session.phase == "local" for peer in peers))
+    motion(receiver, edge, 400)
+    until(lambda: receiver.session.phase == "sending")
+    assert sender.session.phase == "receiving"
+
+
 def test_full_path_secure_input_change_releases_modifier_and_restores_windows_cursor(native_peers):
     peers, windows_api, mac_api = native_peers
     sender, receiver = peers
