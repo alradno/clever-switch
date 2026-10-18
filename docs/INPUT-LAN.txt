@@ -1,8 +1,16 @@
-CLEVERSWITCH 0.5.8 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.9 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.8-arrival.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.9-takeover.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.9
+La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
+remota. Una tecla, clic, rueda o movimiento que quedó en cola durante la
+aceptación cancela esa llegada al procesarse. El cursor quieto no la cancela.
+Las teclas remotas pendientes no se reproducen después de recuperar el control;
+el enlace permanece abierto y permite el siguiente cruce. Se aplica en ambos
+sentidos, sin añadir esperas ni consultas nativas al recorrido de entrada.
 
 MEJORAS 0.5.8
 La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento

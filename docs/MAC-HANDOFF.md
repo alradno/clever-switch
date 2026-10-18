@@ -13,18 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.8 experimental**, protocolo de control 2 y entrada 1.
-  Cada nuevo foco retira la habilitación previa del borde para evitar que un pequeño
-  movimiento local reclame al compañero tras recibir control remoto. El primer
-  desplazamiento local del Mac usa la última posición recibida, igual que Windows.
-  Recuperar el control moviendo hacia el interior permite cruzar en el siguiente
-  movimiento, sin otro paso previo.
-  Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Hay 16 casos nuevos:
-  14 fallaban antes de sus respectivas correcciones; los dos controles Windows
-  del primer delta ya eran correctos.
-  Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback.
-  Se conservan los 64 ciclos rápidos y las mejoras geométricas de 0.5.7.
-  Véanse `validation/input-0.5.8-arrival.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.9 experimental**, protocolo de control 2 y entrada 1.
+  El uso físico local que coincide con una llegada remota conserva su prioridad,
+  aunque el evento hubiera quedado en cola. Tecla, clic, rueda y movimiento
+  cancelan esa llegada sin cerrar el enlace ni reproducir teclas remotas pendientes.
+  Un cursor quieto no interrumpe la recepción y el siguiente cruce conserva el enlace.
+  Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Hay 20 casos nuevos:
+  16 reproducían el fallo y cuatro son controles sin movimiento. Las 78 pruebas
+  focalizadas usan APIs simuladas y TLS/UDP reales en loopback.
+  Se conservan los 64 ciclos rápidos y las mejoras de continuidad anteriores.
+  Véanse `validation/input-0.5.9-takeover.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

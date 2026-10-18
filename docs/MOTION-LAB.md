@@ -6,6 +6,31 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Uso local simultáneo a una llegada en 0.5.9
+
+La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
+remota. Una tecla, clic, rueda o movimiento que quedó en cola durante la
+aceptación cancela esa llegada al procesarse. El cursor quieto no la cancela.
+Las teclas remotas pendientes no se reproducen después de recuperar el control;
+el enlace permanece abierto y permite el siguiente cruce. Se aplica en ambos
+sentidos, sin añadir esperas ni consultas nativas al recorrido de entrada.
+
+Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Los 20 casos
+nuevos simulan la carrera durante la aceptación: 16 reproducían pérdida de
+prioridad local y cuatro comprueban que un cursor quieto no interrumpe el cruce.
+También verifican que no se reproduzcan teclas remotas pendientes y que el
+siguiente cruce funcione sobre el mismo enlace. Las 78 pruebas focalizadas usan
+APIs simuladas y TLS/UDP reales en loopback. La aceptación física sigue pendiente.
+
+La prueba detiene la aceptación después de comprobar que no había entrada
+local pulsada. Con el bloqueo todavía ocupado, ejecuta un callback físico
+local, que queda en cola sin bloquear el hilo nativo. Después permite terminar
+la aceptación y comprueba la cancelación, la ausencia de teclas remotas
+reproducidas y un nuevo cruce con escritura. Se prueban los dos adaptadores
+y los transportes TLS e híbrido. No se activan capturadores reales.
+
+Evidencia: [validación 0.5.9](validation/input-0.5.9-takeover.json).
+
 ## Control local después de una llegada en 0.5.8
 
 La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
