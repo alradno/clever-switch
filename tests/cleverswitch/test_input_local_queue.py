@@ -48,7 +48,8 @@ def test_local_inward_and_edge_reports_survive_a_busy_session(native_peers, sour
 
 
 @pytest.mark.parametrize("role", ["windows", "mac"])
-def test_local_motion_queued_before_an_entire_focus_cannot_rearm_after_its_return(role):
+@pytest.mark.parametrize("next_focus", [False, True], ids=["local", "new_outgoing"])
+def test_local_motion_queued_before_an_entire_focus_cannot_rearm_or_cancel_a_later_focus(role, next_focus):
     backend = DesktopBackend()
     service = Service(Mock(config={"role": role}), backend, enabled=True)
     service.local = service.remote = backend.desktop
@@ -69,7 +70,16 @@ def test_local_motion_queued_before_an_entire_focus_cannot_rearm_after_its_retur
     assert service.deferred.qsize() == 2
     service.session.receive(Packet(Kind.ENTER, 9001, (900, 400)))
     service.session.cancel("physical")
+    if next_focus:
+        assert service.session.enter(900, 400)
+        epoch = service.session.epoch
+        service.session.receive(Packet(Kind.ACCEPT, epoch))
     service._drain()
-    assert service.session.phase == "local" and not service.armed
-    assert not any(packet.kind == Kind.ENTER for packet in sent)
-    assert service.deferred.empty() and not backend.captured
+    assert not service.armed and service.deferred.empty()
+    if next_focus:
+        assert service.session.phase == "sending" and service.session.epoch == epoch
+        assert backend.captured
+        assert [packet.epoch for packet in sent if packet.kind == Kind.ENTER] == [epoch]
+    else:
+        assert service.session.phase == "local" and not backend.captured
+        assert not any(packet.kind == Kind.ENTER for packet in sent)
