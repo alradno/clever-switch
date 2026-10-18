@@ -215,6 +215,11 @@ class MacInput:
                 q.CFRunLoopRemoveSource(self.runloop, source, q.kCFRunLoopCommonModes)
             try:
                 self.capture(False)
+            except Exception:
+                # Keep restore_pending for close()/the next availability
+                # event when Quartz can report a valid desktop again.
+                self.failed = True
+                self.sink.fail("cleanup")
             finally:
                 self.tap = self.runloop = None
 
@@ -490,14 +495,16 @@ class MacInput:
             self.worker.join(timeout=2)
             if self.worker.is_alive():
                 raise RuntimeError("El capturador del Mac no ha terminado")
-        self.capture(False)
+        try:
+            self.capture(False)
+        finally:
+            self.health.close()
         self.held_keys.clear()
         self.held_buttons.clear()
         self.injected_point = None
         self.physical_position = None
         self.injected_caps = None
         self.last_click = None
-        self.health.close()
         if self.device_monitor is None and self.display_monitor is None:
             self.display_invalidated = False
 

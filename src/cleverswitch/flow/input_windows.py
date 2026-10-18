@@ -299,6 +299,11 @@ class WindowsInput:
                 self.api.UnhookWindowsHookEx(hook)
             try:
                 self._capture(False)
+            except Exception:
+                # Preserve the restoration ledger even when Windows has no
+                # valid monitor rectangle during a display transition.
+                self.failed = True
+                self.sink.fail("cleanup")
             finally:
                 self.dispatch.close()
                 self.thread_id = None
@@ -508,10 +513,12 @@ class WindowsInput:
                 raise RuntimeError("El capturador de Windows no ha terminado")
         self.held_keys.clear()
         self.held_buttons.clear()
-        self.capture(False)
+        try:
+            self.capture(False)
+        finally:
+            self.health.close()
         self.pointer_desktop = None
         self.physical_position = None
-        self.health.close()
         if self.device_monitor is None and self.display_monitor is None:
             self.display_invalidated = False
 

@@ -527,9 +527,16 @@ class Runtime:
         # An older control RPC may still describe a locked/reconfiguring peer;
         # it must not tear down the newer stream. Local checks remain current.
         if not local_ready or (not connected and not peer.get("available", True)):
-            service.suspend()
             self.input_last_ready = False
             self.input_budget.suspend()
+            try:
+                service.suspend()
+            except Exception:
+                # Preserve the existing presence/event wait while the OS is
+                # reconfiguring. A failed cleanup must not park the whole
+                # runtime permanently or start a new polling loop.
+                self.input_error = "Entrada pendiente de liberar; usa los controles físicos"
+                return wait
             where = "este equipo" if not local_ready else "el otro equipo"
             self.input_error = f"Entrada suspendida en {where}: revisa sesión y permisos"
             return wait
