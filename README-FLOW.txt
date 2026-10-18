@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.21, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.22, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,23 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.22
+La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
+Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
+separados ni deshace un doble clic en los casos simulados. Incluye los clics
+que esperan la aceptación del cruce y las liberaciones al reconectar el ratón.
+La extensión se negocia con el compañero; una versión anterior conserva su
+formato. Aprovecha la confirmación existente y no añade otra espera al cruce,
+sondeos periódicos ni trabajo de reloj por cada movimiento.
+
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Hay 69 casos
+nuevos y ocho fallos de interpretación de clics reproducidos antes de corregirlos.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; el modelo de
+Windows comprueba el tiempo entregado a su gestor de ventanas. La aceptación
+física de fluidez, doble clic, Easy-Switch y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.22-click-timing.json. Candidata sin instalar.
 
 REVISIÓN 0.5.21
 La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas

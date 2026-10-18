@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.21 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.22 experimental**, protocolo de control **2**.
 Los paquetes de Mac y Windows incorporan las mismas fuentes de aplicación;
 las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -18,6 +18,22 @@ TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de tec
 El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
+Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
+separados ni deshace un doble clic en los casos simulados. Incluye los clics
+que esperan la aceptación del cruce y las liberaciones al reconectar el ratón.
+La extensión se negocia con el compañero; una versión anterior conserva su
+formato. Aprovecha la confirmación existente y no añade otra espera al cruce,
+sondeos periódicos ni trabajo de reloj por cada movimiento.
+
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Hay 69 casos
+nuevos y ocho fallos de interpretación de clics reproducidos antes de corregirlos.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; el modelo de
+Windows comprueba el tiempo entregado a su gestor de ventanas. La aceptación
+física de fluidez, doble clic, Easy-Switch y consumo sigue pendiente.
+
+Véase la [validación de clics](docs/validation/input-0.5.22-click-timing.json).
 
 La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
 entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos
