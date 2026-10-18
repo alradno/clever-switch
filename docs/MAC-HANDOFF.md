@@ -13,6 +13,12 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
+- Prototipo posterior a la candidata: `experiments/motion_lane.py` y
+  [MOTION-LAB.md](MOTION-LAB.md). Movimiento cifrado independiente, posiciones
+  fiables de acciones, comprobación previa de UDP y recuperación limitada.
+  72 pruebas locales y 160 casos de modelo; fuentes comunes para ambos roles.
+  No está integrado ni empaquetado. Falta negociación por TLS y transporte real
+  antes de preparar otra candidata; conservar 0.5.4 como paquete disponible.
 - Candidata conjunta actual `0.5.4`, protocolo de control `2` y entrada `1`.
   Fuentes: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
   Movimiento pendiente actualizable hasta el primer envío; conserva posición

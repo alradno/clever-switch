@@ -3,6 +3,12 @@
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
+El prototipo de movimiento posterior a esta candidata está en `experiments/`.
+Véase [MOTION-LAB.md](MOTION-LAB.md): 72 pruebas locales y 160 casos de modelo,
+con comprobación previa de UDP, cifrado y orden/posición de acciones. Sigue
+pendiente integrarlo con TLS y el transporte real. No forma parte de los paquetes
+0.5.4 y no debe instalarse como si fuera una versión nueva de la app.
+
 Fuentes de la candidata: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
 Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
 firma y vista previa; Windows comprueba el ejecutable empaquetado.
