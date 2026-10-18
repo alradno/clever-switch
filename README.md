@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.6 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.7 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,13 +19,26 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
+La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
+ordenador de origen. Calcula la altura donde la trayectoria toca el borde,
+incluso en diagonales rápidas o con pantallas de distinta altura; los huecos
+entre monitores no autorizan el cruce. Ambos sistemas calculan el primer
+movimiento local desde la posición restaurada, sin perderlo ni usar una antigua.
+Si el regreso ya ha entrado en pantalla, permite invertir el recorrido enseguida;
+los regresos pequeños mantienen la protección contra rebotes. Si hay una tecla o un
+botón pulsado, espera a soltarlo antes de cambiar de equipo.
+
+También evita cerrar el enlace por confundir una restauración de teclado en curso
+con un fallo. La comprobación lee el resultado al terminar la transición, sin
+bloquear el hilo de entrada. Una restauración que falla sigue cerrando la sesión.
+
+Desde 0.5.6 se evita reproducir posiciones antiguas cuando llegan varios movimientos
 juntos. Autentica todo el lote y aplica la posición más reciente entre cada clic,
 tecla o cambio de foco. No añade espera para agrupar. Los mensajes alterados,
 repetidos o antiguos no sustituyen una posición válida; cancelar el control
 descarta los movimientos pendientes. Se aplica igual en ambos sentidos.
 
-En el banco local de Mac, una ráfaga de 64 movimientos con un coste simulado
+En la validación de 0.5.6 en Mac, una ráfaga de 64 movimientos con un coste simulado
 de 1 ms por aplicación pasa de unos 86 ms a 1,5 ms hasta la posición final.
 Son medianas de recuperación del receptor en loopback, no latencia física.
 La ráfaga necesita una aplicación y una confirmación, frente a 64 antes.
@@ -59,8 +72,12 @@ conserva las acciones ya encoladas al volver al equipo de origen. Mantiene la
 recuperación del teclado tras Easy-Switch, los avisos de cambios de pantalla,
 la liberación de teclas y botones y la reconexión finita por eventos.
 
-Pasan 1.205 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.6](docs/validation/input-0.5.6-bursts.json).
+Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
+centradas en estos cambios incluyen 64 ciclos de ida y vuelta rápida, con las
+APIs de ambos sistemas simuladas y TLS/UDP reales en loopback. Se reprodujeron
+21 casos de fallo antes de corregirlos. La prueba física de fluidez y estabilidad
+sigue pendiente; estos resultados no miden la latencia del ratón por Wi-Fi. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.7](docs/validation/input-0.5.7-crossing.json).
 [Diseño y límites](docs/MOTION-LAB.md); [uso de entrada por red](docs/INPUT-LAN.txt).
 La candidata queda preparada para una única prueba conjunta al volver el usuario.
 No se instalan versiones intermedias: Aplicaciones conserva 0.5.1; el último

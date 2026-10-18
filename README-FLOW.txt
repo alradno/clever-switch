@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.6, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.7, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,28 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.7
+La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
+ordenador de origen. Calcula la altura donde la trayectoria toca el borde,
+incluso en diagonales rápidas o con pantallas de distinta altura; los huecos
+entre monitores no autorizan el cruce. Ambos sistemas calculan el primer
+movimiento local desde la posición restaurada, sin perderlo ni usar una antigua.
+Si el regreso ya ha entrado en pantalla, permite invertir el recorrido enseguida;
+los regresos pequeños mantienen la protección contra rebotes. Si hay una tecla o un
+botón pulsado, espera a soltarlo antes de cambiar de equipo.
+
+También evita cerrar el enlace por confundir una restauración de teclado en curso
+con un fallo. La comprobación lee el resultado al terminar la transición, sin
+bloquear el hilo de entrada. Una restauración que falla sigue cerrando la sesión.
+
+Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
+centradas en estos cambios incluyen 64 ciclos de ida y vuelta rápida, con las
+APIs de ambos sistemas simuladas y TLS/UDP reales en loopback. Se reprodujeron
+21 casos de fallo antes de corregirlos. La prueba física de fluidez y estabilidad
+sigue pendiente; estos resultados no miden la latencia del ratón por Wi-Fi.
+
+Evidencia: docs/validation/input-0.5.7-crossing.json. Candidata sin instalar.
 
 REVISIÓN 0.5.6
 La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
@@ -24,7 +46,7 @@ La ráfaga necesita una aplicación y una confirmación, frente a 64 antes.
 El banco recorre 54 casos por versión, con 1/16/64 movimientos y tres costes.
 Reproducir con benchmarks/input_bursts.py.
 
-Pasan 1.205 pruebas en cada plataforma, Ruff y ambas compilaciones.
+La validación de 0.5.6 registró 1.205 pruebas en cada plataforma, Ruff y ambas compilaciones.
 Evidencia: docs/validation/input-0.5.6-bursts.json. Sin instalar;
 la aceptación con periféricos reales queda para la prueba conjunta.
 
