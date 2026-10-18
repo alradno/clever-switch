@@ -1,0 +1,155 @@
+{
+  "edition": "0.5.22",
+  "source_commit": "aae2c3000bf4a6c29b777a584d5431a37c8089b2",
+  "observed_at": "2026-10-18T12:13:23.050910+00:00",
+  "scope": "click_timing_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Capture button time before callback deferral and focus acceptance queues",
+    "Negotiate click-timing-v1; old peers retain original frames and behavior",
+    "Use the existing ACCEPT to map source time into destination monotonic time without an extra exchange",
+    "Keep click timestamps through the reliable position barrier in TLS and hybrid paths",
+    "Backdate Quartz button events and Windows MOUSEINPUT.time; preserve Mac click count using capture intervals",
+    "Date synthetic mouse-disconnect releases in native callback order; malformed or backwards button time releases focus",
+    "No periodic clock synchronization, new thread, movement delay, UDP format change or system-setting change"
+  ],
+  "regression": {
+    "reference_commit": "2f5d416753b16e2794c5c22691fd3f8c00bc7626",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_source_sha256": {
+      "input_motion.py": "b3c616fa9c35ab1df9ff036e4bf1d30267268772e6bc18cde480b29dd98e5ac5",
+      "input_protocol.py": "9c3d6fd5282aa7068a28ca4c1a32988e00861de69c2ad57e4d754b0a2da523df",
+      "input_windows.py": "d5174e9bf344d387905ce578734b6a2f3e523ea6e1a55bf506b3aa249abdc012",
+      "input_macos.py": "3cbb011ea6e92917ab0a03c2f77c6ff7b397a79cf3b23d34ba9736c7f1e70618",
+      "input_service.py": "d3b61dcb1e853e803b21e363670b7c86350802e376e00e9ce603713976634957",
+      "input_hybrid.py": "b8b25eec2c0a25592b9cb16b046ae4acb94969791537be1e3029e120a6a89f33",
+      "input_session.py": "11ce115ff0f5ac5e1ef95377aa95d713b18473104ef80cb6c26f6b197b82c986",
+      "input_stream.py": "06658b47b00718bc091c2561e63a94b2491511203eca169160ad3389437df2fe"
+    },
+    "baseline": {
+      "tests": 8,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0
+    },
+    "corrected_reproduction": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 69,
+    "targeted": {
+      "tests": 69,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "reproduced_failures": 8,
+    "native_input": false,
+    "description": "Both directions and TLS/hybrid; a 180 ms injection pause compresses two separate clicks or expands a double click. All eight baseline cases fail and pass after correction.",
+    "additional_coverage": "Fragmentation, invalid frames, negotiation and legacy peers, distant clock origins, pre-ACCEPT and deferred capture, mouse reconnection, native timestamp origins, DWORD wrap and safe release"
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1985,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "focused_native_checks": {
+      "tests": 307,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 93.37052413077322,
+    "mac_build": {
+      "edition": "0.5.22",
+      "built_at": "2026-10-18T12:00:38.491565+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "f2ae8c0e9d9bc00382f314fac7a76e64bd2d4026c8da5dba70d2366979bcd423",
+      "application_source_matches_validated_commit": "aae2c3000bf4a6c29b777a584d5431a37c8089b2"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39125717230",
+    "head_sha": "aae2c3000bf4a6c29b777a584d5431a37c8089b2",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1985,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.55004496980598,
+    "packaged_native_check": {
+      "edition": "0.5.22",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "jitter_cases": 24,
+      "ordered_jitter_actions": 48,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-aae2c3000bf4a6c29b777a584d5431a37c8089b2",
+      "id": 12135883895,
+      "sha256": "08f4d91f1c8db5ed0cc45a4a21817a590d8b982d13df166923676319ca823bee"
+    },
+    {
+      "name": "Windows-validation-aae2c3000bf4a6c29b777a584d5431a37c8089b2",
+      "id": 12135564834,
+      "sha256": "2bd2cf3795e5549482753a6d5246b67564f8568402341f63fc022f113bf1fc8d"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and window-manager delivery are simulated; TLS/UDP loopback is real",
+    "The eight click timing failures are verified; the change does not remove an imposed network pause or establish the cause of home microcuts",
+    "ACCEPT gives a conservative clock offset, not exact synchronization. Native event times are clamped to the past; sub-millisecond fidelity, very long-focus drift and local/remote threshold boundary behavior require physical validation",
+    "Windows uses a separate window-manager model consuming MOUSEINPUT.time; real application double-click behavior is pending",
+    "Both updated peers are required for timed clicks; legacy fallback preserves connectivity but not the timing correction",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "api_references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput",
+    "https://devblogs.microsoft.com/oldnewthing/20121101-00/?p=6193",
+    "https://developer.apple.com/documentation/coregraphics/cgeventtimestamp",
+    "https://developer.apple.com/documentation/coregraphics/cgeventfield/mouseeventclickstate"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.22.zip",
+      "sha256": "43dfd0ef86d5b4e3b0fba4449c606b474b5a767466fd4ff814e1d75f7c0ce2cc"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.22.zip",
+      "sha256": "08f4d91f1c8db5ed0cc45a4a21817a590d8b982d13df166923676319ca823bee"
+    }
+  }
+}
