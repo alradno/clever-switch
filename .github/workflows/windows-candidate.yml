@@ -50,6 +50,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python benchmarks/input_path_recovery.py > windows-input-path-recovery.json
+      - name: Check absolute pointer precision without native input
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_pointer_precision.py > windows-input-pointer-precision.json
       - name: Build Windows candidate
         run: python build_tray.py
       - name: Check packaged executable without capturing input
@@ -97,4 +101,5 @@ jobs:
             windows-hybrid-network.json
             windows-input-bursts.json
             windows-input-path-recovery.json
+            windows-input-pointer-precision.json
           retention-days: 14
