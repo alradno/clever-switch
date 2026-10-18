@@ -1,0 +1,80 @@
+{
+  "scope": "motion_lab_tls_bootstrap_and_bounded_udp_routing_not_integrated_into_application",
+  "observed_at": "2026-10-18T01:15:18.273071+00:00",
+  "source_commit": "225897ccb8746bd032031cb5c2e3c3c336df5e47",
+  "branch": "feature/lan-input",
+  "ci_url": "https://github.com/alradno/clever-switch/actions/runs/39085575993",
+  "ci_platforms": {
+    "macOS": {
+      "tests": {
+        "tests": 138,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      "coverage_percent": 97.95918367346938,
+      "artifact_digest": "sha256:fc5df7bc33d5674f78d4e4320b13d499400adbf8677bbff47731fb28c869f072",
+      "artifact_digest_verified": true,
+      "model_identical_to_local": true
+    },
+    "Windows": {
+      "tests": {
+        "tests": 138,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      "coverage_percent": 97.95918367346938,
+      "artifact_digest": "sha256:af36c182bc442f55c5ea97b999615637e13913ab6af216c59a38c3e00c632a50",
+      "artifact_digest_verified": true,
+      "model_identical_to_local": true
+    }
+  },
+  "local": {
+    "os": "Darwin",
+    "os_version": "26.6.2",
+    "tests": 138,
+    "coverage_percent": 97.9035639412998,
+    "ruff": "passed"
+  },
+  "verified": [
+    "Fresh ephemeral session keys exchanged through real TLS 1.3 using existing Link and certificate pinning",
+    "One-time challenge and link identity bind the negotiation; wrong/replayed replies cannot produce a usable new session",
+    "Connection close, bootstrap failure and failed response write retire ephemeral keys",
+    "Reconnect creates different keys; late old close/ciphertext cannot retire or affect the new session",
+    "Exact private peer address, UDP port, saved subnet and session routing; authenticated decryption stays with channel owner",
+    "Inbox retains at most 64 ciphertext packets, wake only on empty-to-pending transition and no timer or worker of its own",
+    "Real UDP loopback shares one receiving socket for motion and discovery, tested in both directions",
+    "Actual unmodified input Service receives and releases synthetic input over reliable TLS when extension is absent, for both roles",
+    "Temporary pairing file hashes are unchanged throughout all real-TLS fixtures",
+    "Original 160 deterministic fault-model cases and 320 action/position checks match across local and both CI platforms"
+  ],
+  "application": {
+    "candidate_edition": "0.5.4",
+    "sources_and_tests_unchanged_from": "104df38f6bb9a9a8c0c76dca707ebb8b06a5920f",
+    "mac_installed_version_rechecked": "0.5.1",
+    "new_app_built_or_installed": false,
+    "home_windows_rechecked_this_phase": false,
+    "last_home_windows_observation": "0.5.0"
+  },
+  "limits": [
+    "Experimental adapters select capabilities; production Service and Discovery do not import or enable this module",
+    "Bootstrap and UDP routing use real sockets; fault-model latency remains simulated, not measured on home Wi-Fi or native input",
+    "No complete hybrid channel joining reliable action barriers, datagrams and focus lifecycle in production yet",
+    "No OS input capture/injection, home Windows installation, physical smoothness, battery or native display acceptance in this phase",
+    "No changes to network ports, firewall, router, VPN, permissions, signing, or endpoint security"
+  ],
+  "next": [
+    "Integrate capability selection, shared UDP receive and channel owner in application lifecycle",
+    "Encode reliable action positions/barriers and bind hybrid sending/receiving to focus transitions",
+    "Exercise integrated channels under loss, delay, cancellation, sleep and reconnect; then build one joint candidate",
+    "Physical acceptance on Mac and home Windows when the user returns"
+  ],
+  "prior_model_evidence": "docs/validation/motion-lab-2026-10-18.json",
+  "files_sha256": {
+    "experiments/motion_link.py": "f40009f13aacc3c8e85cb2e545f1da8f6da7ba7e695f175c70454fc526780088",
+    "experiments/test_motion_link.py": "6937c76d563e061b8d35043bc6bf35ac32f6fab41a2135bc159489920e3f85b9",
+    "experiments/test_motion_bootstrap.py": "a005e7106489eff6d8187c1e0a4f93bd3f2b28a34646fd0ca9e7406a1b548098",
+    ".github/workflows/motion-lab.yml": "c26978e6e6900be9148c97ec2519c5a0703585f69da6a57c553dd58b4770b55a"
+  }
+}
