@@ -16,15 +16,21 @@ También corrige el reloj de los clics en Mac: un evento Quartz recién creado
 puede tener fecha cero, por lo que ahora se usa el reloj nativo de actividad.
 Windows conserva su conversión con el contador de milisegundos del sistema.
 
+La temporización interactiva usa ahora un reloj monotónico de alta resolución
+en ambos sistemas. Python 3.12 en Windows usaba pasos de unos 16 ms para plazos
+de 8–16 ms; se corrige sin aumentar la frecuencia de temporizadores del sistema.
+Las fechas nativas de Quartz y Windows conservan sus relojes correspondientes.
+
 Añade medidas agregadas de captura, cola, recepción, entrega y permisos para
 localizar pausas. Las mediciones ceden ante la entrada: si su bloqueo está
 ocupado, se omite la muestra. No guardan teclas, posiciones ni eventos individuales,
 y no añaden sondeos, hilos ni esperas. El movimiento pendiente se sustituye por
 el más reciente cuando es seguro; los clics y modificadores conservan su orden.
 
-Pasan 2.094 pruebas en Mac, Ruff y la compilación ARM64 con firma, fuentes y
-vista previa comprobadas. La validación nativa de Windows está pendiente.
+Pasan 2.102 pruebas por plataforma, Ruff y ambas compilaciones. Se comprueban
+la firma, fuentes y vista previa de Mac, y el ejecutable empaquetado de Windows.
 Se reproducen 24 fallos con la fuente anterior y se conservan 11 controles.
+Ocho casos nuevos de reloj añaden cuatro fallos reproducidos y cuatro controles.
 Las APIs nativas están simuladas y TLS/UDP usan loopback real; estas pruebas
 no demuestran fluidez física ni la causa del vídeo.
 Se acumulan las mejoras sin instalar esta candidata. El 18/10/2026 se comprobó

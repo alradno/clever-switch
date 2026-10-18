@@ -16,8 +16,9 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 - Candidata conjunta actual: **0.5.24 experimental**, protocolo de control 2 y entrada 1.
   Selecciona movimiento reciente a través de heartbeats, corrige esperas calculadas
   con tiempo antiguo y fecha los clics desde el reloj nativo de Mac. Añade medidas
-  agregadas que ceden ante la entrada. Pasan 2.094 pruebas en Mac, Ruff y la
-  compilación ARM64; Windows pendiente. No instalar aún.
+  agregadas que ceden ante la entrada. Usa un reloj preciso común en la ruta
+  interactiva; conserva los relojes nativos. Pasan 2.102 pruebas por plataforma,
+  Ruff y ambas compilaciones; firma y paquetes comprobados. No instalar aún.
   Evidencia: `validation/input-0.5.24-cursor-stutter.json`. La investigación no
   demuestra todavía qué causó las pausas del vídeo doméstico. El 18/10/2026 se
   comprobó 0.5.23 instalada en Mac y disponible por TLS en Windows.
