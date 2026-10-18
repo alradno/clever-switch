@@ -6,9 +6,44 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Bloq Mayús durante cruces rápidos en 0.5.17
+
+La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
+último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
+un estado antiguo y alterar las mayúsculas o minúsculas al escribir.
+Si falla la creación, preparación o publicación nativa del evento, conserva
+el estado anterior. Un cambio físico de Bloq Mayús sigue teniendo prioridad.
+Se comprueban cruces iniciados en ambos equipos, con TLS y transporte híbrido.
+No añade esperas, sondeos, hilos ni consultas al recorrido del ratón.
+
+Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
+nuevos reproducen el fallo anterior en la comparación local; también pasan
+256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
+cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
+Las APIs de entrada y su aplicación tardía están simuladas; TLS/UDP usan loopback
+real. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Ocho casos recorren los adaptadores de producción y la conexión real de
+loopback: parten de cualquiera de los equipos, cambian Bloq Mayús y cruzan
+desde el Mac antes de aplicar sus eventos nativos pendientes. La primera tecla
+en Windows conserva el estado esperado y el canal sigue disponible. Dos casos
+más sincronizan estados alternos sin esperar a WindowServer.
+
+Otros 16 casos rechazan la creación, preparación o publicación nativa del
+evento, con Bloq Mayús inicialmente activado o desactivado y con o sin un
+cambio anterior en cola. Conservan el último estado válido. La suite existente
+comprueba además la prioridad de cambios físicos y las repeticiones de tecla.
+
+La comparación sustituye únicamente el adaptador Mac por su fuente del commit
+`09b041ee2486e61ecead70a581163c3a791c0572`, sin cambiar los casos ni las demás
+rutas. Los 26 casos fallan antes. No se activó captura o inyección reales y no
+se mide latencia física. Ambos paquetes usan la misma fuente y edición.
+
+Evidencia: [validación 0.5.17](validation/input-0.5.17-caps-order.json).
+
 ## Continuidad de teclado y ratón durante reconexiones en 0.5.16
 
-Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
+La validación de 0.5.16 registró 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
 de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
 Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
 reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.

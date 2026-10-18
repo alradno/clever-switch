@@ -1,7 +1,15 @@
-# Continuación en Windows — candidata conjunta 0.5.16 experimental
+# Continuación en Windows — candidata conjunta 0.5.17 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
+último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
+un estado antiguo y alterar las mayúsculas o minúsculas al escribir.
+Si falla la creación, preparación o publicación nativa del evento, conserva
+el estado anterior. Un cambio físico de Bloq Mayús sigue teniendo prioridad.
+Se comprueban cruces iniciados en ambos equipos, con TLS y transporte híbrido.
+No añade esperas, sondeos, hilos ni consultas al recorrido del ratón.
 
 La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
 En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
@@ -133,18 +141,14 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
-de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
-Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
-reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.
-Se comprueban ambos orígenes, TLS/híbrido y entrega inmediata o en cola. Cada
-acción conserva orden y posición; las teclas y botones pendientes se liberan,
-el canal sigue abierto y funciona el siguiente cruce. La prueba ampliada no
-detectó otro fallo y no cambió el código operativo de 0.5.16.
-Las APIs nativas están simuladas y TLS/UDP usan loopback real.
-La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
+Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
+nuevos reproducen el fallo anterior en la comparación local; también pasan
+256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
+cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
+Las APIs de entrada y su aplicación tardía están simuladas; TLS/UDP usan loopback
+real. La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.16-scroll-position.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.17-caps-order.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
