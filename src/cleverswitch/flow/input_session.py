@@ -29,6 +29,7 @@ class Session:
         self.lock = threading.RLock()
         self.phase = "local"
         self.epoch = 0
+        self.local_generation = 0
         self.pending = Outbox()
         self.pending_actions = False
         self.deadline = None
@@ -42,6 +43,8 @@ class Session:
         self.pending_capture = False
 
     def _phase(self, value):
+        if value == "local":
+            self.local_generation += 1
         self.phase = value
         self.on_active(value != "local")
 

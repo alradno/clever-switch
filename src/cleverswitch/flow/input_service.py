@@ -245,7 +245,8 @@ class Service:
         # because an acknowledgement is being processed concurrently.
         swallowed = bool(self.backend.captured)
         try:
-            self.deferred.put_nowait((method, args, session, session.epoch if session else 0))
+            generation = session.local_generation if session else 0
+            self.deferred.put_nowait((method, args, session, session.epoch if session else 0, generation))
             if self.channel is not None:
                 self.channel._wake()
         except queue.Full:
@@ -262,7 +263,7 @@ class Service:
     def _drain_ordered(self):
         for _ in range(256):
             try:
-                method, args, session, epoch = self.deferred.get_nowait()
+                method, args, session, epoch, generation = self.deferred.get_nowait()
             except queue.Empty:
                 return
             delivered = False
@@ -275,8 +276,16 @@ class Service:
                     # priority over that arrival. It must cancel reception,
                     # never be replayed into a new outgoing focus.
                     local_arrival = not epoch and session.phase == "receiving"
+                    # A brief idle/return lock must not discard the inward and
+                    # edge reports that start a new crossing. Only replay them
+                    # in the same local period, never after an intervening focus.
+                    local_motion = (
+                        not epoch and session.phase == "local" and generation == session.local_generation
+                        and method.__name__ == "motion"
+                    )
                     if session is self.session and (
-                        same_focus or local_arrival or method.__name__ in ("keyboard_changed", "mouse_changed")
+                        same_focus or local_arrival or local_motion
+                        or method.__name__ in ("keyboard_changed", "mouse_changed")
                     ):
                         method(self, *args)
                         delivered = True
