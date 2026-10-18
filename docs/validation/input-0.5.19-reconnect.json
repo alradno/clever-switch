@@ -1,0 +1,80 @@
+{
+  "edition": "0.5.19",
+  "validation_commit": "58fdfd222c5a35565751a5662690391982635a19",
+  "previous_head": "4adef2401efbb312fa714df1da6a3098955e560a",
+  "original_package_source_commit": "c3a7a33a91d6e11b66990ed67a4aa366482d2854",
+  "application_sources_and_candidate_packages_unchanged": true,
+  "observed_at": "2026-10-18T10:06:49.835504+00:00",
+  "scope": "production_native_adapters_with_fake_OS_APIs_real_TLS_UDP_loopback_and_one_way_TCP_relay_outages",
+  "new_cases_per_platform": 24,
+  "repeated_reconnect_cases": 16,
+  "reconnect_cycles_per_case": 4,
+  "reconnect_cycles_per_platform": 64,
+  "transient_release_refusal_recoveries_per_platform": 32,
+  "one_way_outages_per_platform": 8,
+  "retired_udp_rejections_over_real_socket_per_platform": 4,
+  "verified": [
+    "Both physical source roles, reliable and hybrid input, closure from source or destination",
+    "Live chord and drag release without native key-up or button-up from the source",
+    "A temporary failed release is retained and retried before opening the replacement stream",
+    "Native and readiness workers and device observers stop after the stream ends",
+    "New authenticated stream reuses the service and backends, with fresh UDP negotiation",
+    "Late notifications from old observers cannot clear fresh keys or buttons",
+    "One-way TLS outage reaches the bounded heartbeat timeout and releases both devices",
+    "A retired encrypted UDP frame really reaches the listener and is rejected during a new active focus",
+    "The next crossing, key and mouse-button inputs work and the recovered link remains available"
+  ],
+  "mac": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1806,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 92.92570677186062,
+    "ruff": "passed"
+  },
+  "windows": {
+    "tests": {
+      "tests": 1806,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.11197916666667,
+    "ci": "https://github.com/alradno/clever-switch/actions/runs/39117419817",
+    "conclusion": "success",
+    "head_sha": "58fdfd222c5a35565751a5662690391982635a19",
+    "packaged_read_only_check": {
+      "edition": "0.5.19",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "build": "passed",
+    "ruff": "passed",
+    "existing_benchmarks": "passed",
+    "validation_artifact_sha256": "98e30f6d465c6cce15a191b1885eb77304fe21337719c67c3a8890dff6b15f27"
+  },
+  "original_candidate_validation": "input-0.5.19-queued-edge.json",
+  "original_packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.19.zip",
+      "sha256": "fc794aa98feac01aa0fea7d15d0ba4d6f35dfa6edf7b3abdb5b3bcd79016919c"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.19.zip",
+      "sha256": "f74c31b39073997b8b4cbb9a4b632d30dc4996f059046f781e3885d3cd85abfe"
+    }
+  },
+  "limits": [
+    "This expands validation and found no new application defect; no operational source was changed",
+    "No native capture or injection, app installation or host security/network changes were used",
+    "The fake macOS run-loop stop latch is reset between runs; actual OS restart behavior remains unverified",
+    "No measurement of home Wi-Fi latency, visual smoothness or battery; joint physical acceptance remains pending"
+  ]
+}
