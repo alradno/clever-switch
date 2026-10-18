@@ -246,7 +246,7 @@ class Service:
         swallowed = bool(self.backend.captured)
         try:
             generation = session.local_generation if session else 0
-            self.deferred.put_nowait((method, args, session, session.epoch if session else 0, generation))
+            self.deferred.put_nowait((method, args, session, session.epoch if session else 0, generation, swallowed))
             if self.channel is not None:
                 self.channel._wake()
         except queue.Full:
@@ -263,7 +263,7 @@ class Service:
     def _drain_ordered(self):
         for _ in range(256):
             try:
-                method, args, session, epoch, generation = self.deferred.get_nowait()
+                method, args, session, epoch, generation, swallowed = self.deferred.get_nowait()
             except queue.Empty:
                 return
             delivered = False
@@ -287,6 +287,22 @@ class Service:
                         same_focus or local_arrival or local_motion
                         or method.__name__ in ("keyboard_changed", "mouse_changed")
                     ):
+                        # ENTER owns its epoch before native capture is ready.
+                        # A callback passed to local apps during that window
+                        # cannot also be forwarded once capture completes.
+                        local_outgoing = (
+                            same_focus and not swallowed and session.phase in ("requesting", "sending")
+                            and (
+                                method.__name__ in ("key", "button", "wheel")
+                                or (method.__name__ == "motion" and (args[2] or args[3]))
+                            )
+                        )
+                        if local_outgoing:
+                            if method.__name__ == "key":
+                                session.cancel("physical")
+                            else:
+                                self._pointer_takeover()
+                            self.armed = False
                         method(self, *args)
                         delivered = True
             if not delivered and method.__name__ in ("key", "button"):

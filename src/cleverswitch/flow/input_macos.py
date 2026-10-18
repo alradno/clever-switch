@@ -311,7 +311,7 @@ class MacInput:
         """Prepare releases and return any position to restore after them."""
         point = self.physical_position
         if point is not None:
-            displaced = self.injected_point != point
+            displaced = self.captured or self.injected_point != point
             self.injected_point = point
             self.previous = point
             if displaced:

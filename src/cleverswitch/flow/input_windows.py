@@ -387,10 +387,11 @@ class WindowsInput:
             raise PermissionError("Windows rechazó la entrada")
 
     def local_takeover(self):
-        if self.physical_position is not None and self.previous != self.physical_position:
+        if self.physical_position is not None and (self.captured or self.previous != self.physical_position):
             # A queued local cancellation owns its physical position even if
             # a remote SendInput completed while the session lock was held.
-            # Restore only after releasing the remote drag and modifiers.
+            # Restore only after releasing the remote drag and modifiers. A
+            # cancelled outgoing capture also restores its saved edge first.
             return self.physical_position
         return None
 
