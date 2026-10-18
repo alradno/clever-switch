@@ -346,7 +346,7 @@ def test_round_trip_aggregate_and_unmatched_pong(mocker):
         channel._round_trip(0.010, 1.0)
         channel._round_trip(0.030, 2.0)
         channel._round_trip(0.020, 3.0)
-        mocker.patch("cleverswitch.flow.input_stream.time.monotonic", return_value=4.0)
+        mocker.patch("cleverswitch.flow.input_stream.time.perf_counter", return_value=4.0)
         assert channel.timing() == {
             "samples": 3,
             "latest_ms": 20.0,

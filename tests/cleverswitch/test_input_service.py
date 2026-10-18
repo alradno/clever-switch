@@ -278,7 +278,7 @@ def test_deferred_epoch_is_checked_after_acquiring_the_session_lock():
         delivered.append(True)
 
     session.lock = CancelBeforeAcquiring()
-    service.deferred.put((motion, (1, 2, 3, 4), session, 10, session.local_generation, True, time.monotonic()))
+    service.deferred.put((motion, (1, 2, 3, 4), session, 10, session.local_generation, True, time.perf_counter()))
     service._drain()
     assert not delivered
 

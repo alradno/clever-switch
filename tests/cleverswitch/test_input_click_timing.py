@@ -280,7 +280,7 @@ def test_click_intent_survives_receiver_pause(native_peers, source, profile):
     for index in range(2):
         if index:
             time.sleep(.28 if profile == "compressed" else .08)
-        captures.append(time.monotonic())
+        captures.append(time.perf_counter())
         button(sender, 0, 1)
         button(sender, 0, 0)
     until(lambda: len(received) == 2)
@@ -312,7 +312,7 @@ def test_deferred_click_and_device_release_keep_callback_time_and_order(native_p
         device_change(sender, "mouse")
         button(sender, 0, 1)
         button(sender, 0, 0)
-        captured_before = time.monotonic()
+        captured_before = time.perf_counter()
         time.sleep(.03)
     until(lambda: len(observed) == 4)
     assert [p.values for p in observed] == [(0, 1), (0, 0), (0, 1), (0, 0)]
@@ -347,10 +347,10 @@ def test_click_waiting_for_accept_keeps_its_capture_time(native_peers, source):
         motion(sender, x, 400)
         assert reached.wait(1)
         assert sender.session.phase == "requesting"
-        captured_after = time.monotonic()
+        captured_after = time.perf_counter()
         button(sender, 0, 1)
         button(sender, 0, 0)
-        captured_before = time.monotonic()
+        captured_before = time.perf_counter()
         assert not observed
         time.sleep(.03)
     finally:

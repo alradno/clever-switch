@@ -530,7 +530,7 @@ def test_delayed_receiver_uses_latest_udp_position_without_replaying_a_burst(hyb
             # Use the TLS owner for every nonce and sender-state mutation.
             for index in range(32):
                 sender.channel.lane.outgoing(
-                    Packet(Kind.MOVE, sender.session.epoch, (100 + index, 400)), time.monotonic()
+                    Packet(Kind.MOVE, sender.session.epoch, (100 + index, 400)), time.perf_counter()
                 )
             emitted.set()
         original_sender_tick()

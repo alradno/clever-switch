@@ -12,7 +12,7 @@ from cleverswitch.flow.input_stream import Channel
 @pytest.mark.parametrize("work_ms", [4, 24, 80, 140])
 def test_socket_wait_uses_time_after_queue_and_packet_processing(mocker, work_ms):
     now = [10.0]
-    mocker.patch.object(input_stream.time, "monotonic", side_effect=lambda: now[0])
+    mocker.patch.object(input_stream.time, "perf_counter", side_effect=lambda: now[0])
     a, b = socket.socketpair()
     channel = Channel(a, lambda packet: None, lambda: None)
     channel.inbox = SimpleNamespace(take=lambda: ())

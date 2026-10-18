@@ -121,7 +121,7 @@ def test_full_drain_batch_rearms_consumed_wake_and_yields_before_more_work(role)
 
     for sequence in range(600):
         service.deferred.put((motion, (sequence,), service.session, 1, service.session.local_generation, True,
-                              time.monotonic()))
+                              time.perf_counter()))
     service.channel._wake.reset_mock()  # Simulate that select consumed producer wakes.
     service._drain()
     assert 0 < len(observed) < 600  # Leave a turn for socket traffic, never drain without a bound.
