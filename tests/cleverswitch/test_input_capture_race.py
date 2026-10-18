@@ -14,6 +14,7 @@ from cleverswitch.flow.input_windows import MouseHook, Point
 
 from .test_flow import paired as paired
 from .test_flow import paired_tls as paired_tls
+from .test_input_device_continuity import busy_session
 from .test_input_end_to_end import enter, key, motion
 from .test_input_end_to_end import native_peers as native_peers
 from .test_input_mixed_reports import button
@@ -116,6 +117,62 @@ def test_local_input_during_outgoing_capture_keeps_its_original_destination(nati
     if not locally_delivered:
         sender.session.leave()
     until(lambda: all(peer.session.phase == "local" for peer in peers))
+    assert all(not peer.keys and not peer.buttons for peer in peers)
+    assert all(not peer.session.keys and not peer.session.buttons for peer in peers)
+    assert all(peer.channel is channel and peer._available() for peer, channel in zip(peers, channels, strict=True))
+    enter(sender)
+    key(sender, 5, 1)
+    until(lambda: receiver.session.keys == {5})
+    key(sender, 5, 0)
+    until(lambda: not receiver.session.keys)
+
+
+@pytest.mark.parametrize("source", [0, 1], ids=["windows_to_mac", "mac_to_windows"])
+@pytest.mark.parametrize("action", ["key", "button", "wheel", "motion", "stationary"])
+def test_local_input_queued_after_an_edge_keeps_priority_when_that_edge_starts_capture(
+    native_peers, source, action,
+):
+    peers, _, _ = native_peers
+    sender, receiver = peers[source], peers[1 - source]
+    channels = [peer.channel for peer in peers]
+    injected, inject = [], receiver.backend.inject
+
+    def record(packet):
+        injected.append(packet)
+        return inject(packet)
+
+    receiver.backend.inject = record
+    edge = 1919 if source == 0 else 0
+    with busy_session(sender, True):
+        motion(sender, edge + (-100 if source == 0 else 100), 400)
+        motion(sender, edge, 400)
+        # All reports are seen before the queued edge starts ENTER/capture.
+        # A local click or keystroke after that edge must retain local priority,
+        # even though its callback has no outgoing epoch yet.
+        result = physical(sender, action)
+        swallowed = result == 1 if source == 0 else result is None
+        assert not swallowed
+        assert sender.session.phase == "local" and not sender.session.epoch
+        assert not sender.backend.captured
+        assert not sender.deferred.empty()
+
+    until(lambda: sender.deferred.empty() and not sender.draining.is_set())
+    if action == "stationary":
+        until(lambda: sender.session.phase == "sending")
+        assert sender.backend.captured
+        sender.session.leave()
+    else:
+        until(lambda: all(peer.session.phase == "local" for peer in peers), timeout=0.5)
+        assert sender.session.failure == "physical"
+        assert not sender.backend.captured and not sender.backend.hidden
+        if action in ("button", "wheel", "motion"):
+            assert sender.backend.previous == (edge, 700)
+    until(lambda: all(peer.session.phase == "local" for peer in peers))
+    assert not any(packet.kind in (Kind.KEY, Kind.BUTTON, Kind.WHEEL) for packet in injected)
+    if action == "key":
+        key(sender, 4, 0)
+    elif action == "button":
+        button(sender, 0, 0)
     assert all(not peer.keys and not peer.buttons for peer in peers)
     assert all(not peer.session.keys and not peer.session.buttons for peer in peers)
     assert all(peer.channel is channel and peer._available() for peer, channel in zip(peers, channels, strict=True))
