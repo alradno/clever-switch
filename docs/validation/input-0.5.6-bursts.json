@@ -1,0 +1,532 @@
+{
+  "edition": "0.5.6",
+  "source_commit": "da803947907ac0ebe5b9f2531997e312d116d7a9",
+  "observed_at": "2026-10-18T02:29:16.363392+00:00",
+  "scope": "shared_production_input_engine_with_synthetic_backends_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Authenticate every queued datagram, then apply only the highest motion serial within each action and epoch boundary",
+    "Keep probe and receipt order; never replace valid motion with altered, replayed or older ciphertext",
+    "Recheck focus and close state before delivery; no timer gathers messages and the inbox remains bounded to 64",
+    "Aggregate diagnostics count skipped stale movement without retaining keys or cursor history"
+  ],
+  "regressions": {
+    "baseline": "18a335593363a7c432c637c7555af61fea46d315",
+    "before_failed": 2,
+    "before_file": "0.5.6-before.xml",
+    "after_targeted_passed": 57,
+    "added_cases": 14
+  },
+  "initial_ci_fixture_race": {
+    "run": "https://github.com/alradno/clever-switch/actions/runs/39089605916",
+    "test": "test_observed_geometry_does_not_poll_native_display_apis_per_tick[1]",
+    "cause": "The connected helper waited for channel allocation but not both worker readiness events",
+    "controlled_reproduction_failed_before": 2,
+    "controlled_reproduction_and_display_cases_passed_after": 37,
+    "fix": "Wait for both services to be available; retain availability and no-poll assertions",
+    "production_code_changed_for_this_failure": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1205,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.5905821685439,
+    "mac_build": {
+      "edition": "0.5.6",
+      "built_at": "2026-10-18T02:26:52.413812+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "c7b3db7abb3046bef9d3f477a4b23a80ea69b6c1b3e6081c5ecddad1fa853e43"
+    },
+    "burst_benchmark": {
+      "cases": 54,
+      "all_used_one_injection": true,
+      "all_final_positions_acknowledged": true,
+      "remaining_motion_deadline": false,
+      "measurements": [
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.0885,
+          "range_ms": [
+            0.064,
+            0.184
+          ]
+        },
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 0.8015000000000001,
+          "range_ms": [
+            0.703,
+            0.825
+          ]
+        },
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 1.3845,
+          "range_ms": [
+            1.326,
+            1.466
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.212,
+          "range_ms": [
+            0.189,
+            0.236
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 0.851,
+          "range_ms": [
+            0.723,
+            0.897
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 1.4445000000000001,
+          "range_ms": [
+            1.361,
+            1.486
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.272,
+          "range_ms": [
+            0.204,
+            0.335
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 0.9259999999999999,
+          "range_ms": [
+            0.833,
+            0.98
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 1.5285,
+          "range_ms": [
+            1.504,
+            1.662
+          ]
+        }
+      ]
+    },
+    "network_benchmark": {
+      "cases": 52,
+      "actions_order_and_position_verified": 104,
+      "final_positions_and_releases_verified": true,
+      "remaining_motion_deadline": false,
+      "reliable_gap_range_ms_under_80ms_TLS_stall_without_actions": [
+        80.665,
+        87.68
+      ],
+      "hybrid_gap_range_ms_under_80ms_TLS_stall_without_actions": [
+        1.344,
+        10.223
+      ]
+    }
+  },
+  "mac_before_after_comparison": {
+    "observed_at": "2026-10-18T02:16:37.625111+00:00",
+    "source_commit_local": "bf7cc4bff14c02cd507dd833a2703102e1ee0994",
+    "baseline_commit": "18a335593363a7c432c637c7555af61fea46d315",
+    "baseline_modules": [
+      "input_hybrid.py",
+      "input_stream.py"
+    ],
+    "cases_per_variant": 54,
+    "comparison": [
+      {
+        "queued_moves": 1,
+        "requested_injection_cost_ms": 0,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.144,
+          "min_ms": 0.084,
+          "max_ms": 0.156
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.0885,
+          "min_ms": 0.064,
+          "max_ms": 0.184
+        }
+      },
+      {
+        "queued_moves": 1,
+        "requested_injection_cost_ms": 0.5,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.778,
+          "min_ms": 0.716,
+          "max_ms": 0.842
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.8015000000000001,
+          "min_ms": 0.703,
+          "max_ms": 0.825
+        }
+      },
+      {
+        "queued_moves": 1,
+        "requested_injection_cost_ms": 1,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 1.4144999999999999,
+          "min_ms": 1.316,
+          "max_ms": 1.463
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 1.3845,
+          "min_ms": 1.326,
+          "max_ms": 1.466
+        }
+      },
+      {
+        "queued_moves": 16,
+        "requested_injection_cost_ms": 0,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            16
+          ],
+          "median_ms": 1.154,
+          "min_ms": 0.791,
+          "max_ms": 1.349
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.212,
+          "min_ms": 0.189,
+          "max_ms": 0.236
+        }
+      },
+      {
+        "queued_moves": 16,
+        "requested_injection_cost_ms": 0.5,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            16
+          ],
+          "median_ms": 11.514500000000002,
+          "min_ms": 11.228,
+          "max_ms": 11.815
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.851,
+          "min_ms": 0.723,
+          "max_ms": 0.897
+        }
+      },
+      {
+        "queued_moves": 16,
+        "requested_injection_cost_ms": 1,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            16
+          ],
+          "median_ms": 21.846,
+          "min_ms": 21.603,
+          "max_ms": 22.084
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 1.4445000000000001,
+          "min_ms": 1.361,
+          "max_ms": 1.486
+        }
+      },
+      {
+        "queued_moves": 64,
+        "requested_injection_cost_ms": 0,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            64
+          ],
+          "median_ms": 4.058,
+          "min_ms": 3.32,
+          "max_ms": 4.851
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.272,
+          "min_ms": 0.204,
+          "max_ms": 0.335
+        }
+      },
+      {
+        "queued_moves": 64,
+        "requested_injection_cost_ms": 0.5,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            64
+          ],
+          "median_ms": 44.548,
+          "min_ms": 44.306,
+          "max_ms": 45.216
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 0.9259999999999999,
+          "min_ms": 0.833,
+          "max_ms": 0.98
+        }
+      },
+      {
+        "queued_moves": 64,
+        "requested_injection_cost_ms": 1,
+        "baseline": {
+          "cases": 6,
+          "injections": [
+            64
+          ],
+          "median_ms": 85.964,
+          "min_ms": 85.198,
+          "max_ms": 86.749
+        },
+        "current": {
+          "cases": 6,
+          "injections": [
+            1
+          ],
+          "median_ms": 1.5285,
+          "min_ms": 1.504,
+          "max_ms": 1.662
+        }
+      }
+    ],
+    "excludes": [
+      "native_input",
+      "Wi-Fi",
+      "display",
+      "application",
+      "capture_to_display_latency"
+    ]
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39089969207",
+    "head_sha": "da803947907ac0ebe5b9f2531997e312d116d7a9",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1205,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 92.78613648576034,
+    "packaged_native_check": {
+      "edition": "0.5.6",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "network_benchmark": {
+      "cases": 52,
+      "actions_order_and_position_verified": 104,
+      "final_positions_and_releases_verified": true,
+      "remaining_motion_deadline": false,
+      "reliable_gap_range_ms_under_80ms_TLS_stall_without_actions": [
+        85.97,
+        88.562
+      ],
+      "hybrid_gap_range_ms_under_80ms_TLS_stall_without_actions": [
+        1.85,
+        11.078
+      ]
+    },
+    "burst_benchmark": {
+      "cases": 54,
+      "all_used_one_injection": true,
+      "all_final_positions_acknowledged": true,
+      "remaining_motion_deadline": false,
+      "measurements": [
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.1795,
+          "range_ms": [
+            0.151,
+            0.222
+          ]
+        },
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 0.984,
+          "range_ms": [
+            0.757,
+            1.242
+          ]
+        },
+        {
+          "queued_moves": 1,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 1.7295,
+          "range_ms": [
+            1.24,
+            1.758
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.2475,
+          "range_ms": [
+            0.235,
+            0.265
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 0.8025,
+          "range_ms": [
+            0.78,
+            1.328
+          ]
+        },
+        {
+          "queued_moves": 16,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 1.8275000000000001,
+          "range_ms": [
+            1.274,
+            1.917
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 0,
+          "median_ms": 0.594,
+          "range_ms": [
+            0.523,
+            0.635
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 0.5,
+          "median_ms": 1.115,
+          "range_ms": [
+            1.072,
+            1.616
+          ]
+        },
+        {
+          "queued_moves": 64,
+          "requested_injection_cost_ms": 1,
+          "median_ms": 2.089,
+          "range_ms": [
+            1.576,
+            3.612
+          ]
+        }
+      ]
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-da803947907ac0ebe5b9f2531997e312d116d7a9",
+      "id": 12122930264,
+      "sha256": "f48141e793b763c4e042e3ef50be9117a70ae7b681d4eddbdec91531a791498d"
+    },
+    {
+      "name": "Windows-validation-da803947907ac0ebe5b9f2531997e312d116d7a9",
+      "id": 12122845539,
+      "sha256": "1fe9d8a548e14610f181213ee756c3415cb43dcb839e3097e27e0ba27633028c"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Burst recovery is measured from receiver release after a synthetic backlog, not capture to display latency",
+    "Per-injection cost uses a requested sleep and includes scheduler overhead; before/after comparison ran on Mac",
+    "No physical home Windows, Wi-Fi, keyboard, mouse, native event injection, display or battery acceptance",
+    "A reliable action held in transit still blocks subsequent motion to retain ordering and pointer position",
+    "No OS protection, permissions, firewall, router, VPN, pairing or login configuration changed"
+  ],
+  "remaining": [
+    "Joint physical acceptance in both directions from the same candidate",
+    "Easy-Switch keyboard recovery, monitor changes, sleep, DHCP and energy measurements"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.6.zip",
+      "sha256": "dcc7ee066cad84ebb381340e610772337283432c0f72d893a493ef65cdb75bad"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.6.zip",
+      "sha256": "f48141e793b763c4e042e3ef50be9117a70ae7b681d4eddbdec91531a791498d"
+    }
+  }
+}
