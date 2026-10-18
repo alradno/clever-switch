@@ -392,10 +392,16 @@ class WindowsInput:
         # queries belong in every mouse report. Keep drag messages uncoalesced
         # by Windows after our own bounded, ordered queue has selected a move.
         desktop = self.pointer_desktop or self.desktop
-        x = round((point[0] - desktop.left) * 65535 / (desktop.right - desktop.left))
-        y = round((point[1] - desktop.top) * 65535 / (desktop.bottom - desktop.top))
-        self._mouse_input(0x8000 | 0x4000 | 0x2000 | 1, x=max(0, min(65535, x)), y=max(0, min(65535, y)))
-        self.previous = tuple(point)
+        width, height = desktop.right - desktop.left + 1, desktop.bottom - desktop.top + 1
+        # Absolute input addresses a range for each pixel, not a line between
+        # two endpoints. Target its center, as Microsoft WPF's Input.cs does,
+        # so quantization cannot land one pixel before the intended position.
+        x = max(0, min(65535, round((round(point[0]) - desktop.left + 0.5) * 65536 / width)))
+        y = max(0, min(65535, round((round(point[1]) - desktop.top + 0.5) * 65536 / height)))
+        self._mouse_input(0x8000 | 0x4000 | 0x2000 | 1, x=x, y=y)
+        # Native mouse callbacks use integer pixels. A fractional network
+        # coordinate must not distort the first physical delta after takeover.
+        self.previous = desktop.left + x * width // 65536, desktop.top + y * height // 65536
 
     def capture(self, enabled):
         # ShowCursor uses the calling thread's counter. Hide and show must run
@@ -422,9 +428,10 @@ class WindowsInput:
                 self.desktop.displays,
                 key=lambda d: sum((a - b) ** 2 for a, b in zip(d.clamp(*self.saved), self.saved, strict=True)),
             )
-            self.anchor = display.x + display.width / 2, display.y + display.height / 2
+            self.anchor = display.x + display.width // 2, display.y + display.height // 2
             self.restore_pending = self.saved
             self.restore(self.anchor)
+            self.anchor = self.previous
             self.api.ShowCursor(False)
             self.hidden = True
             self.captured = True

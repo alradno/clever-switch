@@ -1,2 +1,2 @@
-EDITION = "0.5.11"
+EDITION = "0.5.12"
 PROTOCOL = 2
