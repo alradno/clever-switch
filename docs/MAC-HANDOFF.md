@@ -17,13 +17,19 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   Una tecla, clic, rueda o movimiento local posterior a un borde en cola cancela
   el cruce al procesarse. Conserva posición, liberaciones, enlace y siguiente cruce.
   El cursor quieto y los informes de un periodo local anterior no cancelan el foco.
-  Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Hay 22 casos
-  nuevos; 16 reproducen el fallo anterior. Pasan 257 pruebas focalizadas.
+  Pasan 1.806 pruebas por plataforma, Ruff y ambas compilaciones. Los 22 casos
+  de la corrección inicial incluyen 16 que reproducen el fallo anterior. Pasan 257 pruebas focalizadas.
   Las APIs de entrada son simuladas y TLS/UDP usan loopback real.
   Véanse `validation/input-0.5.19-queued-edge.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
+- Validación adicional 0.5.19: 24 casos nuevos por plataforma, 64 reconexiones
+  repetidas y ocho cortes unidireccionales. Conservan liberaciones, nuevos cruces
+  y pulsaciones tras avisos tardíos; los trabajadores de entrada terminan al cerrar.
+  Cuatro casos rechazan un datagrama antiguo recibido por UDP durante un foco nuevo.
+  APIs nativas simuladas y TLS/UDP reales en loopback. Código y paquetes sin cambios;
+  no se ha probado la fluidez o el consumo físicos. Véase `validation/input-0.5.19-reconnect.json`.
 - Validación adicional 0.5.18: 24 escenarios por plataforma con retrasos UDP
   variables, reordenamiento, pérdidas y retención de 40 ms, desde la negociación.
   Se verifican 48 acciones por ejecución, posición final, liberaciones y ausencia
