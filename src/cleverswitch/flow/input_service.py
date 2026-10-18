@@ -15,7 +15,7 @@ import time
 
 from .input_geometry import Desktop
 from .input_motion_link import CAPABILITY, supports_motion
-from .input_protocol import VERSION, Kind
+from .input_protocol import TIMING_CAPABILITY, VERSION, Kind, supports_timing
 from .input_session import Session
 from .input_stream import Channel
 
@@ -36,6 +36,9 @@ def native_input():
 def native_callback(method):
     @functools.wraps(method)
     def bounded(self, *args):
+        if method.__name__ in ("button", "mouse_changed"):
+            # Date the native callback, before either routing queue can delay it.
+            args = (*args, time.monotonic())
         session = self.session
         # A low-level OS callback must never wait behind an injector that may
         # itself be waiting for this hook thread (notably Windows SendInput).
@@ -121,23 +124,29 @@ class Service:
 
     def capabilities(self):
         transport = getattr(self.link, "motion_transport", None)
-        return {CAPABILITY: 1} if transport is not None and transport.motion_ready() else {}
+        value = {TIMING_CAPABILITY: 1}
+        if transport is not None and transport.motion_ready():
+            value[CAPABILITY] = 1
+        return value
 
-    def offer(self, *, motion=False):
+    def offer(self, *, motion=False, timed=False):
         self._check_ready()
         self.offered = self.backend.desktop
         value = {"version": VERSION, "displays": self.offered.wire()}
         if motion:
             value["motion"] = 1
+        if timed:
+            value["click_timing"] = 1
         return value
 
     def _validate(self, value):
         if (
             type(value) is not dict
-            or set(value) not in ({"version", "displays"}, {"version", "displays", "motion"})
+            or not {"version", "displays"} <= set(value) <= {"version", "displays", "motion", "click_timing"}
             or type(value["version"]) is not int
             or value["version"] != VERSION
-            or ("motion" in value and (type(value["motion"]) is not int or value["motion"] != 1))
+            or any(name in value and (type(value[name]) is not int or value[name] != 1)
+                   for name in ("motion", "click_timing"))
         ):
             raise ValueError("Entrada por red incompatible")
         return Desktop.from_wire(value["displays"])
@@ -160,7 +169,10 @@ class Service:
             self.offer()
             self.remote = remote
             motion = "motion" in value and supports_motion(self.capabilities())
-            return self.offer(motion=motion), lambda connection: self.attach(connection, motion=motion)
+            timed = "click_timing" in value
+            return self.offer(motion=motion, timed=timed), lambda connection: self.attach(
+                connection, motion=motion, timed=timed
+            )
 
     def connect(self, capabilities=None):
         # Exactly one initiator prevents simultaneous duplicate TLS sessions.
@@ -175,8 +187,10 @@ class Service:
             self.connecting = True
         try:
             motion = supports_motion(capabilities) and supports_motion(self.capabilities())
+            timed = supports_timing(capabilities)
             self.link.open_input(
-                self.offer(motion=motion), lambda connection, response: self.attach(connection, response, motion=motion)
+                self.offer(motion=motion, timed=timed),
+                lambda connection, response: self.attach(connection, response, motion=motion, timed=timed)
             )
             return True
         except Exception:
@@ -186,20 +200,23 @@ class Service:
             with self.lock:
                 self.connecting = False
 
-    def attach(self, connection, response=None, *, motion=False):
+    def attach(self, connection, response=None, *, motion=False, timed=False):
         try:
-            return self._attach(connection, response, motion=motion)
+            return self._attach(connection, response, motion=motion, timed=timed)
         except Exception:
             self._stop_backend()
             raise
 
-    def _attach(self, connection, response=None, *, motion=False):
+    def _attach(self, connection, response=None, *, motion=False, timed=False):
         with self.lock:
             if response is not None:
                 self.remote = self._validate(response)
                 if "motion" in response and not motion:
                     raise ValueError("Transporte de movimiento no solicitado")
                 motion = motion and "motion" in response
+                if "click_timing" in response and not timed:
+                    raise ValueError("Tiempo de clic no solicitado")
+                timed = timed and "click_timing" in response
             if self.closed or not self.enabled or self.remote is None:
                 raise ConnectionError("Entrada por red cancelada")
             self._prepare()
@@ -215,6 +232,7 @@ class Service:
                 self.backend,
                 lambda p: channel.send(p),
                 can_receive=lambda: not self.keys and not self.buttons,
+                timed_clicks=timed,
             )
             channel = Channel(
                 connection,
@@ -223,6 +241,7 @@ class Service:
                 self._tick,
                 motion_link=self.link if motion else None,
                 focus=lambda: self._focus(session),
+                timed_clicks=timed,
             )
             session.on_active = lambda active: self._active(channel, active)
             self.session, self.channel = session, channel
@@ -359,7 +378,7 @@ class Service:
                 # The focus ended before delivery, but these are still physical
                 # local observations needed to inhibit crossing while held.
                 held = self.keys if method.__name__ == "key" else self.buttons
-                code, down = args
+                code, down = args[:2]
                 held.add(code) if down else held.discard(code)
 
     def _ended(self, session):
@@ -456,7 +475,7 @@ class Service:
             self.fail("cleanup")
         return False
 
-    def _physical(self, kind, code, down):
+    def _physical(self, kind, code, down, captured_at=None):
         # Validate even local observations, without retaining malformed values.
         from .input_protocol import Packet
 
@@ -475,7 +494,7 @@ class Service:
             else:
                 self.session.cancel("physical")
             return False
-        return self.session.input(kind, code, down)
+        return self.session.input(kind, code, down, captured_at=captured_at)
 
     def _escape_chord(self):
         return all(self.keys & pair for pair in ({0xE0, 0xE4}, {0xE1, 0xE5}, {0xE2, 0xE6}))
@@ -507,17 +526,17 @@ class Service:
         self.keys.clear()
 
     @native_callback
-    def mouse_changed(self):
+    def mouse_changed(self, captured_at=None):
         # A disconnected mouse may never send button-up. Release only this
         # source's forwarded buttons; keyboard state and focus stay intact.
         if self._available():
             for code in sorted(self.buttons):
-                self.session.input(Kind.BUTTON, code, 0)
+                self.session.input(Kind.BUTTON, code, 0, captured_at=captured_at)
         self.buttons.clear()
 
     @native_callback
-    def button(self, code, down):
-        return self._physical(Kind.BUTTON, code, down)
+    def button(self, code, down, captured_at=None):
+        return self._physical(Kind.BUTTON, code, down, captured_at)
 
     @native_callback
     def wheel(self, horizontal, vertical):

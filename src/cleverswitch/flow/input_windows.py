@@ -142,6 +142,8 @@ class WindowsInput:
         self.kernel.GetCurrentThreadId.restype = DWORD
         self.kernel.GetModuleHandleW.restype = c.c_void_p
         self.kernel.GetModuleHandleW.argtypes = [c.c_wchar_p]
+        self.kernel.GetTickCount64.restype = c.c_uint64
+        self.kernel.GetTickCount64.argtypes = []
 
     @property
     def desktop(self):
@@ -400,9 +402,16 @@ class WindowsInput:
             return self.physical_position
         return None
 
-    def _mouse_input(self, flags, data=0, x=0, y=0):
+    def _mouse_input(self, flags, data=0, x=0, y=0, stamp=None):
         event = Input(kind=0)
-        event.mouse = MouseInput(x, y, data & 0xFFFFFFFF, flags, 0, EVENT_TAG)
+        timestamp = 0
+        if stamp is not None:
+            age_ms = int(max(0, self.clock() - stamp / 1_000_000) * 1000)
+            ticks = self.kernel.GetTickCount64()
+            # DWORD wraps every ~50 days; zero asks Windows to date delivery
+            # instead. Use the preceding millisecond at that single wrap value.
+            timestamp = (max(1, ticks - age_ms) & 0xFFFFFFFF) or 0xFFFFFFFF
+        event.mouse = MouseInput(x, y, data & 0xFFFFFFFF, flags, timestamp, EVENT_TAG)
         self._submit(event)
 
     def restore(self, point):
@@ -494,7 +503,7 @@ class WindowsInput:
             if not down and button in self.held_buttons:
                 return
             flags = ((2, 4), (8, 16), (32, 64), (128, 256), (128, 256))[button][0 if down else 1]
-            self._mouse_input(flags, button - 2 if button >= 3 else 0)
+            self._mouse_input(flags, button - 2 if button >= 3 else 0, stamp=packet.stamp)
         elif packet.kind == Kind.WHEEL:
             for axis, value in enumerate(packet.values):
                 self.wheel_remainder[axis] += value * 120

@@ -27,7 +27,8 @@ class MotionLane:
 
     def _reliable(self, frame):
         values = frame.position if frame.kind == Kind.MOVE else frame.values
-        self.reliable(Routed(Packet(frame.kind, frame.epoch, values), frame.action, frame.serial, frame.position))
+        self.reliable(Routed(Packet(frame.kind, frame.epoch, values, frame.stamp),
+                             frame.action, frame.serial, frame.position))
 
     def start(self, now):
         self.probe.start(now)
@@ -90,7 +91,7 @@ class MotionLane:
                     # packet cannot outrun focus and cost a retry round trip.
                     self.sender.move(packet.values, now, reliable=self.focus()[0] == "requesting")
                 else:
-                    self.sender.send_action(packet.kind, *packet.values)
+                    self.sender.send_action(packet.kind, *packet.values, stamp=packet.stamp)
                 self._fallback()
         else:
             if packet.kind in (Kind.LEAVE, Kind.RESET) and self.sender is not None:
@@ -103,7 +104,8 @@ class MotionLane:
         if isinstance(packet, Routed):
             values = () if packet.kind == Kind.MOVE else packet.packet.values
             self.receiver.receive_reliable(
-                Reliable(packet.kind, packet.epoch, packet.action, packet.serial, packet.position, values)
+                Reliable(packet.kind, packet.epoch, packet.action, packet.serial, packet.position, values,
+                         packet.packet.stamp)
             )
         elif packet.kind == Kind.MOVE or packet.kind in ACTIONS:
             raise ValueError("Input position barrier is missing")

@@ -5,6 +5,7 @@ register hooks or touch OS input. All state is transient, never journalled.
 """
 
 import collections
+import dataclasses
 import secrets
 import threading
 import time
@@ -17,7 +18,8 @@ LOCK_KEYS = {57: 1, 83: 2, 71: 4}
 
 class Session:
     def __init__(
-        self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None, can_receive=None
+        self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None, can_receive=None,
+        *, timed_clicks=False,
     ):
         if role not in ("windows", "mac"):
             raise ValueError("Equipo inválido")
@@ -41,6 +43,8 @@ class Session:
         self.outbound_locks = self.pending_locks = None
         self.sent_lock_keys = set()
         self.pending_capture = False
+        self.timed_clicks = timed_clicks
+        self.click_offset = self.last_click_stamp = None
 
     def _phase(self, value):
         if value == "local":
@@ -75,14 +79,27 @@ class Session:
                 return False
             return True
 
-    def input(self, kind, *values):
+    def _send_input(self, packet):
+        if packet.stamp is not None:
+            # The existing ACCEPT gives a lower bound on the clock offset:
+            # its return journey is included in the button's age, never waited.
+            packet = dataclasses.replace(packet, stamp=max(0, packet.stamp + self.click_offset))
+        self._emit(packet)
+
+    def _accept(self, epoch):
+        self._emit(Packet(Kind.ACCEPT, epoch, stamp=int(self.clock() * 1_000_000) if self.timed_clicks else None))
+
+    def input(self, kind, *values, captured_at=None):
         """Return whether physical input belongs to the remote focus."""
         with self.lock:
             if self.closed or self.phase not in ("requesting", "sending"):
                 return False
             if kind not in INPUT_KINDS:
                 raise ValueError("Tipo de entrada inválido")
-            packet = Packet(kind, self.epoch, values)
+            stamp = None
+            if self.timed_clicks and kind == Kind.BUTTON:
+                stamp = int((self.clock() if captured_at is None else captured_at) * 1_000_000)
+            packet = Packet(kind, self.epoch, values, stamp)
             if kind == Kind.KEY and values[0] in LOCK_KEYS and self.outbound_locks is not None:
                 code, down = values
                 state, mask = self.outbound_locks
@@ -98,7 +115,7 @@ class Session:
                     self.pending.put(packet)
                     self.pending_actions = True
                 else:
-                    self._emit(packet)
+                    self._send_input(packet)
             except Exception:
                 self._reset("backpressure")
                 return False
@@ -125,10 +142,15 @@ class Session:
             if packet.epoch != self.epoch:
                 return  # A delayed response must never reset a newer focus.
             if packet.kind == Kind.ACCEPT and self.phase == "requesting":
+                if self.timed_clicks:
+                    if packet.stamp is None:
+                        self.cancel("timing")
+                        return
+                    self.click_offset = packet.stamp - int(self.clock() * 1_000_000)
                 self.deadline = None
                 self._phase("sending")
                 while (item := self.pending.pop()) is not None:
-                    self._emit(item)
+                    self._send_input(item)
                 self.pending_actions = False
             elif packet.kind in (Kind.REJECT, Kind.RESET):
                 self._reset("peer")
@@ -137,11 +159,18 @@ class Session:
                 self._reset()
                 self._emit(Packet(Kind.LEFT, epoch))
             elif packet.kind in INPUT_KINDS and self.phase == "receiving":
+                if self.timed_clicks and packet.kind == Kind.BUTTON:
+                    if packet.stamp is None or (
+                        self.last_click_stamp is not None and packet.stamp < self.last_click_stamp
+                    ):
+                        self.cancel("timing")
+                        return
+                    self.last_click_stamp = packet.stamp
                 self._inject(packet)
 
     def _enter_received(self, packet):
         if self.phase == "receiving" and self.epoch == packet.epoch:
-            self._emit(Packet(Kind.ACCEPT, packet.epoch))
+            self._accept(packet.epoch)
             return
         # Resolve simultaneous physical sources consistently, without two owners.
         collision_lost = self.phase == "requesting" and self.role == "mac"
@@ -165,7 +194,7 @@ class Session:
         try:
             self.backend.inject(Packet(Kind.MOVE, self.epoch, point))
             self._phase("receiving")
-            self._emit(Packet(Kind.ACCEPT, self.epoch))
+            self._accept(self.epoch)
             self.failure = None
         except Exception:
             self._reset("injection")
@@ -243,6 +272,7 @@ class Session:
         self.pending.close()
         self.pending = Outbox()
         self.pending_actions = False
+        self.click_offset = self.last_click_stamp = None
         self.deadline = None
         if self.epoch:
             self.retired.append(self.epoch)

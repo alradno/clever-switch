@@ -451,17 +451,23 @@ class MacInput:
             if packet.kind == Kind.BUTTON and event is not None:
                 count = 1
                 now = self.clock()
+                clicked = now if packet.stamp is None else packet.stamp / 1_000_000
+                if packet.stamp is not None:
+                    # Quartz and Python need not share a clock origin. Backdate
+                    # a newly created event by its age, never post a future time.
+                    age = int(max(0, now - clicked) * 1_000_000_000)
+                    q.CGEventSetTimestamp(event, max(0, q.CGEventGetTimestamp(event) - age))
                 if down:
                     if self.last_click is not None:
                         previous_time, previous_button, previous_point, previous_count = self.last_click
                         if (
-                            now - previous_time <= self.double_click()
+                            0 <= clicked - previous_time <= self.double_click()
                             and previous_button == button
                             and abs(previous_point[0] - point[0]) <= 4
                             and abs(previous_point[1] - point[1]) <= 4
                         ):
                             count = min(3, previous_count + 1)
-                    self.last_click = now, button, point, count
+                    self.last_click = clicked, button, point, count
                 elif self.last_click is not None and self.last_click[1] == button:
                     count = self.last_click[3]
                 q.CGEventSetIntegerValueField(event, q.kCGMouseEventClickState, count)

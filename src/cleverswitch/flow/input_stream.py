@@ -18,7 +18,7 @@ from .input_protocol import Decoder, Kind, Outbox, Packet, Routed
 class Channel:
     def __init__(
         self, connection, on_packet, on_close, on_tick=None, active_interval=0.1, active_timeout=0.6,
-        *, motion_link=None, focus=None,
+        *, motion_link=None, focus=None, timed_clicks=False,
     ):
         if not 0.01 <= active_interval < active_timeout <= 5:
             raise ValueError("Plazos de entrada inválidos")
@@ -28,6 +28,7 @@ class Channel:
         self.outbox = Outbox()
         self.wirebox = Outbox() if motion_link is not None else self.outbox
         self.motion_link, self.focus = motion_link, focus
+        self.timed_clicks = timed_clicks
         self.negotiation = self.lane = self.inbox = self.transport = None
         self._start_lock = threading.RLock()
         self.stop = threading.Event()
@@ -166,7 +167,7 @@ class Channel:
         return packets, needs_write
 
     def _run(self):
-        decoder = Decoder(routed=self.lane is not None)
+        decoder = Decoder(routed=self.lane is not None, timed=self.timed_clicks)
         tx = b""
         tx_count = 0
         sequence = ping = 0

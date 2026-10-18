@@ -68,18 +68,19 @@ class Reliable:
     serial: int
     position: tuple
     values: tuple = ()
+    stamp: int | None = None
 
     def __post_init__(self):
         counter(self.action, zero=self.kind == Kind.MOVE)
         counter(self.serial, zero=True)
         Packet(Kind.MOVE, self.epoch, self.position)
         if self.kind == Kind.MOVE:
-            if self.values:
+            if self.values or self.stamp is not None:
                 raise ValueError("Unexpected snapshot payload")
         elif self.kind not in ACTIONS:
             raise ValueError("Invalid reliable input kind")
         else:
-            Packet(self.kind, self.epoch, self.values)
+            Packet(self.kind, self.epoch, self.values, self.stamp)
 
 
 class Codec:
@@ -276,10 +277,10 @@ class Sender:
         self.retry_at = now + self.retry_offsets[0]
         self._send_latest()
 
-    def send_action(self, kind, *values):
+    def send_action(self, kind, *values, stamp=None):
         if self.mode == "closed":
             return
-        frame = Reliable(kind, self.epoch, self.action + 1, self.serial, self.position, values)
+        frame = Reliable(kind, self.epoch, self.action + 1, self.serial, self.position, values, stamp)
         if kind not in ACTIONS:
             raise ValueError("Invalid action")
         self.action += 1
@@ -401,7 +402,7 @@ class Receiver:
             if frame.action != self.action + 1:
                 raise ValueError("Out-of-order reliable action")
             self._position(frame.serial, frame.position)
-            self.deliver(Packet(frame.kind, frame.epoch, frame.values))
+            self.deliver(Packet(frame.kind, frame.epoch, frame.values, frame.stamp))
             self.action = frame.action
         pending = self.pending
         if pending is not None and pending.after_action <= self.action:
