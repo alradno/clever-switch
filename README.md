@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.5 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.6 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,7 +19,20 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
+juntos. Autentica todo el lote y aplica la posición más reciente entre cada clic,
+tecla o cambio de foco. No añade espera para agrupar. Los mensajes alterados,
+repetidos o antiguos no sustituyen una posición válida; cancelar el control
+descarta los movimientos pendientes. Se aplica igual en ambos sentidos.
+
+En el banco local de Mac, una ráfaga de 64 movimientos con un coste simulado
+de 1 ms por aplicación pasa de unos 86 ms a 1,5 ms hasta la posición final.
+Son medianas de recuperación del receptor en loopback, no latencia física.
+La ráfaga necesita una aplicación y una confirmación, frente a 64 antes.
+El banco recorre 54 casos por versión, con 1/16/64 movimientos y tres costes.
+Reproducir con benchmarks/input_bursts.py.
+
+Desde 0.5.5, la app envía movimiento cifrado por UDP y mantiene teclas, clics,
 rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
 cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
 rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
@@ -32,8 +45,8 @@ se vuelve a probar con cada cruce. Las claves
 son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
 transporte y contadores agregados, sin guardar teclas ni historial del cursor.
 
-En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
-artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+La validación de 0.5.5 recorrió 52 casos por plataforma con TLS mutuo y UDP
+locales. Una retención artificial de 80 ms en TLS produjo pausas de movimiento de 81–88 ms con el
 transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
 Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
 artificial de uno de cada diez datagramas. Son medidas locales con entrada
@@ -46,8 +59,8 @@ conserva las acciones ya encoladas al volver al equipo de origen. Mantiene la
 recuperación del teclado tras Easy-Switch, los avisos de cambios de pantalla,
 la liberación de teclas y botones y la reconexión finita por eventos.
 
-Pasan 1.191 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.5](docs/validation/input-0.5.5-hybrid.json).
+Pasan 1.205 pruebas en cada plataforma, Ruff y ambas compilaciones. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.6](docs/validation/input-0.5.6-bursts.json).
 [Diseño y límites](docs/MOTION-LAB.md); [uso de entrada por red](docs/INPUT-LAN.txt).
 La candidata queda preparada para una única prueba conjunta al volver el usuario.
 No se instalan versiones intermedias: Aplicaciones conserva 0.5.1; el último
