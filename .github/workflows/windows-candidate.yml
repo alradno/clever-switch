@@ -46,6 +46,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python benchmarks/input_bursts.py > windows-input-bursts.json
+      - name: Check finite UDP recovery and adverse packet delivery
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_path_recovery.py > windows-input-path-recovery.json
       - name: Build Windows candidate
         run: python build_tray.py
       - name: Check packaged executable without capturing input
@@ -92,4 +96,5 @@ jobs:
             windows-coverage.json
             windows-hybrid-network.json
             windows-input-bursts.json
+            windows-input-path-recovery.json
           retention-days: 14
