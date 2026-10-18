@@ -1,8 +1,22 @@
-CLEVERSWITCH 0.5.6 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.7 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.205 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.6-bursts.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.7-crossing.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.7
+La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
+ordenador de origen. Calcula la altura donde la trayectoria toca el borde,
+incluso en diagonales rápidas o con pantallas de distinta altura; los huecos
+entre monitores no autorizan el cruce. Ambos sistemas calculan el primer
+movimiento local desde la posición restaurada, sin perderlo ni usar una antigua.
+Si el regreso ya ha entrado en pantalla, permite invertir el recorrido enseguida;
+los regresos pequeños mantienen la protección contra rebotes. Si hay una tecla o un
+botón pulsado, espera a soltarlo antes de cambiar de equipo.
+
+También evita cerrar el enlace por confundir una restauración de teclado en curso
+con un fallo. La comprobación lee el resultado al terminar la transición, sin
+bloquear el hilo de entrada. Una restauración que falla sigue cerrando la sesión.
 
 MEJORAS 0.5.6
 La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos

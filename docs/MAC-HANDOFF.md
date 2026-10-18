@@ -13,16 +13,18 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.6 experimental**, protocolo de control 2 y entrada 1.
-  Aplica la posición más reciente de cada ráfaga UDP autenticada, respetando las
-  fronteras de clics, teclas y foco. Una ráfaga de 64 movimientos requiere una
-  aplicación y un ACK; no añade temporizadores ni búsquedas.
-  Conserva el transporte híbrido de 0.5.5, recuperación del teclado, pantallas y espera pasiva.
-  Pasan 1.205 pruebas por plataforma, Ruff y ambas compilaciones; cobertura Mac
-  92,59 % y Windows 92,79 %. Se verifican 54 casos de ráfagas y 52 de red
-  por plataforma. El fallo inicial de CI fue una carrera reproducida en la espera
-  de arranque de la fixture; el banco espera ahora ambos canales listos.
-  Véanse `validation/input-0.5.6-bursts.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.7 experimental**, protocolo de control 2 y entrada 1.
+  Conserva el recorrido restante y la altura del punto de cruce al volver al origen,
+  evita cruzar por huecos entre monitores y conserva el primer movimiento local.
+  Los regresos amplios permiten invertir el recorrido enseguida; los pequeños
+  mantienen la protección contra rebotes. Corrige el cierre de una conexión sana
+  durante una restauración de teclado todavía en curso.
+  Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones; cobertura Mac
+  92,56 % y Windows 92,79 %.
+  Las 201 pruebas focalizadas incluyen 64 ciclos de ida y vuelta rápida en los dos
+  sentidos y transportes. APIs de entrada simuladas, TLS/UDP reales en loopback.
+  Se reprodujeron 21 casos de fallo antes de sus correcciones. No es aceptación física.
+  Véanse `validation/input-0.5.7-crossing.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

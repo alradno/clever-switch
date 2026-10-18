@@ -6,6 +6,39 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Continuidad del cruce en 0.5.7
+
+La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
+ordenador de origen. Calcula la altura donde la trayectoria toca el borde,
+incluso en diagonales rápidas o con pantallas de distinta altura; los huecos
+entre monitores no autorizan el cruce. Ambos sistemas calculan el primer
+movimiento local desde la posición restaurada, sin perderlo ni usar una antigua.
+Si el regreso ya ha entrado en pantalla, permite invertir el recorrido enseguida;
+los regresos pequeños mantienen la protección contra rebotes. Si hay una tecla o un
+botón pulsado, espera a soltarlo antes de cambiar de equipo.
+
+También evita cerrar el enlace por confundir una restauración de teclado en curso
+con un fallo. La comprobación lee el resultado al terminar la transición, sin
+bloquear el hilo de entrada. Una restauración que falla sigue cerrando la sesión.
+
+Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
+centradas en estos cambios incluyen 64 ciclos de ida y vuelta rápida, con las
+APIs de ambos sistemas simuladas y TLS/UDP reales en loopback. Se reprodujeron
+21 casos de fallo antes de corregirlos. La prueba física de fluidez y estabilidad
+sigue pendiente; estos resultados no miden la latencia del ratón por Wi-Fi.
+
+Ejemplo reproducido: remoto de 501 unidades de altura, origen de 1.001. Un
+movimiento de 300 horizontal y 150 vertical, iniciado a 100 del borde y altura
+200, cruza en y=250. El regreso mapea esa mitad de pantalla a y=500 y conserva
+las 200 unidades horizontales y 100 verticales restantes: llega a y=600. Antes
+se calculaba y=700 desde el extremo final y se perdía el desplazamiento horizontal.
+
+La regresión concurrente retiene una restauración mientras se ejecuta la comprobación
+de salud: la conexión debe seguir viva. El control complementario provoca un fallo
+real de restauración y exige cerrar. La comprobación usa un bloqueo sin espera.
+
+Evidencia: [validación 0.5.7](validation/input-0.5.7-crossing.json).
+
 ## Recepción de ráfagas en 0.5.6
 
 La 0.5.6 evita reproducir posiciones antiguas cuando llegan varios movimientos
@@ -33,7 +66,7 @@ que existiera el canal, pero no que ambos trabajadores estuvieran listos.
 Se reprodujo reteniendo cada trabajador y se corrigió la espera del banco.
 Las aserciones de disponibilidad y de ausencia de sondeo se conservan.
 
-Evidencia actual: [validación 0.5.6](validation/input-0.5.6-bursts.json).
+Evidencia de 0.5.6: [validación 0.5.6](validation/input-0.5.6-bursts.json).
 
 ## Qué se ha construido
 
