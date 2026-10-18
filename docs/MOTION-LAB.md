@@ -6,6 +6,70 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Tiempo de clic conservado en 0.5.22
+
+La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
+Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
+separados ni deshace un doble clic en los casos simulados. Incluye los clics
+que esperan la aceptación del cruce y las liberaciones al reconectar el ratón.
+La extensión se negocia con el compañero; una versión anterior conserva su
+formato. Aprovecha la confirmación existente y no añade otra espera al cruce,
+sondeos periódicos ni trabajo de reloj por cada movimiento.
+
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Hay 69 casos
+nuevos y ocho fallos de interpretación de clics reproducidos antes de corregirlos.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; el modelo de
+Windows comprueba el tiempo entregado a su gestor de ventanas. La aceptación
+física de fluidez, doble clic, Easy-Switch y consumo sigue pendiente.
+
+La reproducción usa un umbral de doble clic de 200 ms y una pausa de 180 ms
+al inyectar el primer o segundo clic. Dos pulsaciones separadas unos 285 ms
+se interpretaban como doble clic; dos separadas unos 85 ms se interpretaban
+como clics simples. Los ocho casos (ambos sentidos, TLS e híbrido y las dos
+pausas) fallaban con la fuente anterior y pasan con la corrección.
+
+El callback fecha los botones antes de diferirlos. El destino añade su tiempo
+monotónico a la confirmación ACCEPT existente; el origen resta el momento en
+que la recibe para convertir los botones al reloj del destino. La demora del
+regreso hace conservadora esa correspondencia y no altera el intervalo entre
+clics del mismo foco. Se renueva en cada cruce, sin sincronización periódica.
+Los botones que esperan ACCEPT conservan su fecha de captura.
+
+`click-timing-v1` se anuncia y acepta expresamente. Sólo entonces se usan las
+tramas de entrada 15 (ACCEPT/botón con tiempo) y 16 (botón con posición y tiempo).
+El tiempo es un entero de microsegundos monotónicos. El protocolo de control
+sigue siendo 2 y el de entrada 1; el movimiento UDP conserva su formato. Las
+versiones anteriores siguen comunicándose con sus tramas originales, aunque
+la mejora temporal requiere ambos extremos actualizados.
+
+Mac calcula el contador de clics desde esas fechas y asigna al evento Quartz
+su edad respecto de un evento recién creado. Windows convierte esa edad al
+contador de milisegundos del sistema y conserva el desbordamiento de DWORD,
+evitando el cero que pediría fechar el evento al entregarlo. Ninguno fecha
+un evento nativo en el futuro. Movimiento y rueda no consultan estos relojes.
+Las liberaciones por cambio de ratón se fechan en el mismo orden del callback.
+Un tiempo de botón ausente o decreciente retira el foco y libera su entrada.
+
+Las pruebas nuevas cubren fragmentación, formatos inválidos, negociación y
+compatibilidad, relojes con orígenes distintos, espera de ACCEPT, callbacks
+en cola, reconexión de ratón, desbordamiento y liberaciones. Se conserva el
+enlace y el siguiente cruce. Windows usa un modelo independiente del gestor
+de ventanas que lee `MOUSEINPUT.time`; no se han enviado clics a aplicaciones
+reales. Las pruebas anteriores de movimiento, orden y recuperación siguen pasando.
+
+La correspondencia de relojes no es una sincronización exacta. Las pausas de
+red siguen existiendo. Queda por validar con hardware el doble clic cerca del
+umbral, la combinación de clics locales y remotos, la deriva en controles muy
+largos y la fluidez. No se atribuyen los microcortes domésticos a esta causa.
+La prueba conjunta debe comprobar clic simple, doble clic, selección y arrastre
+en ambos sentidos, inmediatamente tras cruzar y después de Easy-Switch.
+
+Referencias de API: [MOUSEINPUT.time](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput),
+[efecto sobre el doble clic](https://devblogs.microsoft.com/oldnewthing/20121101-00/?p=6193),
+[CGEventTimestamp](https://developer.apple.com/documentation/coregraphics/cgeventtimestamp)
+y [contador de clics de Quartz](https://developer.apple.com/documentation/coregraphics/cgeventfield/mouseeventclickstate).
+Evidencia: [validación 0.5.22](validation/input-0.5.22-click-timing.json).
+
 ## Flujo sostenido y teclado reconectado en 0.5.21
 
 La validación adicional de 0.5.21 añade 40 escenarios por plataforma de

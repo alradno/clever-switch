@@ -1,7 +1,23 @@
-# Continuación en Windows — candidata conjunta 0.5.21 experimental
+# Continuación en Windows — candidata conjunta 0.5.22 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
+Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
+separados ni deshace un doble clic en los casos simulados. Incluye los clics
+que esperan la aceptación del cruce y las liberaciones al reconectar el ratón.
+La extensión se negocia con el compañero; una versión anterior conserva su
+formato. Aprovecha la confirmación existente y no añade otra espera al cruce,
+sondeos periódicos ni trabajo de reloj por cada movimiento.
+
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Hay 69 casos
+nuevos y ocho fallos de interpretación de clics reproducidos antes de corregirlos.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; el modelo de
+Windows comprueba el tiempo entregado a su gestor de ventanas. La aceptación
+física de fluidez, doble clic, Easy-Switch y consumo sigue pendiente.
+
+Véase [clics 0.5.22](validation/input-0.5.22-click-timing.json).
 
 La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
 entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos

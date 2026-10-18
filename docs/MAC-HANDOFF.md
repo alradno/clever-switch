@@ -13,7 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.21 experimental**, protocolo de control 2 y entrada 1.
+- Candidata conjunta actual: **0.5.22 experimental**, protocolo de control 2 y entrada 1.
+  Conserva los tiempos de clic mediante una extensión negociada, en ambos sentidos.
+  Los clics en cola y las liberaciones tras reconectar el ratón conservan su orden.
+  No añade otro intercambio al cruce ni sincronización periódica de relojes.
+  Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones; 69 casos nuevos
+  y ocho fallos reproducidos antes de corregirlos. APIs nativas simuladas y TLS/UDP
+  reales en loopback. Paquetes preparados sin instalar; aceptación física pendiente.
+  Véase `validation/input-0.5.22-click-timing.json`. Para probar la mejora de clics
+  deben estar actualizados los dos extremos; una versión antigua mantiene el enlace.
+- Candidata anterior: **0.5.21 experimental**, protocolo de control 2 y entrada 1.
   Mac y Windows conservan y completan el cierre si desaparecen temporalmente
   las pantallas, deteniendo la comprobación de entrada en segundo plano.
   La disponibilidad o la preparación del enlace permiten recuperar la entrada.

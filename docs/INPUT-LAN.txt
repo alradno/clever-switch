@@ -1,8 +1,23 @@
-CLEVERSWITCH 0.5.21 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.22 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.876 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.21-display-recovery.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.22-click-timing.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.22
+La 0.5.22 conserva el tiempo de las pulsaciones del ratón al enviarlas entre
+Mac y Windows. Una pausa de red o del receptor ya no comprime dos clics
+separados ni deshace un doble clic en los casos simulados. Incluye los clics
+que esperan la aceptación del cruce y las liberaciones al reconectar el ratón.
+La extensión se negocia con el compañero; una versión anterior conserva su
+formato. Aprovecha la confirmación existente y no añade otra espera al cruce,
+sondeos periódicos ni trabajo de reloj por cada movimiento.
+
+Pasan 1.985 pruebas por plataforma, Ruff y ambas compilaciones. Hay 69 casos
+nuevos y ocho fallos de interpretación de clics reproducidos antes de corregirlos.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; el modelo de
+Windows comprueba el tiempo entregado a su gestor de ventanas. La aceptación
+física de fluidez, doble clic, Easy-Switch y consumo sigue pendiente.
 
 MEJORAS 0.5.21
 La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
