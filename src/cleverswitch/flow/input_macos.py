@@ -262,7 +262,11 @@ class MacInput:
             self.held_keys.add(usage) if down else self.held_keys.discard(usage)
             return self.sink.key(usage, down)
         if kind == q.kCGEventScrollWheel:
-            self._mouse_point(event)
+            point = self._mouse_point(event)
+            if not self.captured:
+                # Native cursor placement need not generate a move. A local
+                # wheel/click still provides the next motion's actual origin.
+                self.previous = point
             # Quartz fixed-point deltas are exposed as doubles by this API.
             vertical = q.CGEventGetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis1)
             horizontal = -q.CGEventGetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis2)
@@ -291,6 +295,8 @@ class MacInput:
         if kind in buttons:
             button, down = buttons[kind]
             point = self._mouse_point(event)
+            if not self.captured:
+                self.previous = point
             self.held_buttons.add(button) if down else self.held_buttons.discard(button)
             swallowed = self.sink.button(button, down)
             if down and not swallowed:
