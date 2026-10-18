@@ -105,6 +105,11 @@ class MacInput:
         self.health.set_active(active)
 
     def lock_state(self):
+        # Quartz posts are asynchronous. A new crossing must inherit the last
+        # ordered toggle even before WindowServer updates its flag snapshot.
+        # Physical Caps changes clear this value in the event callback.
+        if self.injected_caps is not None:
+            return int(self.injected_caps), 1
         flags = self.q.CGEventSourceFlagsState(self.q.kCGEventSourceStateCombinedSessionState)
         return int(bool(flags & self.q.kCGEventFlagMaskAlphaShift)), 1
 
@@ -390,6 +395,7 @@ class MacInput:
             usage, down = packet.values
             if usage not in MAC:
                 raise ValueError("Tecla no compatible")
+            prior_caps = self.injected_caps, self.caps
             repeated = bool(down and usage in self.injected_keys)
             if usage == 57 and down and not repeated:
                 current = self.injected_caps if self.injected_caps is not None else bool(self.lock_state()[0])
@@ -398,12 +404,17 @@ class MacInput:
             self.injected_keys.add(usage) if down else self.injected_keys.discard(usage)
             if not down and usage in self.held_keys:
                 return
-            event = q.CGEventCreateKeyboardEvent(None, MAC[usage], bool(down))
-            if event is not None:
-                q.CGEventSetIntegerValueField(event, q.kCGKeyboardEventAutorepeat, int(repeated))
+            try:
+                event = q.CGEventCreateKeyboardEvent(None, MAC[usage], bool(down))
+                if event is not None:
+                    q.CGEventSetIntegerValueField(event, q.kCGKeyboardEventAutorepeat, int(repeated))
+                    if usage == 57:
+                        q.CGEventSetType(event, q.kCGEventFlagsChanged)
+                self._post(event)
+            except Exception:
                 if usage == 57:
-                    q.CGEventSetType(event, q.kCGEventFlagsChanged)
-            self._post(event)
+                    self.injected_caps, self.caps = prior_caps
+                raise
         elif packet.kind in (Kind.MOVE, Kind.BUTTON):
             if packet.kind == Kind.MOVE:
                 point = packet.values
