@@ -105,8 +105,8 @@ def test_replays_and_missing_frames_rejected():
 
 
 def test_packet_repr_does_not_disclose_keys_or_coordinates():
-    assert "values" not in repr(Packet(Kind.KEY, 9827, (94, 1)))
-    assert "9827" not in repr(Packet(Kind.KEY, 9827, (94, 1)))
+    packet = Packet(Kind.KEY, 9827, (94, 1))
+    assert repr(packet) == object.__repr__(packet)
 
 
 def test_motion_coalesces_only_until_next_action_and_preserves_click_position():
