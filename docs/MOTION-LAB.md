@@ -6,6 +6,42 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Red variable y pérdidas en 0.5.18
+
+Se amplía la validación sin cambiar el código de la app ni los paquetes 0.5.18.
+Pasan 24 escenarios por plataforma, con ambos orígenes, 125/1.000 movimientos
+por segundo y con/sin clic y tecla. Se retrasan simultáneamente el movimiento
+UDP y sus confirmaciones, desde las primeras sondas de negociación. TLS mantiene
+también un retardo ordenado de 2–18 ms. Se comprueba que cada perfil provoca
+realmente los retrasos, reordenamientos o pérdidas previstos.
+
+En cada ejecución se verifican 48 acciones con su orden y posición exactos,
+cero retrocesos del cursor, las liberaciones y la posición final. Se conserva
+el canal y la vía UDP, y la cola queda vacía al terminar. Cuatro controles en
+Mac comprueban la ruta habitual con TLS o híbrido, sin la nueva perturbación.
+La suite de Windows vuelve a pasar sus 1.760 pruebas, Ruff, compilación y
+comprobación del ejecutable sin capturar entrada. Las fuentes y pruebas
+unitarias de la app coinciden con las ya verificadas en ambos sistemas.
+
+Pausa máxima observada entre entregas de movimiento; máximos de los ocho
+escenarios de cada perfil, sin descontar el coste del planificador:
+
+| Perfil artificial | Ejecución en Mac | Ejecución en Windows |
+| --- | ---: | ---: |
+| Retardo variable de 2–18 ms | 19.8 ms | 27.3 ms |
+| Retardo variable y pérdida de uno de cada diez datagramas | 21.4 ms | 27.8 ms |
+| Retención durante una ventana de 40 ms | 41.4 ms | 38.5 ms |
+
+Son medidas de sockets reales en loopback con entrada sintética y un
+planificador de prueba. No miden la Wi-Fi doméstica ni permiten comparar
+el rendimiento físico de los dos equipos. Las retenciones de red siguen
+siendo visibles como pausas; no se demuestra una experiencia de cable.
+La aceptación conjunta de fluidez, Easy-Switch, pantallas y consumo sigue pendiente.
+
+Reproducir: `PYTHONPATH=src .venv/bin/python benchmarks/input_datagram_jitter.py`.
+El nuevo paso queda incluido en la validación automática de Windows.
+Evidencia: [red variable 0.5.18](validation/input-0.5.18-datagram-jitter.json).
+
 ## Pulsaciones locales durante la captura en 0.5.18
 
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
