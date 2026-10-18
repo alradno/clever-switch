@@ -11,6 +11,7 @@ from experiments.motion_lane import lab_codecs
 
 from .test_flow import paired as paired
 from .test_flow import paired_tls as paired_tls
+from .test_input_device_continuity import busy_session
 from .test_input_hybrid import hybrid as hybrid
 from .test_input_hybrid import transports as transports
 from .test_input_service import enter
@@ -181,15 +182,21 @@ def test_paused_receiver_recovers_udp_without_dropping_pressed_input_or_connecti
     receiver.channel._wake()
     try:
         assert held.wait(1)
-        sender.session.input(Kind.MOVE, 300, 400)
+        x, y = sender.remote_position
+        sender.motion(900, 400, 300 - x, 400 - y)
         until(lambda: sender.channel.lane.sender.mode == "reliable", timeout=0.3)
     finally:
         release.set()
     until(lambda: sender.channel.lane.sender.mode == "datagram", timeout=0.3)
     assert receiver.session.keys == {4} and receiver.session.buttons == {0}
-    sender.key(4, 0)
-    sender.button(0, 0)
-    sender.session.input(Kind.MOVE, 400, 500)
+    # Use the same callback queue for releases and motion. Calling Session.input
+    # directly could overtake deferred releases and make the final event a key-up
+    # even though the pointer had arrived correctly. Exercise that queue here.
+    with busy_session(sender, True):
+        assert sender.key(4, 0)
+        assert sender.button(0, 0)
+        assert sender.motion(900, 400, 100, 100)
+        assert sender.deferred.qsize() >= 2
     until(lambda: receiver.backend.events[-1].values == (400, 500))
     assert not receiver.session.keys and not receiver.session.buttons
     assert [peer.channel for peer in hybrid] == channels and all(peer._available() for peer in hybrid)
