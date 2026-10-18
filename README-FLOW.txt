@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.7, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.8, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,26 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.8
+La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
+junto al borde después de recibir control remoto. Cada nuevo foco descarta la
+habilitación anterior del borde; un movimiento local nuevo hacia el interior
+lo vuelve a habilitar. Se aplica en ambos sentidos y también tras cancelar con
+un teclado o ratón local. Si el movimiento físico ya entra en el interior,
+permite cruzar en el siguiente movimiento, sin otro paso previo. En Mac, el primer
+movimiento local usa la última posición recibida, igual que Windows, sin calcular
+un salto desde una posición antigua.
+
+Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
+cubren llegada, regreso, cancelación local y el primer desplazamiento en ambos
+adaptadores, con y sin notificación del evento generado. También comprueban la
+inversión inmediata tras recuperar control moviendo físicamente hacia el interior.
+Catorce fallaban antes de sus respectivas correcciones.
+Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback;
+conservan además los 64 ciclos de ida y vuelta rápida. La aceptación física sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.8-arrival.json. Candidata sin instalar.
 
 REVISIÓN 0.5.7
 La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
@@ -24,7 +44,7 @@ También evita cerrar el enlace por confundir una restauración de teclado en cu
 con un fallo. La comprobación lee el resultado al terminar la transición, sin
 bloquear el hilo de entrada. Una restauración que falla sigue cerrando la sesión.
 
-Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
+La validación de 0.5.7 registró 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
 centradas en estos cambios incluyen 64 ciclos de ida y vuelta rápida, con las
 APIs de ambos sistemas simuladas y TLS/UDP reales en loopback. Se reprodujeron
 21 casos de fallo antes de corregirlos. La prueba física de fluidez y estabilidad
