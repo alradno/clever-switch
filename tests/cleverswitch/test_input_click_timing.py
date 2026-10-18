@@ -215,15 +215,15 @@ def test_native_timestamps_never_schedule_future_or_negative_events(win, mac, st
     assert 0 < api.inputs[-1].mouse.time <= 10000
     backend, q = mac
     backend.clock = lambda: 10.0
-    q.CGEventGetTimestamp = lambda event: 5000000000
+    backend.event_clock = lambda: 5000000000
     backend.inject(Packet(Kind.BUTTON, 1, (0, 1), stamp))
     assert 0 <= q.events[-1]["timestamp"] <= 5000000000
 
 
-def test_mac_backdates_from_quartz_origin_and_rejects_negative_click_intervals(mac):
+def test_mac_backdates_from_native_clock_and_rejects_negative_click_intervals(mac):
     backend, q = mac
     backend.clock = lambda: 1000.0
-    q.CGEventGetTimestamp = lambda event: 5000000000
+    backend.event_clock = lambda: 5000000000
     backend.inject(Packet(Kind.BUTTON, 1, (0, 1), 998750000))
     assert q.events[-1]["timestamp"] == 3750000000
     backend.inject(Packet(Kind.BUTTON, 1, (0, 0), 998760000))

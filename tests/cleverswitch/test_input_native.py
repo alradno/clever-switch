@@ -3,7 +3,6 @@
 import ctypes as c
 import queue
 import threading
-import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -345,7 +344,7 @@ class Quartz:
 
     def CGEventCreateMouseEvent(self, source, kind, point, button):
         return {"kind": kind, "position": point, 3: button, "flags": self.flags,
-                "timestamp": time.monotonic_ns()}
+                "timestamp": 0}
 
     def CGEventGetTimestamp(self, event):
         return event["timestamp"]
