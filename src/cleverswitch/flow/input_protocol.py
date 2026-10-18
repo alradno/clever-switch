@@ -165,6 +165,10 @@ class Outbox:
         with self.lock:
             return [self.items.popleft() for _ in range(min(limit, len(self.items)))]
 
+    def pending(self):
+        with self.lock:
+            return bool(self.items)
+
     def close(self):
         with self.lock:
             self.closed = True

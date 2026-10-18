@@ -162,20 +162,16 @@ class Channel:
                     self.send(Packet(Kind.PING, ping))
                     pending_ping = ping, now + (self.timeout if active else 45), now
                     next_ping = now + (self.interval if active else 15)
-                if not tx:
-                    items = self.outbox.take()
-                    tx_count = len(items)
-                    tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
-                    sequence += tx_count
                 # Heartbeats only run at the interactive rate during a focus
                 # transfer. An idle connected session sleeps for up to 15 s.
                 deadlines = [now + (self.interval if active else 15)]
                 deadlines.append(pending_ping[1] if pending_ping else next_ping)
                 timeout = max(0, min(deadlines) - now)
                 pending = self.connection.pending() if hasattr(self.connection, "pending") else 0
+                wants_write = (tx or self.outbox.pending()) and not write_waits_read
                 readable, writable, _ = select.select(
                     [self.connection, self.wake_reader],
-                    [self.connection] if (tx and not write_waits_read) or read_waits_write else [],
+                    [self.connection] if wants_write or read_waits_write else [],
                     [],
                     0 if pending else timeout,
                 )
@@ -207,6 +203,14 @@ class Channel:
                         read_waits_write = True
                 if self.stop.is_set():
                     break
+                if not tx and self.connection in writable:
+                    # Keep unsent motion coalescible while the socket is busy.
+                    # Freeze a batch only just before its first write; after a
+                    # TLS retry or partial write the exact bytes must survive.
+                    items = self.outbox.take()
+                    tx_count = len(items)
+                    tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
+                    sequence += tx_count
                 if tx and (self.connection in writable or (write_waits_read and self.connection in readable)):
                     try:
                         count = self.connection.send(tx)
