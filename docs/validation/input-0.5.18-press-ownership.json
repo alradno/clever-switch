@@ -1,0 +1,244 @@
+{
+  "edition": "0.5.18",
+  "source_commit": "e70bb860d6380238839a10662c75012bc01cce42",
+  "observed_at": "2026-10-18T08:42:31.790150+00:00",
+  "scope": "shared_input_routing_with_simulated_native_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "A physical key or button press delivered locally keeps its repeats and release local when capture starts between them",
+    "Native callback ownership is separate from deferred routing state and is cleared in device-notification order and on shutdown",
+    "New captured presses retain their remote destination; the cancelled crossing keeps the channel and permits the next crossing",
+    "No new polling, threads, native calls, protocol changes or ownership wrapper on mouse motion"
+  ],
+  "regression": {
+    "reference_commit": "450c5d3e5411d33ca4b49b43e0282b50a4b379f8",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_service_sha256": "b14524a3134d0bc5191b94885951571b69115f347260283d0862a2242b2471ca",
+    "baseline": {
+      "tests": 32,
+      "failures": 32,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 227,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "press_ownership_cases_added": 39,
+    "additional_queued_scroll_cases": 16,
+    "total_cases_added": 55,
+    "capture_transition_cases": 32,
+    "lifecycle_cases": 7,
+    "checks": [
+      "Both source roles and TLS/hybrid transport; normal key, modifier, primary and auxiliary mouse buttons",
+      "Local down precedes capture, repeat and up follow capture while routing is still deferred",
+      "The simulated local application receives its up and retains no held input; no local press is delivered remotely",
+      "Other presses starting after capture remain captured; cleanup preserves the channel and the next crossing",
+      "Device notices clear ownership in native order, without erasing later presses when replayed",
+      "Queue overflow still passes a locally owned release; startup inherits held input and shutdown retires it"
+    ],
+    "native_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1760,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.92477643345607,
+    "mac_build": {
+      "edition": "0.5.18",
+      "built_at": "2026-10-18T08:11:01.294021+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "1332bc140ef4238c51378b49bda716bf1993b17d46759728514774335a01b957",
+      "application_source_matches_validated_commit": "e70bb860d6380238839a10662c75012bc01cce42",
+      "rebuilt_after_test_only_changes": false
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39112021937",
+    "head_sha": "e70bb860d6380238839a10662c75012bc01cce42",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1760,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.11108217215784,
+    "packaged_native_check": {
+      "edition": "0.5.18",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-e70bb860d6380238839a10662c75012bc01cce42",
+      "id": 12130738665,
+      "sha256": "19d8eb0e6c73e37686e9232c8798c8d1fd4d7f609f75a08389659c1b83cbb560"
+    },
+    {
+      "name": "Windows-validation-e70bb860d6380238839a10662c75012bc01cce42",
+      "id": 12130074117,
+      "sha256": "ac6e9d61322914eabd22956eb168fa7a2b1bd797794aece5d06c23a4a6695df5"
+    }
+  ],
+  "recovery_test_review": {
+    "initial_failure": {
+      "run": 39110405803,
+      "attempt": 1,
+      "source_commit": "98e280c3b8e0128b13a34ce84f1cc0e6f0b67b81",
+      "test": "test_paused_receiver_recovers_udp_without_dropping_pressed_input_or_connection[windows_to_mac]",
+      "file": "tests/cleverswitch/test_input_path_recovery.py",
+      "line": 193,
+      "assertion": "latest destination event reaches synthetic position (400, 500)",
+      "result": "1 failed, 1743 passed",
+      "coverage_percent": 93.1,
+      "cause": "not established",
+      "local_followup": "100 exact recovery repetitions passed with unchanged code; this does not reproduce Windows scheduling"
+    },
+    "reproduced_test_ordering": {
+      "synthetic_only": true,
+      "cases": {
+        "direct_session_bypass": [
+          [
+            "MOVE",
+            [
+              400,
+              500
+            ]
+          ],
+          [
+            "KEY",
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            "BUTTON",
+            [
+              0,
+              0
+            ]
+          ]
+        ],
+        "ordered_physical_callbacks": [
+          [
+            "KEY",
+            [
+              4,
+              0
+            ]
+          ],
+          [
+            "BUTTON",
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            "MOVE",
+            [
+              400,
+              500
+            ]
+          ]
+        ]
+      },
+      "explanation": "The old test bypassed queued key/button releases; the production callback queue preserves release/motion order without changing its assertion or timeouts."
+    },
+    "local_repetitions": {
+      "tests": 100,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "correction": "The recovery test now routes motion through Service.motion, like key/button callbacks, and forces queued releases and motion before asserting final position and release state",
+    "qualification": "The earlier test could report failure despite correct cursor arrival; the specific Windows failure had no runtime trace beyond that final-event assertion",
+    "original_run_attempt_2": "success"
+  },
+  "test_harness_review": {
+    "windows_failures": [
+      {
+        "test": "test_action_position_envelope_roundtrips_all_fragment_boundaries[6-values0]",
+        "module": "tests.cleverswitch.test_input_hybrid",
+        "failure": "tests\\cleverswitch\\test_input_hybrid.py:220: in test_action_position_envelope_roundtrips_all_fragment_boundaries\n    assert \"100\" not in repr(frame) and \"values\" not in repr(frame)\nE   AssertionError: assert ('100' not in '<cleverswit...26C7331D100>'\nE     \nE     '100' is contained here:\nE       0026C7331D100>\nE     ?           +++)"
+      },
+      {
+        "test": "test_scroll_targets_each_ordered_position_before_native_queue_is_applied[hybrid-burst-horizontal-windows_to_mac]",
+        "module": "tests.cleverswitch.test_input_scroll_position",
+        "failure": "tests\\cleverswitch\\test_input_scroll_position.py:75: in test_scroll_targets_each_ordered_position_before_native_queue_is_applied\n    assert observed == expected\nE   assert [((300.0, 300...), -0.5), ...] == [((300, 300),...), -0.5), ...]\nE     \nE     At index 2 diff: ((315.0, 309.0), 0.25) != ((310, 306), 0.25)\nE     \nE     Full diff:\nE       [\nE           (\nE               (\nE     -             300,\nE     +             300.0,\nE     ?                ++\nE     -             300,\nE     +             300.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             305,\nE     +             305.0,\nE     ?                ++\nE     -             303,\nE     +             303.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             310,\nE     +             315.0,\nE     ?               ++\nE     -             306,\nE     ?               ^\nE     +             309.0,\nE     ?               ^^^\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             315,\nE     +             315.0,\nE     ?                ++\nE     -             309,\nE     +             309.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             320,\nE     +             320.0,\nE     ?                ++\nE     -             312,\nE     +             312.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             325,\nE     ?              ^^\nE     +             330.0,\nE     ?              ^^^^\nE     -             315,\nE     ?               ^\nE     +             318.0,\nE     ?               ^^^\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             330,\nE     +             330.0,\nE     ?                ++\nE     -             318,\nE     +             318.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             335,\nE     +             335.0,\nE     ?                ++\nE     -             321,\nE     +             321.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             340,\nE     +             345.0,\nE     ?               ++\nE     -             324,\nE     ?               ^\nE     +             327.0,\nE     ?               ^^^\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             345,\nE     ?              ^^\nE     +             360.0,\nE     ?              ^^^^\nE     -             327,\nE     ?              ^^\nE     +             336.0,\nE     ?              ^^^^\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             350,\nE     +             350.0,\nE     ?                ++\nE     -             330,\nE     +             330.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             355,\nE     +             355.0,\nE     ?                ++\nE     -             333,\nE     +             333.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             360,\nE     +             360.0,\nE     ?                ++\nE     -             336,\nE     +             336.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             365,\nE     +             365.0,\nE     ?                ++\nE     -             339,\nE     +             339.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             370,\nE     +             370.0,\nE     ?                ++\nE     -             342,\nE     +             342.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             375,\nE     +             375.0,\nE     ?                ++\nE     -             345,\nE     +             345.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             380,\nE     +             380.0,\nE     ?                ++\nE     -             348,\nE     +             348.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             385,\nE     +             385.0,\nE     ?                ++\nE     -             351,\nE     +             351.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             390,\nE     +             390.0,\nE     ?                ++\nE     -             354,\nE     +             354.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             395,\nE     +             395.0,\nE     ?                ++\nE     -             357,\nE     +             357.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             400,\nE     +             400.0,\nE     ?                ++\nE     -             360,\nE     +             360.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             405,\nE     +             405.0,\nE     ?                ++\nE     -             363,\nE     +             363.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             410,\nE     +             410.0,\nE     ?                ++\nE     -             366,\nE     +             366.0,\nE     ?                ++\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             415,\nE     +             415.0,\nE     ?                ++\nE     -             369,\nE     +             369.0,\nE     ?                ++\nE               ),\nE               -0.5,\nE           ),\nE       ]"
+      },
+      {
+        "test": "test_scroll_targets_each_ordered_position_before_native_queue_is_applied[hybrid-burst-vertical-mac_to_windows]",
+        "module": "tests.cleverswitch.test_input_scroll_position",
+        "failure": "tests\\cleverswitch\\test_input_scroll_position.py:75: in test_scroll_targets_each_ordered_position_before_native_queue_is_applied\n    assert observed == expected\nE   assert [((1500, 300)...), -0.5), ...] == [((1500, 300)...), -0.5), ...]\nE     \nE     At index 2 diff: ((1485, 309), 0.25) != ((1490, 306), 0.25)\nE     \nE     Full diff:\nE       [\nE           (\nE               (\nE                   1500,\nE                   300,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1495,\nE                   303,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             1490,\nE     ?               ^^\nE     +             1485,\nE     ?               ^^\nE     -             306,\nE     ?               ^\nE     +             309,\nE     ?               ^\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1485,\nE                   309,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1480,\nE                   312,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE     -             1475,\nE     ?                ^\nE     +             1470,\nE     ?                ^\nE     -             315,\nE     ?               ^\nE     +             318,\nE     ?               ^\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE     -             1470,\nE     ?               ^^\nE     +             1455,\nE     ?               ^^\nE     -             318,\nE     ?              ^^\nE     +             327,\nE     ?              ^^\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1465,\nE                   321,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1460,\nE                   324,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1455,\nE                   327,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1450,\nE                   330,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1445,\nE                   333,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1440,\nE                   336,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1435,\nE                   339,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1430,\nE                   342,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1425,\nE                   345,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1420,\nE                   348,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1415,\nE                   351,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1410,\nE                   354,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1405,\nE                   357,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1400,\nE                   360,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1395,\nE                   363,\nE               ),\nE               -0.5,\nE           ),\nE           (\nE               (\nE                   1390,\nE                   366,\nE               ),\nE               0.25,\nE           ),\nE           (\nE               (\nE                   1385,\nE                   369,\nE               ),\nE               -0.5,\nE           ),\nE       ]"
+      }
+    ],
+    "windows_run": "https://github.com/alradno/clever-switch/actions/runs/39111106490",
+    "scroll_generator_before": {
+      "tests": 16,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0
+    },
+    "corrected_tests": {
+      "tests": 109,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "corrections": [
+      "Scroll test deltas now derive from the previous physical report rather than asynchronously updated routing state",
+      "Sixteen additional cases force the same motion/wheel callbacks into the queue without changing expected coordinates, actions or timeouts",
+      "Packet and routed-frame privacy checks require opaque object representation; arbitrary hexadecimal address digits cannot be mistaken for payload"
+    ],
+    "qualification": "Forced deferral reproduces the old scroll generator failure in eight burst cases on the unchanged application; there is no complete callback trace for the two earlier Windows scroll failures"
+  },
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and local application delivery are simulated; TLS/UDP loopback is real",
+    "This verifies the reproduced capture race, not physical Wi-Fi latency or peripheral acceptance",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.18.zip",
+      "sha256": "95d0d787eccfd867544a33e05bbe8a653adbe868e2300deab2ec33fb4631ccad"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.18.zip",
+      "sha256": "19d8eb0e6c73e37686e9232c8798c8d1fd4d7f609f75a08389659c1b83cbb560"
+    }
+  }
+}
