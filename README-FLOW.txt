@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.14, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.15, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,29 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.15
+La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
+de un cruce. Si una tecla, clic, rueda o movimiento ya llegó a las aplicaciones
+locales antes de terminar la captura, cancela ese cruce y conserva su destino
+local. Restaura también la posición física del cursor en ambos sistemas.
+La entrada que ya estaba capturada sigue hacia el compañero; un cursor quieto
+no cancela el cruce. Conserva el canal y permite volver a cruzar, sin añadir
+esperas, sondeos, hilos ni consultas nativas al recorrido del movimiento.
+También despierta la comprobación de limpieza después de liberar el callback
+nativo si quedó una liberación fallida; evita aparcarla hasta el siguiente
+intervalo de reposo. Este aviso adicional sólo se emite si queda limpieza pendiente.
+
+Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+48 casos y pasan 200 pruebas focalizadas. Se reprodujeron 24 fallos previos:
+16 al preparar la captura y ocho al completar una liberación fallida.
+Se comprueban teclas, clics, rueda y movimiento durante la preparación del cruce,
+antes y después de la captura, en ambos sentidos y con TLS o transporte híbrido.
+Se conserva el destino de cada entrada, la posición local, el canal y el siguiente
+cruce. Las APIs de entrada están simuladas y TLS/UDP usan loopback.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.15-capture-race.json. Candidata sin instalar.
+
 REVISIÓN 0.5.14
 La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
 una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
@@ -19,7 +42,7 @@ la entrada. Sin un canal preparado, el estado no disponible sigue impidiendo
 iniciar la captura o reintentar la conexión. No añade sondeos, hilos ni cambios
 de protocolo y conserva la espera pasiva cuando el compañero está ausente.
 
-Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+La validación de 0.5.14 registró 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
 26 casos y pasan 110 pruebas focalizadas. De los 26 casos, 16 fallaban con 0.5.13.
 Se comprueba el estado antiguo en cualquiera de los extremos, con el control
 local o remoto, en ambos sentidos y con TLS o transporte híbrido. Se conservan
