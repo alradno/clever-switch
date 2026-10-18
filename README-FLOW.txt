@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.10, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.11, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,30 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.11
+La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
+confirmación UDP tardía, autenticada y del control actual permite una comprobación
+con un reto nuevo; mientras tanto, la entrada continúa por TLS. Sólo vuelve a
+UDP si responde ese reto. Hay como máximo una ventana adicional por conexión,
+con tres intentos y plazo de 100 ms, sin búsquedas periódicas. Un corte sin esa
+confirmación mantiene TLS. Cambiar o cancelar el control retira la comprobación.
+También aprovecha una prueba inicial que termina durante un cruce, conservando
+TLS para el movimiento hasta que el destino acepta. Se aplica en ambos sentidos.
+
+Conserva además el movimiento local que quedó en cola durante un bloqueo breve
+de sesión: entrar al interior y volver al borde sigue iniciando el cruce. Un
+movimiento anterior a otra sesión no se reproduce al recuperar el control.
+
+Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
+diez fallos antes de corregirlos; hay 30 casos nuevos y 333 pruebas focalizadas.
+El banco recorre 36 escenarios y conserva las 144 acciones, con duplicados,
+desorden, alteraciones, pérdidas y pausas. Tras una pausa inicial de 150 ms,
+una retención posterior de TLS causa huecos de 81–89 ms antes y 1,3–9,7 ms
+después en Mac. Son medidas de loopback con entrada sintética; la pausa inicial
+permanece y no se mide la latencia física. La aceptación física sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.11-path-recovery.json. Candidata sin instalar.
+
 REVISIÓN 0.5.10
 La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
 anuncia su llegada o retirada, libera los botones cuyo evento de soltar pudo
@@ -19,7 +43,7 @@ separado. Los avisos tardíos de una sesión cerrada se descartan. No añade
 búsquedas periódicas ni hilos. Un cambio de ratón en el receptor no interrumpe
 un arrastre enviado desde el otro equipo.
 
-Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Hay 40 casos
+La validación de 0.5.10 registró 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Hay 40 casos
 nuevos: recuperación de los cinco botones, conservación del teclado y del control,
 avisos en cola al terminar un cruce, aislamiento del receptor y vida de los
 observadores. Las 233 pruebas focalizadas usan APIs de entrada simuladas y
