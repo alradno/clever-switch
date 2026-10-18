@@ -1,8 +1,18 @@
-CLEVERSWITCH 0.5.11 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.12 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.11-path-recovery.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.12-pointer-precision.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.12
+La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
+al centro del rango que representa su píxel: algunas coordenadas anteriores
+caían en el píxel vecino. Al recuperar control local, el primer desplazamiento
+parte de la posición física redondeada y evita un pequeño salto. El punto donde
+se mantiene el cursor mientras controla el otro equipo también usa un píxel
+exacto en pantallas de dimensiones impares. No añade consultas de pantalla por
+movimiento. Mac conserva sus coordenadas fraccionarias y ambos sistemas
+comparten la misma edición y las pruebas de entrada en ambos sentidos.
 
 MEJORAS 0.5.11
 La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una

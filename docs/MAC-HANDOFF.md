@@ -13,18 +13,15 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.11 experimental**, protocolo de control 2 y entrada 1.
-  Recupera UDP tras una confirmación tardía del control actual y una comprobación
-  con un reto nuevo. Máximo una ventana adicional por conexión, tres intentos y
-  100 ms, sin sondeos periódicos; un corte sin esa confirmación conserva TLS.
-  Conserva además los movimientos locales en cola durante un bloqueo breve,
-  sin rearmar el borde con eventos anteriores a otra sesión.
-  También aprovecha una prueba inicial completada durante el cruce, sin enviar
-  movimiento por UDP antes de la aceptación del destino.
-  Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones; 30 casos nuevos,
-  diez fallos previos reproducidos y 333 pruebas focalizadas. El banco recorre
-  36 escenarios/144 acciones con entrada sintética y TLS/UDP reales en loopback.
-  Véanse `validation/input-0.5.11-path-recovery.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.12 experimental**, protocolo de control 2 y entrada 1.
+  Corrige la conversión absoluta a píxeles y el primer movimiento local en Windows,
+  incluidas anclas en pantallas impares. Mac conserva la precisión fraccionaria.
+  Mantiene la recuperación finita de UDP y la recuperación de teclado y ratón.
+  Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones; 90 casos nuevos,
+  22 fallos previos reproducidos y 231 pruebas focalizadas. En el modelo de Windows,
+  53.000 posiciones pasan de 453 coordenadas incorrectas a ninguna. Otros 64 casos
+  mezclan 19.200 operaciones en ambos sentidos con TLS/UDP reales en loopback.
+  Véanse `validation/input-0.5.12-pointer-precision.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

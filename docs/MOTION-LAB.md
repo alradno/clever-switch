@@ -6,6 +6,44 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Precisión y entrada combinada en 0.5.12
+
+La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
+al centro del rango que representa su píxel: algunas coordenadas anteriores
+caían en el píxel vecino. Al recuperar control local, el primer desplazamiento
+parte de la posición física redondeada y evita un pequeño salto. El punto donde
+se mantiene el cursor mientras controla el otro equipo también usa un píxel
+exacto en pantallas de dimensiones impares. No añade consultas de pantalla por
+movimiento. Mac conserva sus coordenadas fraccionarias y ambos sistemas
+comparten la misma edición y las pruebas de entrada en ambos sentidos.
+
+Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+90 casos y pasan 231 pruebas focalizadas. De las 26 regresiones de precisión,
+22 fallaban antes y cuatro ya protegían el comportamiento del Mac. El banco
+recorre 53.000 posiciones de ocho geometrías: pasa de 453 coordenadas incorrectas
+a ninguna en el modelo de rangos de píxel de Windows. Otros 64 casos mezclan
+19.200 operaciones de movimiento, teclas, botones y rueda con ambos sentidos,
+TLS e híbrido, y un receptor inmediato o con coste simulado de 1 ms.
+Las APIs de entrada están simuladas y TLS/UDP usan loopback. La aceptación
+física de fluidez, recuperación y consumo sigue pendiente.
+
+La comparación llama a `WindowsInput.inject` con `SendInput` simulado y decodifica
+sus argumentos con un modelo independiente de rangos de píxel. Sigue la
+[explicación del código oficial de Microsoft WPF](https://github.com/dotnet/wpf/blob/65d15adece1df9a73e3d1abc11f8bbf99e9fc7a9/src/Microsoft.DotNet.Wpf/src/UIAutomation/UIAutomationClientSideProviders/MS/Internal/AutomationProxies/Input.cs#L87-L104).
+Se verificó el blob `f31c00d9a77563b6096666b9f89f7f852fe208c9` de esa revisión.
+Los barridos horizontal y vertical cubren ocho geometrías entre 1280×720 y
+7680×4320, incluidos orígenes negativos. No se movió un cursor nativo: la prueba
+demuestra la conversión y su estado interno dentro de ese modelo.
+
+Reproducir con `PYTHONPATH=src python benchmarks/input_pointer_precision.py`.
+La comparación de 0.5.11 utiliza el mismo banco con `--expect-errors` contra sus
+módulos de producción. La suite combina ocho semillas, dos sentidos, dos
+transportes y dos costes del receptor; comprueba orden, posición de cada acción,
+liberación de teclas y botones y conservación del enlace. Las 19.200 operaciones
+no cuentan la preparación ni las liberaciones finales.
+
+Evidencia: [validación 0.5.12](validation/input-0.5.12-pointer-precision.json).
+
 ## Recuperación finita de UDP en 0.5.11
 
 La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una

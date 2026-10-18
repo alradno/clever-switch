@@ -1,7 +1,16 @@
-# Continuación en Windows — candidata conjunta 0.5.11 experimental
+# Continuación en Windows — candidata conjunta 0.5.12 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
+al centro del rango que representa su píxel: algunas coordenadas anteriores
+caían en el píxel vecino. Al recuperar control local, el primer desplazamiento
+parte de la posición física redondeada y evita un pequeño salto. El punto donde
+se mantiene el cursor mientras controla el otro equipo también usa un píxel
+exacto en pantallas de dimensiones impares. No añade consultas de pantalla por
+movimiento. Mac conserva sus coordenadas fraccionarias y ambos sistemas
+comparten la misma edición y las pruebas de entrada en ambos sentidos.
 
 La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
 confirmación UDP tardía, autenticada y del control actual permite una comprobación
@@ -88,15 +97,17 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
-diez fallos antes de corregirlos; hay 30 casos nuevos y 333 pruebas focalizadas.
-El banco recorre 36 escenarios y conserva las 144 acciones, con duplicados,
-desorden, alteraciones, pérdidas y pausas. Tras una pausa inicial de 150 ms,
-una retención posterior de TLS causa huecos de 81–89 ms antes y 1,3–9,7 ms
-después en Mac. Son medidas de loopback con entrada sintética; la pausa inicial
-permanece y no se mide la latencia física. La aceptación física sigue pendiente. La comprobación
+Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+90 casos y pasan 231 pruebas focalizadas. De las 26 regresiones de precisión,
+22 fallaban antes y cuatro ya protegían el comportamiento del Mac. El banco
+recorre 53.000 posiciones de ocho geometrías: pasa de 453 coordenadas incorrectas
+a ninguna en el modelo de rangos de píxel de Windows. Otros 64 casos mezclan
+19.200 operaciones de movimiento, teclas, botones y rueda con ambos sentidos,
+TLS e híbrido, y un receptor inmediato o con coste simulado de 1 ms.
+Las APIs de entrada están simuladas y TLS/UDP usan loopback. La aceptación
+física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.11-path-recovery.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.12-pointer-precision.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
