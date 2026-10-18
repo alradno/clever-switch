@@ -20,7 +20,7 @@ de un periodo local anterior no afectan a un cruce nuevo. La corrección es com�
 a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
 la ruta de los callbacks que se procesan al momento.
 
-Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+Pasan 1.806 pruebas por plataforma, Ruff y ambas compilaciones. La corrección inicial tiene
 22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
 quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
 pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
@@ -29,6 +29,17 @@ loopback real. La aceptación física de fluidez, recuperación y consumo
 sigue pendiente.
 
 Evidencia: docs/validation/input-0.5.19-queued-edge.json. Candidata sin instalar.
+
+La validación ampliada de 0.5.19 añade 24 casos por plataforma: 64 reconexiones
+repetidas y ocho cortes de TLS en un solo sentido. Comprueba que se sueltan
+teclas y arrastres, se recupera una liberación rechazada temporalmente y funciona
+el siguiente cruce. Los trabajadores y observadores de entrada terminan al cerrar
+el enlace; sus avisos tardíos no borran pulsaciones de la conexión nueva.
+También se comprueba por UDP real que un paquete cifrado de un enlace anterior
+se rechaza durante un foco nuevo. Las APIs de entrada siguen simuladas.
+Esta ampliación no detectó otro fallo ni cambia el código o los paquetes 0.5.19;
+la fluidez y el consumo físicos siguen pendientes.
+Evidencia: docs/validation/input-0.5.19-reconnect.json.
 
 REVISIÓN 0.5.18
 La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
