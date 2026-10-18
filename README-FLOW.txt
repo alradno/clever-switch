@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.8, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.9, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,23 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.9
+La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
+remota. Una tecla, clic, rueda o movimiento que quedó en cola durante la
+aceptación cancela esa llegada al procesarse. El cursor quieto no la cancela.
+Las teclas remotas pendientes no se reproducen después de recuperar el control;
+el enlace permanece abierto y permite el siguiente cruce. Se aplica en ambos
+sentidos, sin añadir esperas ni consultas nativas al recorrido de entrada.
+
+Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Los 20 casos
+nuevos simulan la carrera durante la aceptación: 16 reproducían pérdida de
+prioridad local y cuatro comprueban que un cursor quieto no interrumpe el cruce.
+También verifican que no se reproduzcan teclas remotas pendientes y que el
+siguiente cruce funcione sobre el mismo enlace. Las 78 pruebas focalizadas usan
+APIs simuladas y TLS/UDP reales en loopback. La aceptación física sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.9-takeover.json. Candidata sin instalar.
+
 REVISIÓN 0.5.8
 La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
 junto al borde después de recibir control remoto. Cada nuevo foco descarta la
@@ -20,7 +37,7 @@ permite cruzar en el siguiente movimiento, sin otro paso previo. En Mac, el prim
 movimiento local usa la última posición recibida, igual que Windows, sin calcular
 un salto desde una posición antigua.
 
-Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
+La validación de 0.5.8 registró 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
 cubren llegada, regreso, cancelación local y el primer desplazamiento en ambos
 adaptadores, con y sin notificación del evento generado. También comprueban la
 inversión inmediata tras recuperar control moviendo físicamente hacia el interior.

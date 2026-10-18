@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.8 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.9 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -18,6 +18,13 @@ TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de tec
 El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.9 conserva la prioridad del uso local cuando coincide con una llegada
+remota. Una tecla, clic, rueda o movimiento que quedó en cola durante la
+aceptación cancela esa llegada al procesarse. El cursor quieto no la cancela.
+Las teclas remotas pendientes no se reproducen después de recuperar el control;
+el enlace permanece abierto y permite el siguiente cruce. Se aplica en ambos
+sentidos, sin añadir esperas ni consultas nativas al recorrido de entrada.
 
 La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
 junto al borde después de recibir control remoto. Cada nuevo foco descarta la
@@ -81,14 +88,13 @@ conserva las acciones ya encoladas al volver al equipo de origen. Mantiene la
 recuperación del teclado tras Easy-Switch, los avisos de cambios de pantalla,
 la liberación de teclas y botones y la reconexión finita por eventos.
 
-Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
-cubren llegada, regreso, cancelación local y el primer desplazamiento en ambos
-adaptadores, con y sin notificación del evento generado. También comprueban la
-inversión inmediata tras recuperar control moviendo físicamente hacia el interior.
-Catorce fallaban antes de sus respectivas correcciones.
-Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback;
-conservan además los 64 ciclos de ida y vuelta rápida. La aceptación física sigue pendiente. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.8](docs/validation/input-0.5.8-arrival.json).
+Pasan 1.289 pruebas por plataforma, Ruff y ambas compilaciones. Los 20 casos
+nuevos simulan la carrera durante la aceptación: 16 reproducían pérdida de
+prioridad local y cuatro comprueban que un cursor quieto no interrumpe el cruce.
+También verifican que no se reproduzcan teclas remotas pendientes y que el
+siguiente cruce funcione sobre el mismo enlace. Las 78 pruebas focalizadas usan
+APIs simuladas y TLS/UDP reales en loopback. La aceptación física sigue pendiente. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.9](docs/validation/input-0.5.9-takeover.json).
 [Diseño y límites](docs/MOTION-LAB.md); [uso de entrada por red](docs/INPUT-LAN.txt).
 La candidata queda preparada para una única prueba conjunta al volver el usuario.
 No se instalan versiones intermedias: Aplicaciones conserva 0.5.1; el último
