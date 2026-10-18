@@ -1,8 +1,22 @@
-CLEVERSWITCH 0.5.10 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.11 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.10-mouse-recovery.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.11-path-recovery.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.11
+La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
+confirmación UDP tardía, autenticada y del control actual permite una comprobación
+con un reto nuevo; mientras tanto, la entrada continúa por TLS. Sólo vuelve a
+UDP si responde ese reto. Hay como máximo una ventana adicional por conexión,
+con tres intentos y plazo de 100 ms, sin búsquedas periódicas. Un corte sin esa
+confirmación mantiene TLS. Cambiar o cancelar el control retira la comprobación.
+También aprovecha una prueba inicial que termina durante un cruce, conservando
+TLS para el movimiento hasta que el destino acepta. Se aplica en ambos sentidos.
+
+Conserva además el movimiento local que quedó en cola durante un bloqueo breve
+de sesión: entrar al interior y volver al borde sigue iniciando el cruce. Un
+movimiento anterior a otra sesión no se reproduce al recuperar el control.
 
 MEJORAS 0.5.10
 La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema

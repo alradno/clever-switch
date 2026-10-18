@@ -1,7 +1,20 @@
-# Continuación en Windows — candidata conjunta 0.5.10 experimental
+# Continuación en Windows — candidata conjunta 0.5.11 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
+confirmación UDP tardía, autenticada y del control actual permite una comprobación
+con un reto nuevo; mientras tanto, la entrada continúa por TLS. Sólo vuelve a
+UDP si responde ese reto. Hay como máximo una ventana adicional por conexión,
+con tres intentos y plazo de 100 ms, sin búsquedas periódicas. Un corte sin esa
+confirmación mantiene TLS. Cambiar o cancelar el control retira la comprobación.
+También aprovecha una prueba inicial que termina durante un cruce, conservando
+TLS para el movimiento hasta que el destino acepta. Se aplica en ambos sentidos.
+
+Conserva además el movimiento local que quedó en cola durante un bloqueo breve
+de sesión: entrar al interior y volver al borde sigue iniciando el cruce. Un
+movimiento anterior a otra sesión no se reproduce al recuperar el control.
 
 La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
 anuncia su llegada o retirada, libera los botones cuyo evento de soltar pudo
@@ -75,15 +88,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones. Hay 40 casos
-nuevos: recuperación de los cinco botones, conservación del teclado y del control,
-avisos en cola al terminar un cruce, aislamiento del receptor y vida de los
-observadores. Las 233 pruebas focalizadas usan APIs de entrada simuladas y
-TLS/UDP reales en loopback. También se comprueba el registro y cierre nativos
-de los observadores pasivos, sin abrir HID ni leer informes. La aceptación
-física sigue pendiente. La comprobación
+Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
+diez fallos antes de corregirlos; hay 30 casos nuevos y 333 pruebas focalizadas.
+El banco recorre 36 escenarios y conserva las 144 acciones, con duplicados,
+desorden, alteraciones, pérdidas y pausas. Tras una pausa inicial de 150 ms,
+una retención posterior de TLS causa huecos de 81–89 ms antes y 1,3–9,7 ms
+después en Mac. Son medidas de loopback con entrada sintética; la pausa inicial
+permanece y no se mide la latencia física. La aceptación física sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.10-mouse-recovery.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.11-path-recovery.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 

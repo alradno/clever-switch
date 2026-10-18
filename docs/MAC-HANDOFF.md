@@ -13,16 +13,18 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.10 experimental**, protocolo de control 2 y entrada 1.
-  La llegada/retirada del ratón libera botones que pudieran quedar retenidos,
-  conservando teclado, control y enlace. Los avisos se procesan también si
-  quedaron en cola al terminar el cruce; se descartan los de observadores retirados.
-  Un cambio local del ratón en el receptor no interrumpe un arrastre remoto.
-  Windows renueva sólo el capturador afectado; Mac observa ambos dispositivos.
-  Pasan 1.329 pruebas por plataforma, Ruff y ambas compilaciones; 40 casos nuevos
-  y 233 pruebas focalizadas con APIs de entrada simuladas y TLS/UDP en loopback.
-  Se registra/cierra el observador nativo pasivo, sin abrir HID ni leer informes.
-  Véanse `validation/input-0.5.10-mouse-recovery.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.11 experimental**, protocolo de control 2 y entrada 1.
+  Recupera UDP tras una confirmación tardía del control actual y una comprobación
+  con un reto nuevo. Máximo una ventana adicional por conexión, tres intentos y
+  100 ms, sin sondeos periódicos; un corte sin esa confirmación conserva TLS.
+  Conserva además los movimientos locales en cola durante un bloqueo breve,
+  sin rearmar el borde con eventos anteriores a otra sesión.
+  También aprovecha una prueba inicial completada durante el cruce, sin enviar
+  movimiento por UDP antes de la aceptación del destino.
+  Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones; 30 casos nuevos,
+  diez fallos previos reproducidos y 333 pruebas focalizadas. El banco recorre
+  36 escenarios/144 acciones con entrada sintética y TLS/UDP reales en loopback.
+  Véanse `validation/input-0.5.11-path-recovery.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

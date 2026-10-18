@@ -6,6 +6,45 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Recuperación finita de UDP en 0.5.11
+
+La 0.5.11 recupera la vía rápida después de una pausa del receptor. Una
+confirmación UDP tardía, autenticada y del control actual permite una comprobación
+con un reto nuevo; mientras tanto, la entrada continúa por TLS. Sólo vuelve a
+UDP si responde ese reto. Hay como máximo una ventana adicional por conexión,
+con tres intentos y plazo de 100 ms, sin búsquedas periódicas. Un corte sin esa
+confirmación mantiene TLS. Cambiar o cancelar el control retira la comprobación.
+También aprovecha una prueba inicial que termina durante un cruce, conservando
+TLS para el movimiento hasta que el destino acepta. Se aplica en ambos sentidos.
+
+Conserva además el movimiento local que quedó en cola durante un bloqueo breve
+de sesión: entrar al interior y volver al borde sigue iniciando el cruce. Un
+movimiento anterior a otra sesión no se reproduce al recuperar el control.
+
+Pasan 1.359 pruebas por plataforma, Ruff y ambas compilaciones. Se reprodujeron
+diez fallos antes de corregirlos; hay 30 casos nuevos y 333 pruebas focalizadas.
+El banco recorre 36 escenarios y conserva las 144 acciones, con duplicados,
+desorden, alteraciones, pérdidas y pausas. Tras una pausa inicial de 150 ms,
+una retención posterior de TLS causa huecos de 81–89 ms antes y 1,3–9,7 ms
+después en Mac. Son medidas de loopback con entrada sintética; la pausa inicial
+permanece y no se mide la latencia física. La aceptación física sigue pendiente.
+
+La comparación local usa la misma instrumentación contra 0.5.10 y 0.5.11,
+a 125/1.000 Hz y en ambos sentidos. El receptor se pausa 150 ms a partir
+de 0,2 s; después se retiene TLS durante 80 ms desde 0,6 s. Los intervalos
+comparados pertenecen a la ventana 0,5–0,9 s, separada de la pausa inicial.
+El atasco posterior no contiene una acción que deba frenar el movimiento.
+Las pérdidas totales de 150 ms y de sus confirmaciones iniciales conservan
+TLS: sin evidencia nueva no hay recuperación automática de UDP. El banco
+comprueba también que no queden plazos de movimiento activos al acabar.
+
+Reproducir con `PYTHONPATH=src python benchmarks/input_path_recovery.py`.
+La comparación anterior usa `--expected-path-after-pause reliable` contra
+los módulos de producción de 0.5.10. Las cifras no son una garantía sobre
+Wi-Fi, pantallas, batería ni periféricos físicos.
+
+Evidencia: [validación 0.5.11](validation/input-0.5.11-path-recovery.json).
+
 ## Recuperación del ratón por eventos en 0.5.10
 
 La 0.5.10 recupera también las desconexiones del ratón. Cuando el sistema
