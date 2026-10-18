@@ -276,7 +276,7 @@ class Service:
                     # never be replayed into a new outgoing focus.
                     local_arrival = not epoch and session.phase == "receiving"
                     if session is self.session and (
-                        same_focus or local_arrival or method.__name__ == "keyboard_changed"
+                        same_focus or local_arrival or method.__name__ in ("keyboard_changed", "mouse_changed")
                     ):
                         method(self, *args)
                         delivered = True
@@ -403,6 +403,15 @@ class Service:
             for code in sorted(self.keys):
                 self.session.input(Kind.KEY, code, 0)
         self.keys.clear()
+
+    @native_callback
+    def mouse_changed(self):
+        # A disconnected mouse may never send button-up. Release only this
+        # source's forwarded buttons; keyboard state and focus stay intact.
+        if self._available():
+            for code in sorted(self.buttons):
+                self.session.input(Kind.BUTTON, code, 0)
+        self.buttons.clear()
 
     @native_callback
     def button(self, code, down):

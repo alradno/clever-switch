@@ -33,7 +33,7 @@ class MacInput:
             from AppKit import NSEvent
 
             from .cursor import MacCursor
-            from .input_devices import MacKeyboardMonitor
+            from .input_devices import MacInputMonitor
             from .input_displays import MacDisplayMonitor
 
             api = Quartz
@@ -42,7 +42,7 @@ class MacInput:
             carbon.IsSecureEventInputEnabled.restype = ctypes.c_bool
             secure_input = carbon.IsSecureEventInputEnabled
             double_click = NSEvent.doubleClickInterval
-            monitor_factory = MacKeyboardMonitor
+            monitor_factory = MacInputMonitor
             display_monitor_factory = MacDisplayMonitor
         self.q, self._ready, self.secure_input = api, ready, secure_input
         self.clock = clock
@@ -180,7 +180,7 @@ class MacInput:
             self.held_buttons = {button for button in range(5) if q.CGEventSourceButtonState(state, button)}
             self.caps = bool(q.CGEventSourceFlagsState(state) & q.kCGEventFlagMaskAlphaShift)
             if self.monitor_factory is not None:
-                monitor = self.monitor_factory(self.keyboard_changed)
+                monitor = self.monitor_factory(lambda kind="keyboard": self.device_changed(kind, monitor))
                 self.device_monitor = monitor
                 monitor.start()
             self.started.set()
@@ -453,3 +453,15 @@ class MacInput:
             self.sink.keyboard_changed()
         except Exception:
             self.sink.fail()
+
+    def device_changed(self, kind, observer):
+        if observer is not self.device_monitor or self.stopping.is_set():
+            return
+        if kind == "keyboard":
+            self.keyboard_changed()
+        elif kind == "mouse":
+            self.held_buttons.clear()
+            try:
+                self.sink.mouse_changed()
+            except Exception:
+                self.sink.fail()

@@ -77,11 +77,11 @@ class WindowsInput:
             api = c.WinDLL("user32", use_last_error=True)
             kernel = c.WinDLL("kernel32", use_last_error=True)
             from .cursor import WindowsCursor
-            from .input_devices import WindowsKeyboardMonitor
+            from .input_devices import WindowsInputMonitor
             from .input_displays import WindowsDisplayMonitor
 
             ready = WindowsCursor().session_ready
-            monitor_factory = WindowsKeyboardMonitor
+            monitor_factory = WindowsInputMonitor
             display_monitor_factory = WindowsDisplayMonitor
         self.api, self.kernel, self._ready = api, kernel, ready
         self.clock = clock
@@ -94,6 +94,7 @@ class WindowsInput:
         self.display_monitor = None
         self.display_invalidated = False
         self.device_event = threading.Event()
+        self.mouse_event = threading.Event()
         self.sink = None
         self.worker = None
         self.thread_id = None
@@ -205,6 +206,7 @@ class WindowsInput:
         self.started.clear()
         self.stopping.clear()
         self.device_event.clear()
+        self.mouse_event.clear()
         self.health.start()
         self.dispatch = Dispatch(self._wake_control)
         self.worker = threading.Thread(target=self._run, name="flow-input-win32", daemon=True)
@@ -242,7 +244,7 @@ class WindowsInput:
                     self.held_keys.add(usage)
             self.held_buttons = {i for i, vk in enumerate((1, 2, 4, 5, 6)) if self.api.GetAsyncKeyState(vk) & 0x8000}
             if self.monitor_factory is not None:
-                monitor = self.monitor_factory(self._device_changed)
+                monitor = self.monitor_factory(lambda kind="keyboard": self._device_changed(kind, monitor))
                 self.device_monitor = monitor
                 monitor.start()
             self.started.set()
@@ -255,17 +257,24 @@ class WindowsInput:
                 if message.message == 0x8011:
                     self.dispatch.drain()
                     continue
-                if message.message == 0x8012:
-                    self.device_event.clear()
+                if message.message in (0x8012, 0x8013):
+                    mouse = message.message == 0x8013
+                    (self.mouse_event if mouse else self.device_event).clear()
                     # Windows can silently remove a low-level hook after a
-                    # timeout. A keyboard arrival/removal renews it on its owner
-                    # thread, without restarting the pointer or the TLS link.
-                    self.api.UnhookWindowsHookEx(hooks.pop())
-                    hook = self.api.SetWindowsHookExW(13, self._key_hook, module, 0)
+                    # timeout. A device arrival/removal renews it on its owner
+                    # thread, without restarting the other hook or TLS link.
+                    index = 0 if mouse else 1
+                    self.api.UnhookWindowsHookEx(hooks.pop(index))
+                    hook = self.api.SetWindowsHookExW(
+                        14 if mouse else 13, self._mouse_hook if mouse else self._key_hook, module, 0
+                    )
                     if not hook:
-                        raise OSError("No se pudo recuperar el teclado")
-                    hooks.append(hook)
-                    self.keyboard_changed()
+                        raise OSError("No se pudo recuperar la entrada")
+                    hooks.insert(index, hook)
+                    if mouse:
+                        self.mouse_changed()
+                    else:
+                        self.keyboard_changed()
                     continue
                 self.api.TranslateMessage(c.byref(message))
                 self.api.DispatchMessageW(c.byref(message))
@@ -293,11 +302,17 @@ class WindowsInput:
                 self.dispatch.close()
                 self.thread_id = None
 
-    def _device_changed(self):
-        if self.stopping.is_set() or self.device_event.is_set():
+    def _device_changed(self, kind="keyboard", observer=None):
+        if observer is not None and observer is not self.device_monitor:
             return
-        self.device_event.set()
-        if self.thread_id is None or not self.api.PostThreadMessageW(self.thread_id, 0x8012, 0, 0):
+        if kind not in ("keyboard", "mouse"):
+            return
+        pending = self.mouse_event if kind == "mouse" else self.device_event
+        if self.stopping.is_set() or pending.is_set():
+            return
+        pending.set()
+        message = 0x8013 if kind == "mouse" else 0x8012
+        if self.thread_id is None or not self.api.PostThreadMessageW(self.thread_id, message, 0, 0):
             self.sink.fail()
 
     def _wake_control(self):
@@ -482,5 +497,12 @@ class WindowsInput:
         self.held_keys.clear()
         try:
             self.sink.keyboard_changed()
+        except Exception:
+            self.sink.fail()
+
+    def mouse_changed(self):
+        self.held_buttons.clear()
+        try:
+            self.sink.mouse_changed()
         except Exception:
             self.sink.fail()
