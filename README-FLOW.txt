@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.3, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.4, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,7 +10,20 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
-REVISIÓN 0.5.3
+REVISIÓN 0.5.4
+La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
+escribir. Así evita enviar primero una posición antigua al terminar una espera
+de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
+bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
+parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+
+En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
+escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
+a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
+no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
+benchmarks/input_freshness.py.
+
+Se conservan las mejoras de pantallas de 0.5.3:
 La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
 Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
 a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
@@ -20,14 +33,14 @@ hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqued
 Un cambio local de pantalla permite una nueva ventana finita de reconexión;
 los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
 
-Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
 firma y vista previa; Windows comprueba el ejecutable empaquetado.
 Se conservan las mejoras 0.5.1/0.5.2 de teclado, permisos, transporte y diagnóstico.
 La candidata se prepara para probar ambos equipos juntos al volver el usuario.
 No se instala ahora: Mac conserva 0.5.1 y el último estado comprobado del Windows
 doméstico es 0.5.0. La aceptación física sigue pendiente, incluidos cambios de
 pantalla, fluidez y recuperación del teclado. Véase docs/INPUT-LAN.txt y
-la evidencia docs/validation/input-0.5.3-displays.json.
+la evidencia docs/validation/input-0.5.4-freshness.json.
 
 HISTORIAL DEL MODO FÍSICO
 REVISIÓN 0.4.6: borde de 80 ms; cursor colocado tras la primera prueba nueva del

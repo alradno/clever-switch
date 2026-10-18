@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.3 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.4 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -19,7 +19,20 @@ El menú «Ratón y teclado por red (experimental)» debe activarse expresamente
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
 
-La 0.5.3 reacciona a los avisos nativos de cambio de pantalla en ambos equipos.
+La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
+escribir. Así evita enviar primero una posición antigua al terminar una espera
+de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
+bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
+parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+
+En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
+escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
+a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
+no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
+benchmarks/input_freshness.py.
+
+Se conserva la recuperación de pantallas de 0.5.3, que responde a los avisos
+nativos de cambio de pantalla en ambos equipos.
 Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
 a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
 pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
@@ -35,9 +48,9 @@ muestra tiempos agregados de ida y vuelta sin guardar entrada. Las medidas de
 [eficiencia 0.5.2](docs/validation/input-0.5.2-efficiency.json) describen trabajo
 simulado evitado, no autonomía ni latencia física.
 
-Pasan 1.006 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
+Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
 firma y vista previa; Windows comprueba el ejecutable empaquetado.
-Evidencia: [0.5.3](docs/validation/input-0.5.3-displays.json).
+Evidencia: [0.5.4](docs/validation/input-0.5.4-freshness.json).
 Los paquetes quedan preparados para una única prueba conjunta al volver el usuario.
 No se instalan candidatas intermedias: Aplicaciones conserva 0.5.1; la última
 comprobación del Windows doméstico corresponde a 0.5.0. Quedan pendientes los
