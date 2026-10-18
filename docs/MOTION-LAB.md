@@ -6,6 +6,60 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Entrada local durante la preparación de un cruce en 0.5.15
+
+La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
+de un cruce. Si una tecla, clic, rueda o movimiento ya llegó a las aplicaciones
+locales antes de terminar la captura, cancela ese cruce y conserva su destino
+local. Restaura también la posición física del cursor en ambos sistemas.
+La entrada que ya estaba capturada sigue hacia el compañero; un cursor quieto
+no cancela el cruce. Conserva el canal y permite volver a cruzar, sin añadir
+esperas, sondeos, hilos ni consultas nativas al recorrido del movimiento.
+También despierta la comprobación de limpieza después de liberar el callback
+nativo si quedó una liberación fallida; evita aparcarla hasta el siguiente
+intervalo de reposo. Este aviso adicional sólo se emite si queda limpieza pendiente.
+
+Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+48 casos y pasan 200 pruebas focalizadas. Se reprodujeron 24 fallos previos:
+16 al preparar la captura y ocho al completar una liberación fallida.
+Se comprueban teclas, clics, rueda y movimiento durante la preparación del cruce,
+antes y después de la captura, en ambos sentidos y con TLS o transporte híbrido.
+Se conserva el destino de cada entrada, la posición local, el canal y el siguiente
+cruce. Las APIs de entrada están simuladas y TLS/UDP usan loopback.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Un cruce puede ejecutarse en el trabajador de red cuando sus movimientos quedaron
+en cola durante una sección de sesión ocupada. El foco ya tenía identificador
+antes de terminar la captura nativa. Una entrada que el callback permitió entregar
+localmente durante esa ventana se encolaba con el mismo identificador y después
+se reenviaba al destino. La cola conserva ahora también si el callback la capturó.
+La cancelación sólo se aplica al foco vigente y a actividad real; los avisos
+de dispositivos y los callbacks de sesiones retiradas conservan sus límites.
+
+La prueba retiene la preparación de captura antes o después de activar el estado
+nativo. Usa los adaptadores de producción con APIs simuladas, los dos orígenes y
+TLS/UDP reales en loopback. Comprueba el resultado del callback, el destino de las
+acciones, la posición al cancelar, las liberaciones y otro cruce sobre el mismo
+canal. Los 24 controles que ya pasaban siguen conservando la entrada capturada
+y el cruce cuando el cursor está quieto.
+
+La referencia de captura es 0.5.14 (`acd6825dbdbababcd388d1499ffb606e37171c9e`).
+El primer CI de 0.5.15 (`71175351453f8442e0eaf8db6204ee595a3ceef1`) pasó los
+40 casos nuevos y detectó un fallo en una prueba anterior de liberación. El
+trabajador TLS podía consumir el aviso de cancelación mientras su callback
+retenía el bloqueo y aparcar la limpieza al pasar al intervalo de reposo.
+Ocho pruebas adicionales reproducen esa secuencia en ambos adaptadores, con
+tecla, clic, rueda y movimiento. Conservan el fallo en el registro de liberaciones
+hasta resolverlo y exigen que el cierre termine sin esperar al intervalo inactivo.
+El transporte híbrido conserva las pruebas de limpieza de la suite completa;
+su procesamiento del foco no admite la misma pausa forzada antes de enviar RESET.
+La corrección sólo despierta después del desbloqueo cuando queda limpieza pendiente.
+
+Los bancos de red, ráfagas, recuperación UDP y precisión vuelven a pasar en Windows.
+No hay captura ni inyección reales. La aceptación con periféricos sigue pendiente.
+
+Evidencia: [validación 0.5.15](validation/input-0.5.15-capture-race.json).
+
 ## Disponibilidad actual después de recuperar el enlace en 0.5.14
 
 La 0.5.14 evita que un estado antiguo de compañero no disponible cierre

@@ -13,16 +13,17 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.14 experimental**, protocolo de control 2 y entrada 1.
-  Un estado antiguo de compañero no disponible ya no cierra un canal de entrada
-  nuevo y preparado. Conserva canal y observadores en ambos sistemas; la falta
-  de disponibilidad local sigue liberando ambos dispositivos. Sin canal preparado,
-  mantiene la espera y los límites existentes. No añade sondeos ni hilos.
-  Mantiene precisión, posición local, secuencias de clics y recuperación de UDP,
-  teclado y ratón. Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones;
-  26 casos nuevos, 16 fallos previos reproducidos y 110 pruebas focalizadas.
+- Candidata conjunta actual: **0.5.15 experimental**, protocolo de control 2 y entrada 1.
+  Una entrada que llegó localmente durante la preparación de la captura ya no se
+  reenvía al compañero: cancela ese cruce, conserva su destino y restaura la posición
+  física del cursor. La entrada ya capturada sigue al destino; un cursor quieto
+  no cancela. Conserva el canal y el siguiente cruce, sin sondeos ni hilos nuevos.
+  Mantiene precisión, prioridad local y recuperación de enlace, UDP, teclado y ratón.
+  Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones; 48 casos nuevos,
+  24 fallos previos reproducidos y 200 pruebas focalizadas. La limpieza fallida
+  recibe su aviso después de liberar el callback nativo, sin esperar al reposo.
   Las APIs de entrada están simuladas; TLS/UDP son reales en loopback.
-  Véanse `validation/input-0.5.14-readiness.json` y [MOTION-LAB.md](MOTION-LAB.md).
+  Véanse `validation/input-0.5.15-capture-race.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

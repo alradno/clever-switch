@@ -1,7 +1,18 @@
-# Continuación en Windows — candidata conjunta 0.5.14 experimental
+# Continuación en Windows — candidata conjunta 0.5.15 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
+de un cruce. Si una tecla, clic, rueda o movimiento ya llegó a las aplicaciones
+locales antes de terminar la captura, cancela ese cruce y conserva su destino
+local. Restaura también la posición física del cursor en ambos sistemas.
+La entrada que ya estaba capturada sigue hacia el compañero; un cursor quieto
+no cancela el cruce. Conserva el canal y permite volver a cruzar, sin añadir
+esperas, sondeos, hilos ni consultas nativas al recorrido del movimiento.
+También despierta la comprobación de limpieza después de liberar el callback
+nativo si quedó una liberación fallida; evita aparcarla hasta el siguiente
+intervalo de reposo. Este aviso adicional sólo se emite si queda limpieza pendiente.
 
 La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
 una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
@@ -114,15 +125,16 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
-26 casos y pasan 110 pruebas focalizadas. De los 26 casos, 16 fallaban con 0.5.13.
-Se comprueba el estado antiguo en cualquiera de los extremos, con el control
-local o remoto, en ambos sentidos y con TLS o transporte híbrido. Se conservan
-las teclas, el arrastre, el canal y los observadores; la indisponibilidad local
-sigue liberando ambos dispositivos. Las APIs de entrada están simuladas y TLS/UDP
-usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
+Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+48 casos y pasan 200 pruebas focalizadas. Se reprodujeron 24 fallos previos:
+16 al preparar la captura y ocho al completar una liberación fallida.
+Se comprueban teclas, clics, rueda y movimiento durante la preparación del cruce,
+antes y después de la captura, en ambos sentidos y con TLS o transporte híbrido.
+Se conserva el destino de cada entrada, la posición local, el canal y el siguiente
+cruce. Las APIs de entrada están simuladas y TLS/UDP usan loopback.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.14-readiness.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.15-capture-race.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
