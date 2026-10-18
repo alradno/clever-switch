@@ -13,32 +13,18 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Prototipo posterior a la candidata: `experiments/motion_lane.py` y
-  [MOTION-LAB.md](MOTION-LAB.md). Movimiento cifrado independiente, posiciones
-  fiables de acciones, comprobación previa de UDP y recuperación limitada.
-  138 pruebas por plataforma y 160 casos de modelo; fuentes comunes para ambos roles.
-  `motion_link.py` prueba negociación por TLS real, claves por conexión y cola
-  UDP limitada. Falta conectarlo al flujo completo de la app. No está integrado
-  ni empaquetado; conservar 0.5.4 como paquete disponible.
-- Candidata conjunta actual `0.5.4`, protocolo de control `2` y entrada `1`.
-  Fuentes: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
-  Movimiento pendiente actualizable hasta el primer envío; conserva posición
-  de los clics y bytes de los reintentos TLS, sin añadir espera o suavizado.
-  Banco local reproducible: `benchmarks/input_freshness.py`.
-  Se conservan avisos nativos de pantallas y rechazo de coordenadas desfasadas
-  durante el enlace,
-  liberación de entrada y restauración del cursor en pantallas restantes. Se retiran
-  los observadores al desconectar y se rechazan avisos de una instancia anterior.
-  Conserva recuperación de teclado y mejoras de eficiencia de 0.5.1/0.5.2.
-  Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
-  firma y vista previa; Windows comprueba el ejecutable empaquetado.
-  Véase `validation/input-0.5.4-freshness.json`.
-  No instalar versiones intermedias ni pedir pruebas al usuario ausente; probar
-  ambas plataformas juntas al volver. Aplicaciones conserva 0.5.1, cuyos permisos
-  estaban pendientes en la comprobación anterior. Último Windows comprobado: 0.5.0.
-  Quedan pendientes fluidez, teclado, reposo/DHCP y cambios físicos de monitor,
-  resolución y escala. No confundir registro nativo o simulación con aceptación.
-  La compilación no modifica TCC, vinculación, Inicio, firewall ni políticas.
+- Candidata conjunta actual: **0.5.5 experimental**, protocolo de control 2 y entrada 1.
+  Movimiento UDP cifrado integrado con acciones fiables y posición exacta en TLS.
+  La capacidad se negocia; sin UDP o con un compañero anterior, continúa por TLS.
+  Conserva puertos, configuración, recuperación del teclado, pantallas y espera pasiva.
+  Pruebas: 1.191 por plataforma, ambas compilaciones y Ruff correctos. Mac tiene
+  cobertura 92,56 %; Windows, 92,79 %. El banco integrado recorre
+  52 casos, ambos sentidos, retención de TLS y pérdida artificial de UDP.
+  Véanse `validation/input-0.5.5-hybrid.json` y [MOTION-LAB.md](MOTION-LAB.md) para
+  commits, compilaciones, CI y límites. `experiments/` reutiliza los módulos de producción.
+  No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
+  0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
+  Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
   sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento
   del teclado en un único hilo separado, con descarte tras reconexión; descubrimiento

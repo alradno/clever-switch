@@ -1,9 +1,10 @@
-# Movimiento independiente de la cola fiable
+# Movimiento cifrado integrado en la entrada continua
 
-Este experimento avanza hacia una entrada continua más resistente a pérdidas.
-Todavía no está integrado ni instalado: la candidata de la app sigue siendo
-0.5.4. Los archivos de `experiments/` no forman parte de su ejecución ni de sus
-paquetes. No se capturan periféricos ni se inyecta entrada del sistema.
+La candidata 0.5.5 incorpora el transporte a `Service`, `Channel` y `Discovery`.
+Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
+`input_hybrid.py`. Los archivos equivalentes de `experiments/` los reutilizan;
+ya no mantienen una segunda implementación. No se ha instalado la candidata.
+La validación utiliza entrada sintética y sockets reales en loopback.
 
 ## Qué se ha construido
 
@@ -67,7 +68,7 @@ Evidencia: [validación del laboratorio](validation/motion-lab-2026-10-18.json).
 Reproducir desde la raíz con las dependencias de desarrollo:
 
 ```sh
-python -m pytest experiments -o addopts='' --cov=experiments.motion_lane --cov=experiments.motion_link --cov-fail-under=95
+python -m pytest experiments -o addopts='' --cov=cleverswitch.flow.input_motion --cov=cleverswitch.flow.input_motion_link --cov-fail-under=95
 PYTHONPATH=src python experiments/benchmark_motion.py
 ```
 
@@ -85,15 +86,15 @@ También se prueba un receptor compartido para los avisos de disponibilidad y el
 movimiento. Rechaza mensajes de otra dirección, puerto, subred o sesión. La cola
 conserva como máximo 64 datagramas y despierta al consumidor al pasar de cola vacía
 a pendiente; el hilo receptor no descifra ni aplica entrada. El dueño del canal recoge los
-mensajes y conserva la autenticación criptográfica. Esto permite reutilizar el
-puerto UDP existente cuando se conecte el componente a la aplicación.
+mensajes y conserva la autenticación criptográfica. La integración reutiliza el
+puerto UDP 47655 y el listener existente de la aplicación.
 
 Las pruebas usan TLS mutuo y UDP reales en loopback, en ambos sentidos. Incluyen
 reconexión, fallo del certificado, respuesta incompleta, cierre, limpieza de
 claves y mezcla de descubrimiento/movimiento en un socket. El servicio de entrada
 actual, sin modificar, conserva el modo fiable con un extremo de laboratorio
-que no selecciona la capacidad. La selección se realiza mediante un adaptador
-de prueba; todavía no está conectada al anuncio de capacidades de la aplicación.
+que no selecciona la capacidad. En esa fase la selección se realizaba mediante un adaptador
+de prueba; en 0.5.5 la anuncia y negocia el servicio de producción.
 
 La suite ampliada pasa 138 pruebas locales, con 97,90 % de cobertura conjunta
 (100 % del módulo nuevo). Las 138 pruebas pasan también en Windows y macOS,
@@ -102,17 +103,50 @@ con sus hashes publicados y los 160 casos del modelo mantienen idénticos result
 [CI de la negociación](https://github.com/alradno/clever-switch/actions/runs/39085575993);
 [evidencia y límites](validation/motion-link-2026-10-18.json).
 
-## Trabajo necesario para incorporarlo a la app
+## Integración 0.5.5 y validación pendiente
 
-Falta conectar estos componentes al `Service` y `Discovery` de producción y al
-bucle que multiplexa TLS, UDP y plazos en un único dueño del estado. También
-falta codificar las acciones con sus barreras en el flujo real y enlazar su vida
-con el foco, la cancelación, el reposo y la reconexión de la aplicación. El banco
-actual prueba esas piezas por separado; aún no recorre ese circuito completo.
+El dueño de TLS consume también la cola cifrada de UDP y aplica las acciones
+a través de la máquina de foco existente. El protocolo de entrada sigue en 1:
+la extensión se selecciona sólo si ambos equipos anuncian su capacidad. Un
+compañero anterior conserva el formato fiable original. El mensaje ampliado
+lleva acción, secuencia y posición; el decodificador antiguo lo rechaza.
 
-La integración debe conservar el puerto, las reglas de firewall y la espera
-pasiva y probarse con sockets reales bajo fallos, además del modelo. Los tiempos
-del modelo anterior siguen siendo simulados; la prueba de negociación no los
-convierte en mediciones físicas. Después corresponderá compilar una candidata
-conjunta y probarla con los periféricos reales al volver el usuario. La candidata
-disponible sigue siendo 0.5.4 y no se ha instalado una app nueva.
+Antes de ACCEPT, los movimientos siguen ENTER por TLS. El servicio no captura
+mientras negocia las claves. La salida normal conserva las acciones encoladas;
+RESET y cancelación retiran lo atrasado. El cierre del listener UDP pasa a TLS
+sin dejar teclas pulsadas. Una reconexión retira claves, cola y datagramas viejos.
+No se añade un hilo, puerto ni sondeo periódico al transporte de movimiento.
+
+Las 43 pruebas de `test_input_hybrid.py` recorren el servicio real en ambos
+sentidos, junto a las regresiones del laboratorio dentro de la suite completa.
+Pasan 1.191 pruebas por plataforma: cobertura 92,56 % en Mac y 92,79 % en Windows. Dos regresiones de salida
+normal y dos de arranque fallaban antes de sus correcciones; la evidencia distingue
+estos fallos de los ajustes del propio banco de pruebas.
+
+La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
+cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
+rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
+Si UDP falla o el compañero es una versión anterior, continúa por TLS.
+
+Se reutiliza UDP 47655, junto a TCP 47654 y la vinculación existente. No hay
+puertos nuevos ni cambios de firewall. La confirmación de la última posición
+detiene sus reintentos; si se pierde, tienen plazo finito. Una vía fallida no
+se vuelve a probar con cada cruce. Las claves
+son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
+transporte y contadores agregados, sin guardar teclas ni historial del cursor.
+
+En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
+artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
+Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
+artificial de uno de cada diez datagramas. Son medidas locales con entrada
+sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
+frenando el movimiento que la sucede para conservar su significado.
+Reproducir con benchmarks/input_hybrid.py.
+
+Evidencia de código, compilaciones y CI: [validación 0.5.5](validation/input-0.5.5-hybrid.json).
+Queda probar las dos apps con periféricos reales, Wi-Fi, cambios físicos de canal,
+reposo, DHCP y consumo al volver el usuario. Los resultados del modelo anterior
+siguen siendo simulados. Un corte completo de red y una acción fiable retenida
+siguen imponiendo una espera: no se promete latencia cero.

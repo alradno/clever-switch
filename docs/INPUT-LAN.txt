@@ -1,11 +1,40 @@
-CLEVERSWITCH 0.5.4 — ENTRADA POR LAN EXPERIMENTAL
-Candidata del 18 de octubre de 2026 para la prueba conjunta al volver el usuario.
-Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado.
-No instalada: Mac conserva 0.5.1; el último estado comprobado del Windows doméstico
-es 0.5.0. La aceptación física sigue pendiente.
-Evidencia: validation/input-0.5.4-freshness.json.
+CLEVERSWITCH 0.5.5 — ENTRADA POR LAN EXPERIMENTAL
+Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
+Pasan 1.191 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.5-hybrid.json. No instalada: Mac conserva 0.5.1;
+el último estado observado del Windows doméstico corresponde a 0.5.0.
 
+MEJORAS 0.5.5
+La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
+cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
+rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
+Si UDP falla o el compañero es una versión anterior, continúa por TLS.
+
+Se reutiliza UDP 47655, junto a TCP 47654 y la vinculación existente. No hay
+puertos nuevos ni cambios de firewall. La confirmación de la última posición
+detiene sus reintentos; si se pierde, tienen plazo finito. Una vía fallida no
+se vuelve a probar con cada cruce. Las claves
+son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
+transporte y contadores agregados, sin guardar teclas ni historial del cursor.
+
+En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
+artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
+Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
+artificial de uno de cada diez datagramas. Son medidas locales con entrada
+sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
+frenando el movimiento que la sucede para conservar su significado.
+Reproducir con benchmarks/input_hybrid.py.
+
+El cruce sólo se habilita cuando termina la negociación autenticada y está
+arrancado el canal. Cerrar durante el arranque retira el estado y las claves.
+Al volver normalmente al origen, los clics y teclas ya encolados se entregan
+en orden antes de cerrar ese foco. Una cancelación descarta entrada atrasada.
+El cambio de canal físico del teclado sigue liberando teclas retenidas sin
+interrumpir el ratón; las pruebas nuevas recorren ambos transportes y sentidos.
+
+HISTORIAL DE MEJORAS
 MEJORAS 0.5.4
 La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
 escribir. Así evita enviar primero una posición antigua al terminar una espera
@@ -87,7 +116,7 @@ posteriormente en la cola de Windows. Se conserva el orden de teclas y clics.
 
 COMPORTAMIENTO
 Ratón y teclado permanecen conectados físicamente al mismo equipo. Al cruzar
-el borde hacia el otro, una conexión TLS ya establecida reenvía la entrada.
+el borde hacia el otro, el enlace ya preparado reenvía la entrada por los transportes descritos arriba.
 No hay cambio de canal Bluetooth ni transmisión de imágenes, ventanas o archivos.
 Windows está a la izquierda y el Mac a la derecha. Cada aplicación y distribución
 de teclado siguen perteneciendo a su equipo. Los modificadores conservan su
@@ -108,7 +137,7 @@ de dos sistemas. Admite monitores múltiples, coordenadas negativas y huecos;
 si cambia la geometría, cancela el foco y renueva la conexión.
 
 PROTOCOLO Y RECURSOS
-Se reutilizan TLS mutuo, pinning, vinculación y TCP 47654. No cambia el firewall
+Se reutilizan TLS mutuo, pinning, vinculación, TCP 47654 y UDP 47655. No cambia el firewall
 por subred, no fija nuevas IPs ni abre puertos. Sólo Windows inicia el stream;
 los dos pueden ser el origen físico. Una conexión admite un único foco remoto.
 Hay confirmación inicial, épocas y secuencias para descartar mensajes antiguos.

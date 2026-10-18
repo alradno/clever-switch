@@ -1,54 +1,42 @@
-# Continuación en Windows — candidata conjunta 0.5.4 experimental
+# Continuación en Windows — candidata conjunta 0.5.5 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
-El prototipo de movimiento posterior a esta candidata está en `experiments/`.
-Véase [MOTION-LAB.md](MOTION-LAB.md): 138 pruebas por plataforma y 160 casos de modelo,
-con comprobación previa de UDP, cifrado y orden/posición de acciones. La segunda
-fase prueba negociación por TLS real, claves por conexión y una cola UDP limitada.
-Falta conectarlo al flujo completo de la app. No forma parte de los paquetes 0.5.4
-y no debe instalarse como si fuera una versión nueva de la app.
+La candidata 0.5.5 integra movimiento cifrado por UDP y mantiene teclas, clics,
+rueda y cambios de foco en TLS. Cada acción conserva la posición exacta del
+cursor; un movimiento posterior espera a las acciones que lo preceden. La vía
+rápida se negocia entre ambos equipos y se comprueba con intentos limitados.
+Si UDP falla o el compañero es una versión anterior, continúa por TLS.
 
-Fuentes de la candidata: `104df38f6bb9a9a8c0c76dca707ebb8b06a5920f`.
-Pasan 1.010 pruebas por plataforma, Ruff y ambas compilaciones. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado.
-CI: [Windows candidate](https://github.com/alradno/clever-switch/actions/runs/39081183118).
-Evidencia: `validation/input-0.5.4-freshness.json`.
+Se reutiliza UDP 47655, junto a TCP 47654 y la vinculación existente. No hay
+puertos nuevos ni cambios de firewall. La confirmación de la última posición
+detiene sus reintentos; si se pierde, tienen plazo finito. Una vía fallida no
+se vuelve a probar con cada cruce. Las claves
+son nuevas por conexión y se retiran al cerrar. El diagnóstico muestra el
+transporte y contadores agregados, sin guardar teclas ni historial del cursor.
 
-La 0.5.4 mantiene actualizable el movimiento pendiente hasta que el socket puede
-escribir. Así evita enviar primero una posición antigua al terminar una espera
-de red. Los clics, teclas y cambios de foco conservan su orden y posición; un
-bloque ya presentado a TLS no se modifica durante sus reintentos o escrituras
-parciales. No se añade un temporizador de suavizado ni una espera para agrupar.
+En 52 casos por plataforma con el servicio real, TLS mutuo y UDP locales, una retención
+artificial de 80 ms en TLS produce pausas de movimiento de 81–88 ms con el
+transporte fiable y de 1–10 ms con el híbrido, a 125/1.000 Hz y en ambos sentidos.
+Las 104 acciones de cada ejecución conservan orden y posición; también se prueba pérdida
+artificial de uno de cada diez datagramas. Son medidas locales con entrada
+sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
+frenando el movimiento que la sucede para conservar su significado.
+Reproducir con benchmarks/input_hybrid.py.
 
-En el banco local, con esperas artificiales de 8, 24 y 80 ms antes de poder
-escribir, el primer movimiento pasa de una muestra de unos 10–99 ms de antigüedad
-a la más reciente, con unos 0,1 ms. Es frescura de la cola en esa simulación,
-no latencia física de Wi-Fi ni una garantía de fluidez. Reproducir con
-benchmarks/input_freshness.py.
-
-Se conservan las mejoras de 0.5.3, que responden a los avisos nativos de cambio
-de pantalla en ambos equipos.
-Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
-a negociar la geometría. Si se retira un monitor, restaura el cursor dentro de una
-pantalla que siga conectada. También rechaza una conexión si las pantallas cambian
-entre el anuncio y el arranque del capturador. Los observadores viven sólo mientras
-hay una sesión conectada; no añaden temporizadores ni trabajadores de búsqueda.
-Un cambio local de pantalla permite una nueva ventana finita de reconexión;
-los fallos de red siguen agotando sus intentos y pasan a espera pasiva.
-
-Se conservan la recuperación de teclado, consultas de permisos separadas del hilo
-de entrada y envío por ráfagas sin espera añadida de 0.5.1/0.5.2. No hay sondeo
-periódico de pantallas cuando está registrado el observador nativo.
+Pasan 1.191 pruebas por plataforma, Ruff y ambas compilaciones. La comprobación
+del ejecutable Windows y las medidas del banco en CI se registran con su commit
+en `validation/input-0.5.5-hybrid.json`. `experiments/` reutiliza los módulos de
+producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
+probarse desde el mismo commit y edición.
 
 El usuario ha pedido seguir desarrollando y probar ambas versiones al volver.
-No pedirle instalar ni renovar permisos ahora. La candidata no se instala;
-Aplicaciones conserva 0.5.1. El último Windows doméstico comprobado tenía 0.5.0.
-Validar fluidez en ambos sentidos, Easy-Switch del teclado, teclas/arrastres locales,
-reposo/despertar y DHCP. Añadir retirada de monitor, cambio de resolución/escala
-con foco local y remoto: se debe liberar la entrada y volver a cruzar con la
-geometría nueva. Conservar configuración y ruta del instalador.
+No pedir instalaciones ni renovación de permisos ahora. Mac conserva 0.5.1;
+el último Windows doméstico observado tenía 0.5.0. Validar fluidez en ambos
+sentidos, Easy-Switch del teclado, teclas/arrastres locales, reposo/despertar,
+DHCP y cambios físicos de pantalla. Se mantienen los límites de recuperación
+y la instalación estable por usuario; no hay administración remota.
 
 «Comprobar permisos de entrada…» revisa la sesión sin registrar hooks ni enviar
 eventos. El ejecutable admite `--input-check archivo.json` para guardar esa misma
