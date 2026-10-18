@@ -266,11 +266,18 @@ class Service:
             except queue.Empty:
                 return
             delivered = False
-            if session is not None and session is self.session and (epoch or method.__name__ == "keyboard_changed"):
+            if session is not None and session is self.session:
                 with session.lock:
                     # A native cancel can retire the epoch while this worker
                     # waits for the lock. Validate ownership inside the lock.
-                    if session is self.session and (epoch == session.epoch or method.__name__ == "keyboard_changed"):
+                    same_focus = epoch and epoch == session.epoch
+                    # Input seen locally while ENTER held the lock still owns
+                    # priority over that arrival. It must cancel reception,
+                    # never be replayed into a new outgoing focus.
+                    local_arrival = not epoch and session.phase == "receiving"
+                    if session is self.session and (
+                        same_focus or local_arrival or method.__name__ == "keyboard_changed"
+                    ):
                         method(self, *args)
                         delivered = True
             if not delivered and method.__name__ in ("key", "button"):
