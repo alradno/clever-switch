@@ -6,6 +6,47 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Entrada local posterior a un borde en cola en 0.5.19
+
+La 0.5.19 conserva el control local si un cruce quedó en cola y después
+llegó una tecla, clic, rueda o movimiento a la aplicación local antes de empezar
+la captura. Al procesar esa entrada cancela el cruce que acaba de iniciarse,
+sin reenviarla al otro equipo. Conserva la posición local, las liberaciones y
+el enlace para el siguiente cruce. Un cursor quieto no lo cancela y los eventos
+de un periodo local anterior no afectan a un cruce nuevo. La corrección es común
+a Mac y Windows; no añade esperas, sondeos, hilos ni consultas nativas, y conserva
+la ruta de los callbacks que se procesan al momento.
+
+Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
+quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
+pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
+Las APIs nativas y la entrega a aplicaciones están simuladas; TLS/UDP usan
+loopback real. La aceptación física de fluidez, recuperación y consumo
+sigue pendiente.
+
+La secuencia reproducida mantiene ocupado el bloqueo de sesión, entrega
+localmente los movimientos hacia el interior y el borde, y después otra acción.
+Al liberar el bloqueo, el borde en cola inicia un foco saliente. La acción
+siguiente todavía pertenece al periodo local y no tiene el identificador de
+ese foco nuevo: antes se descartaba y dejaba la captura remota activa. Ahora
+se reconoce su periodo local y conserva la prioridad de lo ya entregado.
+
+Los 20 casos de cruce recorren tecla, botón, rueda, movimiento y cursor quieto,
+en ambos orígenes y con TLS o híbrido. Dos controles adicionales comprueban
+que un movimiento de un periodo terminado no cancele un foco saliente posterior.
+La comparación carga sólo `input_service.py` del commit
+`00f79dfcae77c843c7acce819d7c3736d4532983`, con las mismas pruebas finales:
+16 fallan y seis ya pasan. El canal conserva su disponibilidad y el siguiente
+cruce funciona; las pulsaciones y la posición local permanecen coherentes.
+
+Windows vuelve a ejecutar los bancos existentes de red, ráfagas, recuperación,
+UDP variable y precisión. Ambos paquetes usan las mismas fuentes de aplicación
+y siguen sin instalarse. Esta prueba no atribuye los microcortes al router ni
+mide una mejora de latencia física.
+
+Evidencia: [validación 0.5.19](validation/input-0.5.19-queued-edge.json).
+
 ## Red variable y pérdidas en 0.5.18
 
 Se amplía la validación sin cambiar el código de la app ni los paquetes 0.5.18.
