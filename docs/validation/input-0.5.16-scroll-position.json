@@ -1,7 +1,7 @@
 {
   "edition": "0.5.16",
-  "source_commit": "27bd356e4ac8f798d22cede5bfe5edda238160b0",
-  "observed_at": "2026-10-18T07:08:57.425208+00:00",
+  "source_commit": "cd92803c9306de89928e76f69235a144968eac17",
+  "observed_at": "2026-10-18T07:29:11.634275+00:00",
   "scope": "production_native_adapters_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
   "changes": [
     "Set the Mac wheel event location to the last ordered pointer position before posting",
@@ -39,7 +39,7 @@
     "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "python": "3.14.6",
     "tests": {
-      "tests": 1615,
+      "tests": 1679,
       "failures": 0,
       "errors": 0,
       "skipped": 0
@@ -48,26 +48,27 @@
     "coverage_percent": 92.85431250825519,
     "mac_build": {
       "edition": "0.5.16",
-      "built_at": "2026-10-18T07:01:06.043342+00:00",
+      "built_at": "2026-10-18T07:24:28.405271+00:00",
       "signature_valid": true,
       "modules_match_sources": 26,
       "preview_exit_code": 0,
       "installed": false,
       "installed_edition": "0.5.1",
-      "executable_sha256": "bb37d53a2a58d248ef3c01882119e74e73b9510d5d541a1edb3c280e9af91f74"
+      "executable_sha256": "60859f663429db5d63da8ab2ebe97440ee1ebc66b23057cb7917278ec87f4466"
     }
   },
   "ci_windows": {
-    "url": "https://github.com/alradno/clever-switch/actions/runs/39106151394",
-    "head_sha": "27bd356e4ac8f798d22cede5bfe5edda238160b0",
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39107426160",
+    "head_sha": "cd92803c9306de89928e76f69235a144968eac17",
     "conclusion": "success",
+    "package_manifest_verified": true,
     "tests": {
-      "tests": 1615,
+      "tests": 1679,
       "failures": 0,
       "errors": 0,
       "skipped": 0
     },
-    "coverage_percent": 93.05519225738948,
+    "coverage_percent": 93.04211352341093,
     "packaged_native_check": {
       "edition": "0.5.16",
       "platform": "win32",
@@ -85,19 +86,18 @@
       "pixels_checked": 53000,
       "incorrect_pixels": 0,
       "positions_order_releases_and_finite_recovery_verified": true
-    },
-    "package_manifest_verified": true
+    }
   },
   "downloaded_artifacts": [
     {
-      "name": "Windows-validation-27bd356e4ac8f798d22cede5bfe5edda238160b0",
-      "id": 12128970626,
-      "sha256": "032a4ee566d778081c15a77977a4cea7e871baf3c8bc40405e16217361b40de7"
+      "name": "CleverSwitch-Windows-cd92803c9306de89928e76f69235a144968eac17",
+      "id": 12129196886,
+      "sha256": "8e8bc1be9b477316105a7b0499a493c70b274e8cf44da1d0ebe7c13939dcee39"
     },
     {
-      "name": "CleverSwitch-Windows-27bd356e4ac8f798d22cede5bfe5edda238160b0",
-      "id": 12128049627,
-      "sha256": "d1755db38e9eb8c38973cd1c5440a56236c04920a96921b4296faae88d7b221e"
+      "name": "Windows-validation-cd92803c9306de89928e76f69235a144968eac17",
+      "id": 12129072413,
+      "sha256": "c95eafac6dd221adbf5691ddda2485a1d9092b6e256c6b2609995725d940f240"
     }
   ],
   "installed": {
@@ -118,11 +118,73 @@
   "packages": {
     "Mac": {
       "file": "CleverSwitch-Mac-0.5.16.zip",
-      "sha256": "dab46b5e9e0e5b4d922ad79f196af9f4bc35f0a08a6299b99d832722c906f767"
+      "sha256": "20de07b31169a9e79226d259f44c1daa921c5ed7809415d2493d43c962426f11"
     },
     "Windows": {
       "file": "CleverSwitch-Windows-0.5.16.zip",
-      "sha256": "d1755db38e9eb8c38973cd1c5440a56236c04920a96921b4296faae88d7b221e"
+      "sha256": "8e8bc1be9b477316105a7b0499a493c70b274e8cf44da1d0ebe7c13939dcee39"
     }
+  },
+  "prior_validation": {
+    "source_commit": "27bd356e4ac8f798d22cede5bfe5edda238160b0",
+    "observed_at": "2026-10-18T07:08:57.425208+00:00",
+    "ci": "https://github.com/alradno/clever-switch/actions/runs/39106151394",
+    "tests_per_platform": 1615,
+    "packages": {
+      "Mac": {
+        "file": "CleverSwitch-Mac-0.5.16.zip",
+        "sha256": "dab46b5e9e0e5b4d922ad79f196af9f4bc35f0a08a6299b99d832722c906f767"
+      },
+      "Windows": {
+        "file": "CleverSwitch-Windows-0.5.16.zip",
+        "sha256": "d1755db38e9eb8c38973cd1c5440a56236c04920a96921b4296faae88d7b221e"
+      }
+    }
+  },
+  "additional_continuity_validation": {
+    "reference_commit": "4b802ea19fbda557fc7a67008aa8d134b14268a1",
+    "runtime_code_unchanged": true,
+    "cases": {
+      "tests": 64,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "sources": [
+      "windows",
+      "mac"
+    ],
+    "transports": [
+      "reliable TLS",
+      "hybrid TLS and encrypted UDP"
+    ],
+    "scheduling": [
+      "immediate",
+      "deferred while the source session is busy"
+    ],
+    "deterministic_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "rounds_per_case": 6,
+    "generated_operations_per_round": 16,
+    "generated_operations": 6144,
+    "checks": [
+      "repeated keyboard and mouse arrival/removal with real adapter lifecycle and simulated OS APIs",
+      "interleaved movement, four key usages including modifiers, five mouse buttons and both scroll axes",
+      "each delivered action preserves its position and order, including lost key-up/button-up releases",
+      "physical backend state, source ledger and receiving ledger agree after every burst",
+      "focused control and channel survive all notifications; return and the next crossing still work",
+      "64 new cases pass without changes to runtime code; no new functional defect claimed"
+    ],
+    "native_input": false,
+    "network": "real TLS/UDP loopback",
+    "physical_acceptance": "pending"
   }
 }
