@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.20, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.21, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,23 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.21
+La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
+durante un cambio de configuración. Mac y Windows detienen la comprobación de
+entrada en segundo plano aunque falle la restauración del cursor, conservan
+el cierre pendiente y lo completan cuando vuelve una pantalla válida.
+La suspensión mantiene la espera de disponibilidad existente y el siguiente
+cruce vuelve a registrar sus capturadores. No añade búsquedas periódicas.
+
+Pasan 1.876 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+40 casos con los adaptadores de producción y APIs de sistema simuladas:
+16 reproducen fallos de cierre y recuperación; 24 verifican cambios de tamaño,
+origen y número de pantallas. Pasan 220 pruebas focalizadas. Ambos sentidos
+se comprueban con TLS y transporte híbrido reales en loopback. La fluidez,
+Easy-Switch, pantallas y consumo físicos siguen pendientes de aceptación conjunta.
+
+Evidencia: docs/validation/input-0.5.21-display-recovery.json. Candidata sin instalar.
 
 REVISIÓN 0.5.20
 La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.
