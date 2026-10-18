@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.23, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.24, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -9,6 +9,31 @@ Entrada continua por LAN con los periféricos conectados físicamente a un equip
 No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocolo
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
+
+REVISIÓN 0.5.24
+La 0.5.24 evita reproducir posiciones antiguas después de una pausa aunque
+entre ellas haya mensajes de mantenimiento del enlace. Conserva las fronteras
+de teclas, botones, rueda y foco. Calcula la espera siguiente con el reloj actual,
+sin añadir de nuevo el tiempo ya consumido al procesar la cola.
+También corrige el reloj de los clics en Mac: un evento Quartz recién creado
+puede tener fecha cero, por lo que ahora se usa el reloj nativo de actividad.
+Windows conserva su conversión con el contador de milisegundos del sistema.
+
+Añade medidas agregadas de captura, cola, recepción, entrega y permisos para
+localizar pausas. Las mediciones ceden ante la entrada: si su bloqueo está
+ocupado, se omite la muestra. No guardan teclas, posiciones ni eventos individuales,
+y no añaden sondeos, hilos ni esperas. El movimiento pendiente se sustituye por
+el más reciente cuando es seguro; los clics y modificadores conservan su orden.
+
+Pasan 2.094 pruebas en Mac, Ruff y la compilación ARM64 con firma, fuentes y
+vista previa comprobadas. La validación nativa de Windows está pendiente.
+Se reproducen 24 fallos con la fuente anterior y se conservan 11 controles.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; estas pruebas
+no demuestran fluidez física ni la causa del vídeo.
+Se acumulan las mejoras sin instalar esta candidata. El 18/10/2026 se comprobó
+0.5.23 instalada en Mac y disponible en Windows mediante el enlace autenticado.
+
+Evidencia: docs/validation/input-0.5.24-cursor-stutter.json.
 
 REVISIÓN 0.5.23
 La 0.5.23 conserva el enlace al recuperar una ráfaga de entrada pendiente.

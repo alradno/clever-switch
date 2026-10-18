@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.23 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.24 experimental**, protocolo de control **2**.
 Los paquetes de Mac y Windows incorporan las mismas fuentes de aplicación;
 las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -18,6 +18,30 @@ TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de tec
 El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.24 evita reproducir posiciones antiguas después de una pausa aunque
+entre ellas haya mensajes de mantenimiento del enlace. Conserva las fronteras
+de teclas, botones, rueda y foco. Calcula la espera siguiente con el reloj actual,
+sin añadir de nuevo el tiempo ya consumido al procesar la cola.
+También corrige el reloj de los clics en Mac: un evento Quartz recién creado
+puede tener fecha cero, por lo que ahora se usa el reloj nativo de actividad.
+Windows conserva su conversión con el contador de milisegundos del sistema.
+
+Añade medidas agregadas de captura, cola, recepción, entrega y permisos para
+localizar pausas. Las mediciones ceden ante la entrada: si su bloqueo está
+ocupado, se omite la muestra. No guardan teclas, posiciones ni eventos individuales,
+y no añaden sondeos, hilos ni esperas. El movimiento pendiente se sustituye por
+el más reciente cuando es seguro; los clics y modificadores conservan su orden.
+
+Pasan 2.094 pruebas en Mac, Ruff y la compilación ARM64 con firma, fuentes y
+vista previa comprobadas. La validación nativa de Windows está pendiente.
+Se reproducen 24 fallos con la fuente anterior y se conservan 11 controles.
+Las APIs nativas están simuladas y TLS/UDP usan loopback real; estas pruebas
+no demuestran fluidez física ni la causa del vídeo.
+Se acumulan las mejoras sin instalar esta candidata. El 18/10/2026 se comprobó
+0.5.23 instalada en Mac y disponible en Windows mediante el enlace autenticado.
+
+Véase la [investigación de pausas](docs/validation/input-0.5.24-cursor-stutter.json).
 
 La 0.5.23 conserva el enlace al recuperar una ráfaga de entrada pendiente.
 Amplía la cola acotada para cubrir un ratón de 1.000 informes por segundo
