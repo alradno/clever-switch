@@ -1,0 +1,289 @@
+{
+  "edition": "0.5.4",
+  "source_commit": "104df38f6bb9a9a8c0c76dca707ebb8b06a5920f",
+  "observed_at": "2026-10-18T00:09:47.439691+00:00",
+  "changes": [
+    "Defer selecting and encoding the next batch until write readiness, keeping not-yet-submitted adjacent motion replaceable with the latest sample",
+    "Preserve every click/key/focus barrier and its position; keep bytes and sequence unchanged after TLS retries and partial writes",
+    "Shared transport change applies to both source directions; no smoothing timer or added batching delay"
+  ],
+  "tests": {
+    "mac": {
+      "tests": 1010,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "windows": {
+      "tests": 1010,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "mac_coverage_percent": 91.9,
+  "ruff": "passed",
+  "changed_python_format": "passed",
+  "regressions_before_fix": {
+    "baseline": "717c09daa9a48f1f908f4431c082c81137147437",
+    "tests": 2,
+    "failures": 2,
+    "errors": 0,
+    "cases": [
+      "write stall without actions",
+      "write stall with a click barrier"
+    ]
+  },
+  "freshness_benchmark": {
+    "scope": "synthetic_motion_local_socket_write_readiness_stall",
+    "baseline": "717c09daa9a48f1f908f4431c082c81137147437",
+    "not_measured": [
+      "TLS_library_backpressure",
+      "Wi-Fi",
+      "native_input",
+      "display",
+      "application"
+    ],
+    "cases": [
+      {
+        "simulated_write_stall_ms": 8,
+        "offered_moves": 5,
+        "wire_moves": 2,
+        "first_write_sample_age_ms": 10.489,
+        "first_write_is_latest_sample": false,
+        "last_sample_arrived": true,
+        "revision": "baseline_0.5.3"
+      },
+      {
+        "simulated_write_stall_ms": 24,
+        "offered_moves": 5,
+        "wire_moves": 2,
+        "first_write_sample_age_ms": 30.158,
+        "first_write_is_latest_sample": false,
+        "last_sample_arrived": true,
+        "revision": "baseline_0.5.3"
+      },
+      {
+        "simulated_write_stall_ms": 80,
+        "offered_moves": 5,
+        "wire_moves": 2,
+        "first_write_sample_age_ms": 99.484,
+        "first_write_is_latest_sample": false,
+        "last_sample_arrived": true,
+        "revision": "baseline_0.5.3"
+      },
+      {
+        "simulated_write_stall_ms": 8,
+        "offered_moves": 5,
+        "wire_moves": 1,
+        "first_write_sample_age_ms": 0.108,
+        "first_write_is_latest_sample": true,
+        "last_sample_arrived": true,
+        "revision": "candidate"
+      },
+      {
+        "simulated_write_stall_ms": 24,
+        "offered_moves": 5,
+        "wire_moves": 1,
+        "first_write_sample_age_ms": 0.102,
+        "first_write_is_latest_sample": true,
+        "last_sample_arrived": true,
+        "revision": "candidate"
+      },
+      {
+        "simulated_write_stall_ms": 80,
+        "offered_moves": 5,
+        "wire_moves": 1,
+        "first_write_sample_age_ms": 0.096,
+        "first_write_is_latest_sample": true,
+        "last_sample_arrived": true,
+        "revision": "candidate"
+      }
+    ]
+  },
+  "stream_benchmark": {
+    "scope": "synthetic_input_mutual_tls_loopback_no_native_input",
+    "excludes": [
+      "Bluetooth",
+      "Wi-Fi",
+      "native_injection",
+      "display",
+      "application"
+    ],
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.323,
+        "delivery_ms": {
+          "p50": 0.314,
+          "p95": 0.442,
+          "p99": 0.513,
+          "max": 0.956,
+          "mean": 0.322
+        },
+        "process_cpu_percent_one_core": 3.74,
+        "duration_seconds": 1.998
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 125,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 250,
+        "delivered": 250,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.319,
+        "delivery_ms": {
+          "p50": 0.304,
+          "p95": 0.399,
+          "p99": 0.498,
+          "max": 0.61,
+          "mean": 0.309
+        },
+        "process_cpu_percent_one_core": 3.62,
+        "duration_seconds": 1.998
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 2000,
+        "delivered": 2000,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.287,
+        "delivery_ms": {
+          "p50": 0.18,
+          "p95": 0.26,
+          "p99": 0.308,
+          "max": 0.436,
+          "mean": 0.182
+        },
+        "process_cpu_percent_one_core": 14.21,
+        "duration_seconds": 2.003
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 0,
+        "offered": 2000,
+        "delivered": 2000,
+        "coalesced": 0,
+        "received_coalesced": 0,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 1.314,
+        "delivery_ms": {
+          "p50": 0.165,
+          "p95": 0.252,
+          "p99": 0.294,
+          "max": 0.439,
+          "mean": 0.167
+        },
+        "process_cpu_percent_one_core": 12.73,
+        "duration_seconds": 2.003
+      },
+      {
+        "direction": "windows_to_mac",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 2000,
+        "delivered": 789,
+        "coalesced": 0,
+        "received_coalesced": 1211,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 2.542,
+        "delivery_ms": {
+          "p50": 3.119,
+          "p95": 3.694,
+          "p99": 5.434,
+          "max": 5.924,
+          "mean": 3.216
+        },
+        "process_cpu_percent_one_core": 13.02,
+        "duration_seconds": 2.009
+      },
+      {
+        "direction": "mac_to_windows",
+        "rate_hz": 1000,
+        "receiver_simulated_delay_ms": 2.0,
+        "offered": 2000,
+        "delivered": 790,
+        "coalesced": 0,
+        "received_coalesced": 1210,
+        "scheduler_late": 0,
+        "handoff_upper_bound_ms": 3.825,
+        "delivery_ms": {
+          "p50": 3.066,
+          "p95": 3.681,
+          "p99": 5.216,
+          "max": 5.761,
+          "mean": 3.191
+        },
+        "process_cpu_percent_one_core": 11.89,
+        "duration_seconds": 2.009
+      }
+    ]
+  },
+  "mac": {
+    "edition": "0.5.4",
+    "built_at": "2026-10-18T00:01:12.442302+00:00",
+    "signature_valid": true,
+    "modules_match_sources": 23,
+    "preview_exit_code": 0,
+    "installed": false,
+    "installed_edition": "0.5.1",
+    "executable_sha256": "dc45cde13f4052d66f375e2eb839957f77f1c81cc6659a0fe171254f7b15bddc",
+    "os_version": "26.6.2",
+    "architecture": "arm64"
+  },
+  "windows": {
+    "ci_url": "https://github.com/alradno/clever-switch/actions/runs/39081183118",
+    "job_id": 117538255405,
+    "native_build": "passed",
+    "packaged_check": {
+      "edition": "0.5.4",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "artifact_digest_verified": true,
+    "manifest_files_verified": true,
+    "installed_on_home_pc": false
+  },
+  "packages": {
+    "mac_sha256": "d42f5205ef932ce5bef5af7582851a658f4853375dba9e01ba1d4626fad1a58e",
+    "windows_sha256": "f53b88249daf2136e015475f3dc0d89e49a4d5ee490f1c76e005f8d87593a98b"
+  },
+  "installation": "No intermediate installation. Installed Mac rechecked as 0.5.1; home Windows answered an authenticated read-only readiness request as 0.5.0 during this validation.",
+  "physical_acceptance": "Deferred until the user returns. No physical smoothness, battery or cable-equivalence claim.",
+  "limits": [
+    "The freshness benchmark stalls local socket write readiness; it does not measure real Wi-Fi or data already accepted into TCP/TLS",
+    "Real loopback TLS benchmarks use in-memory input and do not measure native injection, Bluetooth or display refresh",
+    "Router ICMP variability alone does not identify the cause of input microcuts; local diagnostic evidence is archived separately"
+  ],
+  "remaining": [
+    "Physical joint acceptance and effective permissions of the final installed signature",
+    "Measure input transport jitter and already submitted TCP backlog under network stalls before choosing further transport changes",
+    "Verify keyboard Easy-Switch, monitors, sleep/wake and DHCP in both directions"
+  ],
+  "unchanged": [
+    "pairing and identity",
+    "startup",
+    "ports/firewall",
+    "router and VPN configuration",
+    "permissions and security software",
+    "control protocol 2 and input protocol 1"
+  ],
+  "prior_display_evidence": "docs/validation/input-0.5.3-displays.json"
+}
