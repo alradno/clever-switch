@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.12, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.13, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,27 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.13
+La 0.5.13 conserva la posición del ratón local cuando recupera el control
+durante un arrastre remoto. Si había un movimiento remoto en curso, primero
+suelta sus botones y modificadores y después restaura la posición física.
+Si alguna liberación falla, conserva su registro para recuperarla y evita
+recolocar el cursor mientras quede pendiente. Se aplica en Mac y Windows.
+También corrige el historial de clics del Mac: un clic local intermedio rompe
+la secuencia remota anterior, y un doble o triple clic local conserva el contador
+que entrega macOS. No añade sondeos, hilos ni consultas de pantalla por movimiento.
+
+Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+70 casos y pasan 293 pruebas focalizadas. De 56 casos comparados con 0.5.12,
+44 fallaban antes y 12 ya pasaban. Otros 12 casos comprueban fallos de preparación,
+restauración y liberación. Se prueba movimiento, clic y rueda locales durante
+un arrastre remoto, incluso con un movimiento remoto en curso, en ambos sentidos
+y con TLS o transporte híbrido. También se verifica que teclas y movimiento
+usan la misma cola al recuperar el teclado. Las APIs de entrada están simuladas y TLS/UDP
+usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.13-local-pointer.json. Candidata sin instalar.
+
 REVISIÓN 0.5.12
 La 0.5.12 corrige la precisión del cursor en Windows. Cada posición apunta
 al centro del rango que representa su píxel: algunas coordenadas anteriores
@@ -20,7 +41,7 @@ exacto en pantallas de dimensiones impares. No añade consultas de pantalla por
 movimiento. Mac conserva sus coordenadas fraccionarias y ambos sistemas
 comparten la misma edición y las pruebas de entrada en ambos sentidos.
 
-Pasan 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+La validación de 0.5.12 registró 1.449 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
 90 casos y pasan 231 pruebas focalizadas. De las 26 regresiones de precisión,
 22 fallaban antes y cuatro ya protegían el comportamiento del Mac. El banco
 recorre 53.000 posiciones de ocho geometrías: pasa de 453 coordenadas incorrectas
