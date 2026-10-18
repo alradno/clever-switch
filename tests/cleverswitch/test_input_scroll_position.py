@@ -8,6 +8,7 @@ from cleverswitch.flow.input_protocol import Kind
 
 from .test_flow import paired as paired
 from .test_flow import paired_tls as paired_tls
+from .test_input_device_continuity import busy_session
 from .test_input_end_to_end import enter, motion
 from .test_input_end_to_end import native_peers as native_peers
 from .test_input_mixed_reports import wheel
@@ -19,8 +20,9 @@ from .test_input_stream import until
 @pytest.mark.parametrize("source", [0, 1], ids=["windows_to_mac", "mac_to_windows"])
 @pytest.mark.parametrize("axis", [0, 1], ids=["horizontal", "vertical"])
 @pytest.mark.parametrize("count", [1, 24], ids=["single", "burst"])
+@pytest.mark.parametrize("busy", [False, True], ids=["immediate", "deferred"])
 def test_scroll_targets_each_ordered_position_before_native_queue_is_applied(
-    native_peers, monkeypatch, source, axis, count,
+    native_peers, monkeypatch, source, axis, count, busy,
 ):
     peers, windows_api, mac_api = native_peers
     sender, receiver = peers[source], peers[1 - source]
@@ -44,13 +46,19 @@ def test_scroll_targets_each_ordered_position_before_native_queue_is_applied(
 
     anchor_x, anchor_y = sender.backend.anchor
     expected = []
-    for index in range(count):
-        point = (300 + index * 5 if source == 0 else 1500 - index * 5, 300 + index * 3)
-        previous = sender.remote_position
-        motion(sender, int(anchor_x + point[0] - previous[0]), int(anchor_y + point[1] - previous[1]))
-        amount = 0.25 if index % 2 == 0 else -0.5
-        wheel(sender, amount if axis == 0 else 0, amount if axis == 1 else 0)
-        expected.append((point, amount))
+    previous = sender.remote_position
+    with busy_session(sender, busy):
+        for index in range(count):
+            point = (300 + index * 5 if source == 0 else 1500 - index * 5, 300 + index * 3)
+            # Physical reports are deltas from the last report. The routing
+            # worker's position may still lag behind callbacks in its queue.
+            motion(sender, int(anchor_x + point[0] - previous[0]), int(anchor_y + point[1] - previous[1]))
+            previous = point
+            amount = 0.25 if index % 2 == 0 else -0.5
+            wheel(sender, amount if axis == 0 else 0, amount if axis == 1 else 0)
+            expected.append((point, amount))
+        if busy:
+            assert not sender.deferred.empty()
     until(lambda: len(scrolls()) == count)
     if receiver.role == "mac":
         field = (mac_api.kCGScrollWheelEventFixedPtDeltaAxis2, mac_api.kCGScrollWheelEventFixedPtDeltaAxis1)[axis]

@@ -217,7 +217,8 @@ def test_action_position_envelope_roundtrips_all_fragment_boundaries(kind, value
         assert decoded == [frame] and not decoder.buffer
     with pytest.raises(ValueError):
         Decoder().feed(encoded)
-    assert "100" not in repr(frame) and "values" not in repr(frame)
+    # The opaque object identity may itself contain the digits of a coordinate.
+    assert repr(frame) == object.__repr__(frame)
 
 
 @pytest.mark.parametrize("change", [
