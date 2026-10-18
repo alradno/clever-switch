@@ -5,6 +5,7 @@ No real hooks, event taps, SendInput or CGEventPost are called by these tests.
 """
 
 import ctypes as c
+import time
 from unittest.mock import Mock
 
 import pytest
@@ -45,6 +46,7 @@ def native_peers(paired_tls, request):
     kernel = Mock()
     kernel.GetCurrentThreadId.return_value = 10
     kernel.GetModuleHandleW.return_value = 100
+    kernel.GetTickCount64.side_effect = lambda: int(time.monotonic() * 1000)
     desktop = Desktop([Display(0, 0, 1920, 1080)])
     backends = [
         WindowsInput(windows_api, kernel, ready=lambda: True, desktop=desktop, monitor_factory=DeviceObserver),
@@ -63,7 +65,7 @@ def native_peers(paired_tls, request):
         if discoveries:
             discoveries[0].peer_port, discoveries[1].peer_port = discoveries[1].port, discoveries[0].port
         links[0].port, links[1].port = links[1].port, links[0].port
-        peers[0].connect(peers[1].capabilities() if request.param else None)
+        peers[0].connect(peers[1].capabilities())
         until(lambda: all(peer._available() for peer in peers))
         if request.param:
             until(lambda: all(peer.channel.lane.probe.state == "ready" for peer in peers))

@@ -8,6 +8,7 @@ import time
 import pytest
 
 from cleverswitch.flow.input_motion import Motion
+from cleverswitch.flow.input_motion_link import supports_motion
 from cleverswitch.flow.input_protocol import Decoder, Kind, Packet, Routed
 from cleverswitch.flow.input_stream import Channel
 from cleverswitch.flow.network import Discovery
@@ -192,7 +193,7 @@ def test_closed_udp_listener_reverts_to_tls_without_losing_pressed_input(hybrid,
     until(lambda: receiver.session.keys == {4})
     transport = sender.channel.transport
     transport.close()
-    assert not sender.capabilities() and not transport.motion_ready()
+    assert not supports_motion(sender.capabilities()) and not transport.motion_ready()
     sender.session.input(Kind.MOVE, 333, 444)
     sender.key(4, 0)
     until(lambda: receiver.backend.events[-1].kind == Kind.KEY and receiver.backend.events[-1].values == (4, 0))

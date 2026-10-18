@@ -3,6 +3,7 @@
 import ctypes as c
 import queue
 import threading
+import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -343,7 +344,14 @@ class Quartz:
         return {"kind": self.kCGEventKeyDown if down else self.kCGEventKeyUp, 9: code, "flags": self.flags}
 
     def CGEventCreateMouseEvent(self, source, kind, point, button):
-        return {"kind": kind, "position": point, 3: button, "flags": self.flags}
+        return {"kind": kind, "position": point, 3: button, "flags": self.flags,
+                "timestamp": time.monotonic_ns()}
+
+    def CGEventGetTimestamp(self, event):
+        return event["timestamp"]
+
+    def CGEventSetTimestamp(self, event, stamp):
+        event["timestamp"] = stamp
 
     def CGEventCreateScrollWheelEvent(self, source, units, axes, vertical, horizontal):
         return {
