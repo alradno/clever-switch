@@ -22,7 +22,7 @@ class MacInput:
         ready=None,
         secure_input=None,
         desktop=None,
-        clock=time.monotonic,
+        clock=time.perf_counter,
         double_click=None,
         monitor_factory=None,
         display_monitor_factory=None,

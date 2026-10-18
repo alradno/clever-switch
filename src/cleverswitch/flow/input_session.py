@@ -18,7 +18,7 @@ LOCK_KEYS = {57: 1, 83: 2, 71: 4}
 
 class Session:
     def __init__(
-        self, role, desktop, backend, send, on_active=None, clock=time.monotonic, token=None, can_receive=None,
+        self, role, desktop, backend, send, on_active=None, clock=time.perf_counter, token=None, can_receive=None,
         *, timed_clicks=False, injection_timing=None,
     ):
         if role not in ("windows", "mac"):

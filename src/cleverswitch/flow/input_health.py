@@ -11,7 +11,7 @@ from .input_timing import Duration
 
 
 class Readiness:
-    def __init__(self, check, clock=time.monotonic):
+    def __init__(self, check, clock=time.perf_counter):
         self.check, self.clock = check, clock
         self.sample = (False, float("-inf"))
         self.interval, self.idle_interval, self.max_age = 0.1, 0.4, 0.5

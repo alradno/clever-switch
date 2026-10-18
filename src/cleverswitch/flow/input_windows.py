@@ -70,7 +70,7 @@ class WindowsInput:
         kernel=None,
         ready=None,
         desktop=None,
-        clock=time.monotonic,
+        clock=time.perf_counter,
         monitor_factory=None,
         display_monitor_factory=None,
     ):

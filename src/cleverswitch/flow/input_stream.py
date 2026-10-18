@@ -15,6 +15,10 @@ from .input_motion_link import bootstrap
 from .input_protocol import Decoder, Kind, Outbox, Packet, replace_motion
 from .input_timing import Duration
 
+# All interactive deadlines and durations use perf_counter, as do Service,
+# Session and the backends. Python 3.12's Windows monotonic clock has ~16 ms
+# ticks, too coarse for 8 ms retries. Native OS timestamps keep their own clocks.
+
 
 class Channel:
     def __init__(
@@ -131,7 +135,7 @@ class Channel:
             "average_ms": round(total / count * 1000, 3),
             "maximum_ms": round(high * 1000, 3),
             "mean_variation_ms": round(variation / max(1, count - 1) * 1000, 3),
-            "age_seconds": round(max(0, time.monotonic() - checked), 3),
+            "age_seconds": round(max(0, time.perf_counter() - checked), 3),
         }
 
     def _read_packets(self, decoder):
@@ -177,7 +181,7 @@ class Channel:
         sequence = ping = 0
         pending_ping = None
         was_active = False
-        now = time.monotonic()
+        now = time.perf_counter()
         next_ping, last_rx, active_since = now + 15, now, now
         write_waits_read = read_waits_write = False
         try:
@@ -185,7 +189,7 @@ class Channel:
                 self.lane.start(now)
             self.ready.set()
             while not self.stop.is_set():
-                now = time.monotonic()
+                now = time.perf_counter()
                 active = self.active.is_set()
                 if active != was_active:
                     was_active, active_since = active, now
@@ -199,14 +203,14 @@ class Channel:
                     for message in self.lane.decode_datagrams(self.inbox.take()):
                         if self.stop.is_set():
                             break
-                        self.lane.receive_message(message, time.monotonic())
-                    self.lane.tick(time.monotonic())
+                        self.lane.receive_message(message, time.perf_counter())
+                    self.lane.tick(time.perf_counter())
                     for packet in self.outbox.take():
-                        self.lane.outgoing(packet, time.monotonic())
+                        self.lane.outgoing(packet, time.perf_counter())
                 # Routing, decoding and native delivery can consume this turn.
                 # A retry deadline is absolute: do not add that work's duration
                 # again to the socket wait or grant a stale liveness deadline.
-                completed = time.monotonic()
+                completed = time.perf_counter()
                 self.routing_duration.observe(completed - now)
                 now = completed
                 if (pending_ping and now >= pending_ping[1]) or (
@@ -227,7 +231,7 @@ class Channel:
                         deadlines.append(self.lane.deadline)
                     if self.outbox.pending():
                         deadlines.append(now)
-                timeout = max(0, min(deadlines) - time.monotonic())
+                timeout = max(0, min(deadlines) - time.perf_counter())
                 pending = self.connection.pending() if hasattr(self.connection, "pending") else 0
                 wants_write = (tx or self.wirebox.pending()) and not write_waits_read
                 readable, writable, _ = select.select(
@@ -243,13 +247,13 @@ class Channel:
                         pass
                 can_read = self.connection in readable or pending or (read_waits_write and self.connection in writable)
                 if can_read:
-                    reading_started = time.monotonic()
+                    reading_started = time.perf_counter()
                     try:
                         packets, read_waits_write = self._read_packets(decoder)
                         for packet in packets:
                             if self.stop.is_set():
                                 break
-                            last_rx = time.monotonic()
+                            last_rx = time.perf_counter()
                             if packet.kind == Kind.PING:
                                 self.send(Packet(Kind.PONG, packet.epoch))
                             elif packet.kind == Kind.PONG:
@@ -267,7 +271,7 @@ class Channel:
                     except ssl.SSLWantWriteError:
                         read_waits_write = True
                     finally:
-                        self.receiving_duration.observe(time.monotonic() - reading_started)
+                        self.receiving_duration.observe(time.perf_counter() - reading_started)
                 if self.stop.is_set():
                     break
                 if not tx and self.connection in writable:
@@ -279,7 +283,7 @@ class Channel:
                     tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
                     sequence += tx_count
                 if tx and (self.connection in writable or (write_waits_read and self.connection in readable)):
-                    write_started = time.monotonic()
+                    write_started = time.perf_counter()
                     try:
                         count = self.connection.send(tx)
                         if not count:
@@ -294,7 +298,7 @@ class Channel:
                     except (ssl.SSLWantWriteError, BlockingIOError):
                         write_waits_read = False
                     finally:
-                        self.write_duration.observe(time.monotonic() - write_started)
+                        self.write_duration.observe(time.perf_counter() - write_started)
         except TimeoutError:
             self.failure = "timeout"
         except (ValueError, BufferError):

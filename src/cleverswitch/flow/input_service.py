@@ -39,7 +39,7 @@ def native_callback(method):
     def bounded(self, *args):
         if method.__name__ in ("button", "mouse_changed"):
             # Date the native callback, before either routing queue can delay it.
-            args = (*args, time.monotonic())
+            args = (*args, time.perf_counter())
         session = self.session
         # A low-level OS callback must never wait behind an injector that may
         # itself be waiting for this hook thread (notably Windows SendInput).
@@ -62,7 +62,7 @@ def native_callback(method):
 
     @functools.wraps(method)
     def measured(self, *args):
-        started = time.monotonic()
+        started = time.perf_counter()
         timing = self.performance
         if method.__name__ == "motion":
             timing.motion(started)
@@ -72,7 +72,7 @@ def native_callback(method):
         try:
             return bounded(self, *args)
         finally:
-            duration.observe(time.monotonic() - started)
+            duration.observe(time.perf_counter() - started)
 
     # Track what actually reached local apps at callback time, independently
     # of the routing worker's queue. This wrapper is absent from mouse motion.
@@ -304,7 +304,7 @@ class Service:
                     return
             finally:
                 session.lock.release()
-        now = time.monotonic()
+        now = time.perf_counter()
         if now >= self.next_check:
             self.next_check = now + 0.1
             if not self.backend.ready():
@@ -328,7 +328,7 @@ class Service:
         try:
             generation = session.local_generation if session else 0
             self.deferred.put_nowait((
-                method, args, session, session.epoch if session else 0, generation, swallowed, time.monotonic(),
+                method, args, session, session.epoch if session else 0, generation, swallowed, time.perf_counter(),
             ))
             if self.channel is not None:
                 self.channel._wake()
@@ -352,7 +352,7 @@ class Service:
             delivered = False
             if session is not None and session is self.session:
                 with session.lock:
-                    self.performance.deferred_wait.observe(time.monotonic() - queued_at)
+                    self.performance.deferred_wait.observe(time.perf_counter() - queued_at)
                     # A native cancel can retire the epoch while this worker
                     # waits for the lock. Validate ownership inside the lock.
                     same_focus = epoch and epoch == session.epoch
