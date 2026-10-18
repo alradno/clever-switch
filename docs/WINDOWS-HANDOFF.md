@@ -3,6 +3,16 @@
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
 
+La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
+entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos
+y pausas de 40 ms. Verifica 19.800 movimientos, 720 acciones ordenadas y
+60 reconexiones de teclado por plataforma, además de las liberaciones y el
+siguiente cruce. Pasan 1.916 pruebas en Mac y Windows. No aparece otro fallo
+de aplicación: las fuentes y los paquetes de la candidata siguen iguales.
+Las APIs de entrada son simuladas y TLS/UDP usan loopback real; la fluidez y
+recuperación físicas siguen pendientes de la prueba conjunta.
+Véase [flujo sostenido 0.5.21](validation/input-0.5.21-sustained.json).
+
 La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
 durante un cambio de configuración. Mac y Windows detienen la comprobación de
 entrada en segundo plano aunque falle la restauración del cursor, conservan

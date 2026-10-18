@@ -24,6 +24,15 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
+- La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
+  entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos
+  y pausas de 40 ms. Verifica 19.800 movimientos, 720 acciones ordenadas y
+  60 reconexiones de teclado por plataforma, además de las liberaciones y el
+  siguiente cruce. Pasan 1.916 pruebas en Mac y Windows. No aparece otro fallo
+  de aplicación: las fuentes y los paquetes de la candidata siguen iguales.
+  Las APIs de entrada son simuladas y TLS/UDP usan loopback real; la fluidez y
+  recuperación físicas siguen pendientes de la prueba conjunta.
+  Véase `validation/input-0.5.21-sustained.json`.
 - Validación adicional 0.5.19: 24 casos nuevos por plataforma, 64 reconexiones
   repetidas y ocho cortes unidireccionales. Conservan liberaciones, nuevos cruces
   y pulsaciones tras avisos tardíos; los trabajadores de entrada terminan al cerrar.

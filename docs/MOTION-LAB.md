@@ -6,6 +6,48 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Flujo sostenido y teclado reconectado en 0.5.21
+
+La validación adicional de 0.5.21 añade 40 escenarios por plataforma de
+entrada sostenida a 125 y 1.000 informes por segundo, con receptores lentos
+y pausas de 40 ms. Verifica 19.800 movimientos, 720 acciones ordenadas y
+60 reconexiones de teclado por plataforma, además de las liberaciones y el
+siguiente cruce. Pasan 1.916 pruebas en Mac y Windows. No aparece otro fallo
+de aplicación: las fuentes y los paquetes de la candidata siguen iguales.
+Las APIs de entrada son simuladas y TLS/UDP usan loopback real; la fluidez y
+recuperación físicas siguen pendientes de la prueba conjunta.
+
+Cada caso genera movimiento durante 0,6 segundos y mezcla escritura,
+arrastre y rueda desde los callbacks de los adaptadores de producción.
+Veinte casos desconectan el teclado tres veces con una tecla pulsada,
+sin enviar su liberación física, mientras el ratón continúa un arrastre.
+La notificación debe liberar sólo el teclado y permitir escribir de nuevo.
+Al terminar, se mantienen Shift y un botón pulsados para comprobar que
+el regreso los libera y que el enlace admite otro cruce y otra pulsación.
+
+La recepción tiene costes artificiales de 0, 2 o 5 ms por evento; otros
+ocho casos añaden una pausa de 40 ms. Todas las acciones conservan orden
+y posición, el cursor alcanza el destino final sin retroceder y el enlace
+permanece disponible. La agrupación de movimientos ya existente evita
+reproducir cada posición atrasada. Las pausas impuestas siguen presentes.
+
+Las observaciones temporales del Mac se toman después del coste simulado
+y de que el adaptador termine su llamada a la API falsa. Miden ese recorrido,
+sin incluir aplicaciones, pantalla, Wi-Fi o periféricos reales. Son resultados
+de diagnóstico; los criterios de aceptación comprueban orden, posición,
+liberaciones y continuidad, sin imponer un umbral de latencia al planificador
+del equipo de pruebas. No se atribuyen los microcortes domésticos al router.
+
+La ampliación conserva los paquetes ya preparados desde
+`e6a76245c472451ccb74132cdc44da2fd4e43a38`. Windows recompila en CI y verifica
+el ejecutable sin capturar entrada; la compilación del Mac no se repite porque
+sus fuentes no cambian. La aceptación física continúa pendiente, en ambos sentidos.
+
+Reproducir los 40 escenarios y sus observaciones agregadas:
+`python -m pytest tests/cleverswitch/test_input_sustained.py --no-cov -q -s`.
+
+Evidencia: [flujo sostenido 0.5.21](validation/input-0.5.21-sustained.json).
+
 ## Recuperación tras cambios de pantalla en 0.5.21
 
 La 0.5.21 recupera la entrada si el sistema deja de informar de pantallas
