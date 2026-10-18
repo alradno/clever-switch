@@ -243,7 +243,7 @@ def test_reflection_wrong_session_and_wrong_role_are_rejected(lab):
     assert lab.receiver.codec.open(raw) is not None
 
 
-@pytest.mark.parametrize("raw", [b"", b"x", b"x" * 65536])
+@pytest.mark.parametrize("raw", [b"", b"x", b"x" * 65536], ids=["empty", "truncated", "oversized"])
 def test_invalid_datagram_lengths_are_discarded(lab, raw):
     lab.receiver.receive(raw)
     assert not lab.delivered and not lab.receipts
