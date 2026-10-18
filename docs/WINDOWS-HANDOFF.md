@@ -1,7 +1,15 @@
-# Continuación en Windows — candidata conjunta 0.5.19 experimental
+# Continuación en Windows — candidata conjunta 0.5.20 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.20 evita un cruce involuntario después de recolocar el cursor en Mac.
+Si una aplicación lo mueve sin generar un evento de movimiento, el siguiente
+clic o rueda conserva esa posición como origen del próximo desplazamiento.
+Así, un movimiento vertical junto al borde no se interpreta como uno horizontal
+desde la posición anterior. Windows ya conservaba esa referencia y se comprueba
+con los mismos casos. Los eventos propios marcados no alteran la referencia
+física. No añade esperas, sondeos, hilos ni consultas nativas.
 
 La 0.5.19 conserva el control local si un cruce quedó en cola y después
 llegó una tecla, clic, rueda o movimiento a la aplicación local antes de empezar
@@ -176,15 +184,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.806 pruebas por plataforma, Ruff y ambas compilaciones. La corrección inicial tiene
-22 casos: 16 reproducen el fallo anterior; cuatro conservan el cruce con el cursor
-quieto y dos descartan movimiento de un periodo local ya terminado. Pasan 257
-pruebas focalizadas. Se comprueban ambos orígenes y TLS/transporte híbrido.
-Las APIs nativas y la entrega a aplicaciones están simuladas; TLS/UDP usan
-loopback real. La aceptación física de fluidez, recuperación y consumo
-sigue pendiente. La comprobación
+Pasan 1.836 pruebas por plataforma, Ruff y ambas compilaciones. Hay 30 casos
+nuevos: 12 reproducen el cruce involuntario anterior y 18 controles ya pasaban.
+Las 243 pruebas focalizadas comprueban ambos orígenes, TLS/híbrido, clics primarios
+y adicionales, ambas ruedas y callbacks inmediatos o en cola. Conservan el
+control local, el enlace, el siguiente cruce intencionado y la escritura.
+Las APIs de entrada son simuladas; TLS/UDP usan loopback real. La fluidez,
+Easy-Switch y el consumo físicos siguen pendientes de aceptación conjunta. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.19-queued-edge.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.20-pointer-baseline.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
