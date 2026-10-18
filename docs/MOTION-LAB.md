@@ -6,6 +6,50 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Pulsaciones locales durante la captura en 0.5.18
+
+La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
+Si la pulsación llegó a la aplicación local antes de empezar la captura,
+su repetición y su liberación siguen llegando allí aunque la captura ya haya
+empezado. El cruce se cancela y puede repetirse después, sobre el mismo enlace.
+Conserva el destino de las nuevas pulsaciones capturadas. La corrección es común
+a Mac y Windows y no añade esperas, sondeos, hilos ni consultas nativas.
+
+Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+39 casos de pulsaciones: 32 reproducen la pérdida anterior de repetición o
+liberación y siete comprueban avisos de dispositivos, cola saturada, inicio
+y cierre. Pasan 227
+pruebas focalizadas. Además, 16 casos fuerzan la cola de movimiento y rueda
+sin cambiar sus posiciones esperadas. Se comprueban teclas, modificadores
+y botones en ambos sentidos, con TLS o transporte híbrido. Las APIs nativas y la entrega a las
+aplicaciones son simuladas; TLS/UDP usan loopback real. La aceptación física
+de fluidez, recuperación y consumo sigue pendiente.
+
+Los 32 casos de cruce pasan la pulsación a las aplicaciones locales, inician
+la captura y repiten/sueltan antes de que el trabajador procese la cola.
+La versión anterior ocultaba esas liberaciones. La nueva conserva el estado
+de las pulsaciones que realmente pasaron por el callback local; los avisos de
+dispositivo lo retiran en orden nativo. Ese seguimiento no envuelve movimiento.
+Se comprueba que la aplicación local no conserva teclas o botones pulsados,
+que el compañero no recibe la pulsación y que funciona el siguiente cruce.
+
+La comparación carga sólo el servicio compartido de `450c5d3e5411d33ca4b49b43e0282b50a4b379f8`
+con las mismas regresiones finales. Los 32 casos fallan con esa fuente anterior.
+La validación de Windows detectó también defectos del banco de pruebas. La
+recuperación enviaba movimiento directamente a la sesión, saltándose la cola
+de callbacks de las liberaciones; ahora conserva la misma ruta para todos.
+El generador de rueda calculaba algunos deltas desde una posición de sesión
+aún pendiente: forzar la cola reproduce ocho fallos con ese generador. Ahora
+usa su último informe físico y añade 16 casos con cola forzada. Se mantienen
+las posiciones, los eventos y los plazos exigidos. La comprobación de privacidad
+requiere una representación opaca, sin buscar cifras que pueden aparecer por
+casualidad en la dirección de memoria. El informe conserva los fallos anteriores
+y sus límites de atribución.
+
+No se activó captura ni inyección reales. Ambos paquetes usan la misma fuente.
+
+Evidencia: [validación 0.5.18](validation/input-0.5.18-press-ownership.json).
+
 ## Bloq Mayús durante cruces rápidos en 0.5.17
 
 La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el

@@ -13,13 +13,14 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.17 experimental**, protocolo de control 2 y entrada 1.
-  Bloq Mayús conserva el estado ordenado durante los cruces rápidos aunque macOS
-  aún no haya aplicado sus eventos; un fallo nativo conserva el estado anterior.
-  Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. La comparación
-  local reproduce el fallo en 26 casos; pasan 256 pruebas focalizadas, con ambos orígenes y
-  transportes. Las APIs de entrada son simuladas y TLS/UDP usan loopback real.
-  Véanse `validation/input-0.5.17-caps-order.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.18 experimental**, protocolo de control 2 y entrada 1.
+  Una pulsación entregada localmente conserva su repetición y liberación si
+  empieza la captura entre ambas. Evita teclas o arrastres que siguen pulsados.
+  Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Hay 39 casos
+  nuevos de pulsaciones; 32 reproducen el fallo anterior. Pasan 227 pruebas focalizadas.
+  Se añaden otros 16 casos de movimiento y rueda con cola forzada.
+  Las APIs de entrada son simuladas y TLS/UDP usan loopback real.
+  Véanse `validation/input-0.5.18-press-ownership.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

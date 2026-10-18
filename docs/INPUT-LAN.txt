@@ -1,8 +1,26 @@
-CLEVERSWITCH 0.5.17 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.18 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.17-caps-order.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.18-press-ownership.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.18
+La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
+Si la pulsación llegó a la aplicación local antes de empezar la captura,
+su repetición y su liberación siguen llegando allí aunque la captura ya haya
+empezado. El cruce se cancela y puede repetirse después, sobre el mismo enlace.
+Conserva el destino de las nuevas pulsaciones capturadas. La corrección es común
+a Mac y Windows y no añade esperas, sondeos, hilos ni consultas nativas.
+
+Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+39 casos de pulsaciones: 32 reproducen la pérdida anterior de repetición o
+liberación y siete comprueban avisos de dispositivos, cola saturada, inicio
+y cierre. Pasan 227
+pruebas focalizadas. Además, 16 casos fuerzan la cola de movimiento y rueda
+sin cambiar sus posiciones esperadas. Se comprueban teclas, modificadores
+y botones en ambos sentidos, con TLS o transporte híbrido. Las APIs nativas y la entrega a las
+aplicaciones son simuladas; TLS/UDP usan loopback real. La aceptación física
+de fluidez, recuperación y consumo sigue pendiente.
 
 MEJORAS 0.5.17
 La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
@@ -370,6 +388,9 @@ posición y permitir otro cruce al volver hacia el interior y al borde.
 Para 0.5.16, mover entre dos paneles desplazables y usar la rueda enseguida:
 debe desplazarse el panel bajo la posición nueva, también horizontalmente.
 Repetir en ambos sentidos y con monitores secundarios.
+Para 0.5.18, pulsar y soltar una tecla o un botón al iniciar el cruce:
+si la pulsación quedó local, su liberación también debe llegar allí, sin
+repetición ni arrastre retenidos. Comprobar después otro cruce en ambos sentidos.
 Las teclas multimedia/Fn y pantallas protegidas no están resueltas por el protocolo
 de teclas estándar. UAC, pantalla de acceso, Secure Input y aplicaciones que
 rechazan entrada sintética no se eluden. No es una promesa de compatibilidad

@@ -1,7 +1,14 @@
-# Continuación en Windows — candidata conjunta 0.5.17 experimental
+# Continuación en Windows — candidata conjunta 0.5.18 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
+Si la pulsación llegó a la aplicación local antes de empezar la captura,
+su repetición y su liberación siguen llegando allí aunque la captura ya haya
+empezado. El cruce se cancela y puede repetirse después, sobre el mismo enlace.
+Conserva el destino de las nuevas pulsaciones capturadas. La corrección es común
+a Mac y Windows y no añade esperas, sondeos, hilos ni consultas nativas.
 
 La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
 último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
@@ -141,14 +148,17 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
-nuevos reproducen el fallo anterior en la comparación local; también pasan
-256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
-cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
-Las APIs de entrada y su aplicación tardía están simuladas; TLS/UDP usan loopback
-real. La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
+Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+39 casos de pulsaciones: 32 reproducen la pérdida anterior de repetición o
+liberación y siete comprueban avisos de dispositivos, cola saturada, inicio
+y cierre. Pasan 227
+pruebas focalizadas. Además, 16 casos fuerzan la cola de movimiento y rueda
+sin cambiar sus posiciones esperadas. Se comprueban teclas, modificadores
+y botones en ambos sentidos, con TLS o transporte híbrido. Las APIs nativas y la entrega a las
+aplicaciones son simuladas; TLS/UDP usan loopback real. La aceptación física
+de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.17-caps-order.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.18-press-ownership.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
