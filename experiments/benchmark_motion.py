@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cleverswitch.flow.input_protocol import Kind, Packet  # noqa: E402
-from experiments.motion_lane import Receiver, Sender, lab_codecs  # noqa: E402
+from experiments.motion_lane import PathProbe, Receiver, Sender, lab_codecs  # noqa: E402
 
 
 class Clock:
@@ -43,19 +43,22 @@ class Network:
 
     def __init__(self, clock, profile):
         self.clock, self.profile = clock, profile
+        self.origin = 0
         self.datagrams = self.datagram_bytes = self.dropped = 0
 
     def due(self, *, unreliable=False, reverse=False):
         now = self.clock.now
         # Quantize only the profile lookup to avoid floating point boundaries.
-        micros = round(now * 1_000_000)
+        micros = round((now - self.origin) * 1_000_000)
         single = 200_000 <= micros < 201_000
         if self.profile == "udp_blocked" and unreliable:
             return None
         if self.profile == "receipts_blocked" and unreliable and reverse:
             return None
+        if self.profile == "udp_fails_after_start" and unreliable and micros >= 200_000:
+            return None
         if self.profile == "outage_80ms" and 200_000 <= micros < 280_000:
-            return None if unreliable else 0.28 + self.delay
+            return None if unreliable else self.origin + 0.28 + self.delay
         loss = (
             self.profile == "one_lost_transmission"
             and single
@@ -154,7 +157,7 @@ def run_case(mode, source, rate, profile, actions):
     clock = Clock()
     network = Network(clock, profile)
     sink = Sink(clock)
-    sender = receiver = None
+    sender = receiver = probe = None
     timer_version = 0
 
     def arm_timer():
@@ -174,18 +177,34 @@ def run_case(mode, source, rate, profile, actions):
         codecs = lab_codecs()
 
         def receipt(raw):
-            sender.receive(raw, clock.now)
-            arm_timer()
+            if sender is None:
+                probe.receive(raw, clock.now)
+            else:
+                sender.receive(raw, clock.now)
+                arm_timer()
 
         receiver = Receiver(codecs[1 - source], lambda raw: network.datagram(raw, receipt, reverse=True), sink.inject)
+        probe = PathProbe(codecs[source], lambda raw: network.datagram(raw, receiver.receive))
+        probe.start(clock.now)
+        while probe.deadline is not None:
+            clock.run(probe.deadline)
+            probe.tick(clock.now)
+        # The finite path check runs before focus capture, on connection setup.
         receiver.begin(7, (100, 100))
         reliable = OrderedPath(network, receiver.receive_reliable)
         sender = Sender(
-            codecs[source], 7, (100, 100), lambda raw: network.datagram(raw, receiver.receive), reliable.send
+            codecs[source],
+            7,
+            (100, 100),
+            lambda raw: network.datagram(raw, receiver.receive),
+            reliable.send,
+            probe=probe,
         )
     else:
         reliable = OrderedPath(network, sink.inject)
 
+    started = network.origin = clock.now
+    probe_packets = network.datagrams
     expected = []
     action_schedule = (
         {
@@ -198,7 +217,7 @@ def run_case(mode, source, rate, profile, actions):
         else {}
     )
     for index in range(rate):
-        clock.run(index / rate)
+        clock.run(started + index / rate)
         position = (101 + index, 100)
         sink.captured[position[0]] = clock.now
         if sender is None:
@@ -213,12 +232,12 @@ def run_case(mode, source, rate, profile, actions):
                 reliable.send(Packet(kind, 7, values))
             else:
                 sender.send_action(kind, *values)
-    clock.run(2)
+    clock.run(started + 2)
     if sink.position != (100 + rate, 100) or sink.actions != expected or sink.keys or sink.buttons:
         raise AssertionError("Final position, action order/position or release mismatch")
     if sender is not None and (sender.deadline is not None or receiver.pending is not None):
         raise AssertionError("The experiment left unbounded work")
-    gaps = [(end - start) * 1000 for start, end in itertools.pairwise([0, *sink.times])]
+    gaps = [(end - start) * 1000 for start, end in itertools.pairwise([started, *sink.times])]
     result = {
         "mode": mode,
         "direction": "windows_to_mac" if source == 0 else "mac_to_windows",
@@ -229,9 +248,11 @@ def run_case(mode, source, rate, profile, actions):
         "delivered_moves": len(sink.times),
         "simulated_sample_age_ms": {"p99": percentile(sink.ages, 0.99), "max": round(max(sink.ages), 3)},
         "simulated_max_delivery_gap_ms": round(max(gaps), 3),
-        "simulated_first_delivery_delay_ms": round(sink.times[0] * 1000, 3),
-        "simulated_final_position_delay_ms": round((sink.times[-1] - (rate - 1) / rate) * 1000, 3),
-        "datagrams_sent_including_receipts_and_retries": network.datagrams,
+        "simulated_first_delivery_delay_ms": round((sink.times[0] - started) * 1000, 3),
+        "simulated_final_position_delay_ms": round((sink.times[-1] - started - (rate - 1) / rate) * 1000, 3),
+        "datagrams_sent_including_probes_receipts_and_retries": network.datagrams,
+        "preflight_datagrams": probe_packets,
+        "preflight_result": probe.state if probe is not None else "not_applicable",
         "datagram_payload_bytes": network.datagram_bytes,
         "datagrams_dropped": network.dropped,
         "ordered_frames": reliable.sent,
@@ -257,6 +278,7 @@ def main():
         "outage_80ms",
         "last_movement_lost",
         "udp_blocked",
+        "udp_fails_after_start",
         "receipts_blocked",
         "action_path_delayed",
     )

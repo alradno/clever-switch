@@ -7,15 +7,34 @@ import pytest
 from cleverswitch.flow.input_geometry import Desktop, Display
 from cleverswitch.flow.input_protocol import Kind, Packet
 from cleverswitch.flow.input_session import Session
-from experiments.motion_lane import HEADER, MAX_COUNTER, Codec, Motion, Receipt, Receiver, Reliable, Sender, lab_codecs
+from experiments.benchmark_motion import run_case
+from experiments.motion_lane import (
+    HEADER,
+    MAX_COUNTER,
+    Codec,
+    Motion,
+    PathProbe,
+    Probe,
+    Receipt,
+    Receiver,
+    Reliable,
+    Sender,
+    lab_codecs,
+)
 
 
 class Lab:
     def __init__(self, source=0):
         self.codecs = lab_codecs()
         self.moves, self.receipts, self.actions, self.delivered = [], [], [], []
-        self.sender = Sender(self.codecs[source], 7, (100, 100), self.moves.append, self.actions.append)
         self.receiver = Receiver(self.codecs[1 - source], self.receipts.append, self.delivered.append)
+        self.probe = PathProbe(self.codecs[source], self.moves.append)
+        self.probe.start(0)
+        self.receiver.receive(self.moves.pop())
+        self.probe.receive(self.receipts.pop(), 0.004)
+        self.sender = Sender(
+            self.codecs[source], 7, (100, 100), self.moves.append, self.actions.append, probe=self.probe
+        )
         self.receiver.begin(7, (100, 100))
 
     def udp(self, now=0):
@@ -122,7 +141,7 @@ def test_blocked_udp_has_finite_retries_then_reliable_final_position(lab):
         lab.sender.tick(now)
     assert len(lab.moves) == 4
     assert lab.sender.mode == "reliable" and lab.sender.deadline is None
-    assert len(lab.actions) == 1 and lab.actions[0].position == (120, 130)
+    assert len(lab.actions) == 3 and all(frame.position == (120, 130) for frame in lab.actions)
     lab.reliable()
     assert lab.receiver.position == (120, 130)
     lab.sender.move((140, 150), 1)
@@ -243,6 +262,84 @@ def test_counter_exhaustion_and_closed_key_cannot_reuse_nonce():
     assert codec.open(raw) is None
 
 
+def test_unprobed_path_uses_reliable_input_immediately(lab):
+    sender = Sender(lab.sender.codec, 7, (100, 100), lab.moves.append, lab.actions.append)
+    sender.move((120, 130), 0)
+    lab.reliable()
+    assert sender.mode == "reliable" and sender.deadline is None
+    assert lab.receiver.position == (120, 130) and not lab.moves
+
+
+def test_probe_can_validate_without_input_focus_and_stops_when_ready(lab):
+    assert lab.probe.state == "ready" and lab.probe.deadline is None
+    assert lab.delivered == [] and lab.sender.mode == "datagram"
+    lab.probe.start(1)
+    lab.probe.tick(86400)
+    assert lab.moves == []
+
+
+def test_blocked_probe_has_three_attempts_no_periodic_work_and_cannot_enable(lab):
+    probe = PathProbe(lab.sender.codec, lab.moves.append)
+    probe.start(0)
+    for now in (0.016, 0.048, 0.100, 1, 86400):
+        probe.tick(now)
+    assert probe.state == "unavailable" and probe.deadline is None and len(lab.moves) == 3
+    sender = Sender(lab.sender.codec, 7, (100, 100), lab.moves.append, lab.actions.append, probe=probe)
+    assert sender.mode == "reliable"
+
+
+def test_probe_rejects_wrong_challenge_late_reply_and_another_connection(lab):
+    probe = PathProbe(lab.sender.codec, lab.moves.append)
+    probe.start(0)
+    probe.receive(lab.receiver.codec.seal(Probe(True, b"x" * 16)), 0.001)
+    assert probe.state == "pending"
+    probe.receive(lab.receiver.codec.seal(Probe(True, probe.challenge)), 0.100)
+    assert probe.state == "unavailable"
+    other, _ = lab_codecs()
+    sender = Sender(other, 7, (100, 100), lab.moves.append, lab.actions.append, probe=lab.probe)
+    assert sender.mode == "reliable"
+
+
+def test_lost_probe_response_can_retry_without_enabling_input(lab):
+    lab.receiver.end()
+    probe = PathProbe(lab.sender.codec, lab.moves.append)
+    probe.start(0)
+    lab.receiver.receive(lab.moves.pop())
+    lab.receipts.clear()
+    probe.tick(0.016)
+    lab.receiver.receive(lab.moves.pop())
+    probe.receive(lab.receipts.pop(), 0.020)
+    assert probe.state == "ready" and not lab.delivered and lab.receiver.epoch is None
+
+
+def test_probe_socket_failure_and_late_response_keep_reliable_mode(lab):
+    def fail(raw):
+        raise OSError("Synthetic probe failure")
+
+    probe = PathProbe(lab.sender.codec, fail)
+    probe.start(0)
+    assert probe.state == "unavailable" and probe.deadline is None
+    probe.receive(lab.receiver.codec.seal(Probe(True, probe.challenge)), 0.001)
+    assert probe.state == "unavailable"
+
+
+def test_reply_socket_failure_does_not_break_valid_motion_or_open_focus(lab):
+    def fail(raw):
+        raise OSError("Synthetic reply failure")
+
+    lab.receiver.datagram = fail
+    probe = PathProbe(lab.sender.codec, lab.moves.append)
+    probe.start(0)
+    lab.receiver.receive(lab.moves.pop())
+    assert probe.state == "pending" and not lab.delivered
+    lab.sender.move((120, 130), 0)
+    lab.receiver.receive(lab.moves.pop())
+    assert lab.receiver.position == (120, 130) and not lab.receipts
+    lab.sender.tick(0.101)
+    lab.reliable()
+    assert lab.sender.mode == "reliable" and lab.receiver.position == (120, 130)
+
+
 @pytest.mark.parametrize(
     "kind,values", [(Kind.KEY, (4, 1)), (Kind.BUTTON, (0, 1)), (Kind.WHEEL, (0, 1)), (Kind.LOCKS, (1, 7))]
 )
@@ -355,3 +452,11 @@ def test_existing_session_releases_pressed_input_when_hybrid_focus_ends(lab):
         (Kind.KEY, (4, 0)),
         (Kind.BUTTON, (0, 0)),
     }
+
+
+@pytest.mark.parametrize("source", [0, 1], ids=["windows_to_mac", "mac_to_windows"])
+@pytest.mark.parametrize("rate", [125, 1000])
+def test_confirmed_path_outage_keeps_pointer_progress_before_mode_fallback(source, rate):
+    result = run_case("hybrid", source, rate, "udp_fails_after_start", True)
+    assert result["simulated_max_delivery_gap_ms"] <= 24
+    assert result["final_mode"] == "reliable" and result["verified_actions_and_positions"] == 4

@@ -56,6 +56,16 @@ class Receipt:
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
+class Probe:
+    response: bool
+    challenge: bytes
+
+    def __post_init__(self):
+        if type(self.response) is not bool or type(self.challenge) is not bytes or len(self.challenge) != 16:
+            raise ValueError("Invalid path challenge")
+
+
+@dataclasses.dataclass(frozen=True, repr=False)
 class Reliable:
     kind: Kind
     epoch: int
@@ -112,6 +122,8 @@ class Codec:
             payload = b"M" + MOTION.pack(message.epoch, message.serial, message.after_action, *message.position)
         elif isinstance(message, Receipt):
             payload = b"A" + ACK.pack(message.epoch, message.serial)
+        elif isinstance(message, Probe):
+            payload = (b"R" if message.response else b"Q") + message.challenge
         else:
             raise ValueError("Invalid datagram message")
         self.sent += 1
@@ -137,6 +149,8 @@ class Codec:
                 result = Motion(epoch, serial, action, (x, y))
             elif len(payload) == 1 + ACK.size and payload[0:1] == b"A":
                 result = Receipt(*ACK.unpack(payload[1:]))
+            elif len(payload) == 17 and payload[0:1] in (b"Q", b"R"):
+                result = Probe(payload[0:1] == b"R", payload[1:])
             else:
                 return None
         except (InvalidTag, ValueError, struct.error):
@@ -155,20 +169,73 @@ def lab_codecs():
     return tuple(Codec(secret, session_id, role) for role in ("windows", "mac"))
 
 
+class PathProbe:
+    """One finite check after TLS authentication, before selecting the fast path.
+
+    A failed check leaves input on the reliable path. No periodic retry is
+    scheduled; a later connection/lifecycle event may create a new probe.
+    """
+
+    offsets = (0, 0.016, 0.048)
+    timeout = 0.1
+
+    def __init__(self, codec, datagram):
+        self.codec, self.datagram = codec, datagram
+        self.challenge = secrets.token_bytes(16)
+        self.state = "new"
+        self.started = None
+        self.attempts = 0
+
+    @property
+    def deadline(self):
+        if self.state != "pending":
+            return None
+        return self.started + (self.offsets[self.attempts] if self.attempts < len(self.offsets) else self.timeout)
+
+    def start(self, now):
+        if self.state != "new":
+            return
+        self.started, self.state = now, "pending"
+        self.tick(now)
+
+    def tick(self, now):
+        if self.deadline is None or now < self.deadline:
+            return
+        if now >= self.started + self.timeout:
+            self.state = "unavailable"
+            return
+        self.attempts += 1
+        try:
+            self.datagram(self.codec.seal(Probe(False, self.challenge)))
+        except OSError:
+            self.state = "unavailable"
+
+    def receive(self, raw, now):
+        if self.state != "pending":
+            return
+        if now >= self.started + self.timeout:
+            self.state = "unavailable"
+            return
+        message = self.codec.open(raw)
+        if isinstance(message, Probe) and message.response and message.challenge == self.challenge:
+            self.state = "ready"
+
+
 class Sender:
     retry_offsets = (0.008, 0.024, 0.056)
+    checkpoint_interval = 0.016
     acknowledgement_timeout = 0.1
 
-    def __init__(self, codec, epoch, position, datagram, reliable):
+    def __init__(self, codec, epoch, position, datagram, reliable, *, probe=None):
         Packet(Kind.MOVE, epoch, position)
         self.codec, self.epoch, self.position = codec, epoch, position
         self.datagram, self.reliable = datagram, reliable
         self.serial = self.action = self.acknowledged = 0
         self.latest = None
-        self.unacknowledged_since = self.retry_at = None
+        self.unacknowledged_since = self.retry_at = self.checkpoint_at = None
         self.retry_origin = 0
         self.retries = 0
-        self.mode = "datagram"
+        self.mode = "datagram" if probe is not None and probe.codec is codec and probe.state == "ready" else "reliable"
 
     @property
     def deadline(self):
@@ -177,12 +244,14 @@ class Sender:
         values = [self.unacknowledged_since + self.acknowledgement_timeout]
         if self.retry_at is not None:
             values.append(self.retry_at)
+        if self.checkpoint_at is not None:
+            values.append(self.checkpoint_at)
         return min(values)
 
     def _fallback(self):
         self.mode = "reliable"
         self.latest = None
-        self.retry_at = self.unacknowledged_since = None
+        self.retry_at = self.checkpoint_at = self.unacknowledged_since = None
         self.reliable(Reliable(Kind.MOVE, self.epoch, self.action, self.serial, self.position))
 
     def _send_latest(self):
@@ -204,6 +273,7 @@ class Sender:
         self.latest = Motion(self.epoch, self.serial, self.action, position)
         if self.unacknowledged_since is None:
             self.unacknowledged_since = now
+            self.checkpoint_at = now + self.checkpoint_interval
         self.retry_origin, self.retries = now, 0
         self.retry_at = now + self.retry_offsets[0]
         self._send_latest()
@@ -228,15 +298,24 @@ class Sender:
         self.acknowledged = message.serial
         if message.serial == self.serial:
             self.latest = None
-            self.retry_at = self.unacknowledged_since = None
+            self.retry_at = self.checkpoint_at = self.unacknowledged_since = None
         elif self.latest is not None:
             self.unacknowledged_since = now
+            self.checkpoint_at = now + self.checkpoint_interval
 
     def tick(self, now):
         if self.deadline is None or now < self.deadline:
             return
         if now >= self.unacknowledged_since + self.acknowledgement_timeout:
             self._fallback()
+            return
+        if self.checkpoint_at is not None and now >= self.checkpoint_at:
+            # Keep pointer progress if a previously usable UDP path disappears.
+            # Healthy ACKs cancel this work; it ends at the same finite fallback
+            # deadline. A late snapshot cannot override a newer datagram.
+            self.reliable(Reliable(Kind.MOVE, self.epoch, self.action, self.serial, self.position))
+            self.checkpoint_at = now + self.checkpoint_interval
+        if self.retry_at is None or now < self.retry_at:
             return
         self.retries += 1
         self.retry_at = (
@@ -247,7 +326,7 @@ class Sender:
     def stop(self):
         self.mode = "closed"
         self.latest = None
-        self.retry_at = self.unacknowledged_since = None
+        self.retry_at = self.checkpoint_at = self.unacknowledged_since = None
 
 
 class Receiver:
@@ -281,6 +360,12 @@ class Receiver:
 
     def receive(self, raw):
         message = self.codec.open(raw)
+        if isinstance(message, Probe) and not message.response:
+            try:
+                self.datagram(self.codec.seal(Probe(True, message.challenge)))
+            except OSError:
+                pass
+            return
         if not isinstance(message, Motion) or message.epoch != self.epoch:
             return
         # ACK means authenticated receipt, not that a blocked action was applied.
