@@ -25,7 +25,7 @@ from benchmarks.input_stream import MemoryInput, percentile, until  # noqa: E402
 from cleverswitch.flow.identity import Pairing  # noqa: E402
 from cleverswitch.flow.input_protocol import Kind  # noqa: E402
 from cleverswitch.flow.input_service import Service  # noqa: E402
-from cleverswitch.flow.network import Link  # noqa: E402
+from cleverswitch.flow.network import Discovery, Link  # noqa: E402
 
 
 class Relay:
@@ -155,7 +155,7 @@ class ObservedInput(MemoryInput):
 
 
 @contextlib.contextmanager
-def connected(directory):
+def connected(directory, *, hybrid=False):
     pairings = [Pairing(directory / role, testing=True) for role in ("windows", "mac")]
     invitation, response = directory / "invitation.json", directory / "response.json"
     pairings[0].create_invitation(invitation, "127.0.0.1", "127.0.0.0/8")
@@ -167,29 +167,51 @@ def connected(directory):
         pairing.save(config)
     links = [Link(pairing, lambda op, args: {}, port=0) for pairing in pairings]
     services = [Service(link, ObservedInput(), enabled=True) for link in links]
+    discoveries = [Discovery(link, 0) for link in links] if hybrid else []
     relay = None
     try:
         for link in links:
             link.start()
+        for discovery in discoveries:
+            discovery.start()
+        if discoveries:
+            discoveries[0].peer_port, discoveries[1].peer_port = discoveries[1].port, discoveries[0].port
         relay = Relay(links[1].port)
         links[1].port, links[0].port = links[0].port, relay.port
-        services[0].connect()
-        until(lambda: services[1].channel is not None)
+        services[0].connect(services[1].capabilities())
+        until(lambda: all(service._available() for service in services))
+        if hybrid:
+            until(lambda: all(service.channel.lane.probe.state == "ready" for service in services))
         if any(service.channel.connection.version() != "TLSv1.3" for service in services):
             raise RuntimeError("End-to-end TLS was not established")
         yield services, relay
     finally:
         for service in services:
             service.close()
+        for discovery in discoveries:
+            discovery.close()
         for link in links:
             link.close()
         if relay is not None:
             relay.close()
 
 
-def run_case(directory, rate, source, profile, include_actions):
-    with connected(directory) as (services, relay):
+def run_case(directory, rate, source, profile, include_actions, *, hybrid=False, drop_every=0):
+    with connected(directory, hybrid=hybrid) as (services, relay):
         sender, receiver = services[source], services[1 - source]
+        datagrams = {"attempted": 0, "dropped": 0}
+        if drop_every:
+            transport = sender.channel.transport
+            send_motion = transport.send_motion
+
+            def lossy(raw, peer):
+                datagrams["attempted"] += 1
+                if datagrams["attempted"] % drop_every == 0:
+                    datagrams["dropped"] += 1
+                else:
+                    send_motion(raw, peer)
+
+            transport.send_motion = lossy
         direction = 1 if sender.role == "windows" else -1
         boundary = sender.backend.desktop.right if direction == 1 else 0
         sender.motion(boundary - direction * 100, 400, direction, 0)
@@ -239,7 +261,8 @@ def run_case(directory, rate, source, profile, include_actions):
         gaps = [(second[0] - first[0]) * 1000 for first, second in itertools.pairwise(samples)]
         if not samples or not gaps or relay.failure:
             raise RuntimeError("Incomplete relay measurement")
-        if profile == "stall_80ms" and relay.held_bytes == 0:
+        # In the hybrid path a motion-only stream can bypass the relay entirely.
+        if profile == "stall_80ms" and (not hybrid or include_actions) and relay.held_bytes == 0:
             raise RuntimeError("The relay did not exercise the requested stall")
         result = {
             "direction": sender.role + "_to_" + receiver.role,
@@ -264,7 +287,13 @@ def run_case(directory, rate, source, profile, include_actions):
             "pressed_input_released": True,
             "final_position_delivered": True,
             "end_to_end_tls": "TLSv1.3",
+            "transport": "hybrid" if hybrid else "reliable",
+            "synthetic_datagram_loss": datagrams,
         }
+        if hybrid:
+            until(lambda: sender.channel.lane.sender.latest is None)
+            result["motion_mode"] = sender.channel.lane.sender.mode
+            result["idle_motion_deadline"] = sender.channel.lane.deadline
         if not sender.session.leave():
             raise RuntimeError("Synthetic return to local input failed")
         until(lambda: receiver.session.phase == "local")
