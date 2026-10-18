@@ -1,0 +1,135 @@
+{
+  "edition": "0.5.8",
+  "source_commit": "99b7a33d50b2dc8a57312714743706e3a4ab76c8",
+  "observed_at": "2026-10-18T03:24:52.505757+00:00",
+  "scope": "shared_production_input_engine_with_simulated_native_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Retire previous local edge arming when a new input focus starts, so a remote arrival cannot reuse stale authorization to cross back",
+    "Rearm immediately after a real inward physical takeover, so the next report can intentionally cross without an extra movement",
+    "Track the latest injected Mac pointer position as the baseline for subsequent local physical motion, matching the Windows behavior"
+  ],
+  "regressions": {
+    "reference_commit": "46023083c97d56faec5d8799a67320bf14c657d3",
+    "before": {
+      "tests": 12,
+      "failures": 10,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted_after": {
+      "tests": 157,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases_in_complete_suite": 16,
+    "inward_takeover_before": {
+      "tests": 4,
+      "failures": 4,
+      "errors": 0,
+      "skipped": 0
+    },
+    "inward_takeover_reference": "ef2495cbedeb2458ef660b304c6d994ad34293aa",
+    "arrival_cases": 8,
+    "native_delta_cases": 4,
+    "rapid_native_round_trips_preserved": 64,
+    "simulated_APIs": "User32 and Quartz doubles only; no native hooks, taps or injection",
+    "transports": [
+      "mutual TLS only",
+      "mutual TLS plus encrypted UDP"
+    ],
+    "directions": [
+      "Windows source / Mac target",
+      "Mac source / Windows target"
+    ],
+    "departure_modes": [
+      "ordinary return",
+      "physical local cancellation"
+    ]
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1269,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.56254225828262,
+    "mac_build": {
+      "edition": "0.5.8",
+      "built_at": "2026-10-18T03:17:51.057179+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "237634ce9a419d848a99ca81c4b173248a617e57c7ffdea74fd77108e7ec8605"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39093230925",
+    "head_sha": "99b7a33d50b2dc8a57312714743706e3a4ab76c8",
+    "conclusion": "success",
+    "tests": {
+      "tests": 1269,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 92.82463186077644,
+    "packaged_native_check": {
+      "edition": "0.5.8",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_actions": 104,
+      "burst_cases": 54,
+      "final_positions_and_releases_verified": true
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-99b7a33d50b2dc8a57312714743706e3a4ab76c8",
+      "id": 12123547463,
+      "sha256": "718246d8559f4c04c4449e9001d4f9702be72524672fbf4365151b7e7d5502c9"
+    },
+    {
+      "name": "CleverSwitch-Windows-99b7a33d50b2dc8a57312714743706e3a4ab76c8",
+      "id": 12123179521,
+      "sha256": "01eeef03b26748ad882e1ab04106150c2948b26cc62cde2f8eeb7c9ed53507a6"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Loopback tests and native builds do not prove physical mouse/keyboard smoothness or Wi-Fi latency",
+    "Home Windows, actual keyboard recovery, displays, sleep, DHCP and energy have not been accepted with this candidate",
+    "No OS protection, permissions, firewall, router, VPN, pairing or login configuration changed"
+  ],
+  "remaining": [
+    "Joint physical acceptance in both directions from the same candidate",
+    "Easy-Switch, monitor changes, sleep, DHCP and energy measurements"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.8.zip",
+      "sha256": "565b74abed56d6c0e597c06764a1fcf34e54e7d4c3088b2a170efaf49bfc6302"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.8.zip",
+      "sha256": "01eeef03b26748ad882e1ab04106150c2948b26cc62cde2f8eeb7c9ed53507a6"
+    }
+  }
+}
