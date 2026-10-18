@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.17, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.18, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,26 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.18
+La 0.5.18 evita dejar una tecla o un arrastre pulsados al iniciar un cruce.
+Si la pulsación llegó a la aplicación local antes de empezar la captura,
+su repetición y su liberación siguen llegando allí aunque la captura ya haya
+empezado. El cruce se cancela y puede repetirse después, sobre el mismo enlace.
+Conserva el destino de las nuevas pulsaciones capturadas. La corrección es común
+a Mac y Windows y no añade esperas, sondeos, hilos ni consultas nativas.
+
+Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Se añaden
+39 casos de pulsaciones: 32 reproducen la pérdida anterior de repetición o
+liberación y siete comprueban avisos de dispositivos, cola saturada, inicio
+y cierre. Pasan 227
+pruebas focalizadas. Además, 16 casos fuerzan la cola de movimiento y rueda
+sin cambiar sus posiciones esperadas. Se comprueban teclas, modificadores
+y botones en ambos sentidos, con TLS o transporte híbrido. Las APIs nativas y la entrega a las
+aplicaciones son simuladas; TLS/UDP usan loopback real. La aceptación física
+de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.18-press-ownership.json. Candidata sin instalar.
+
 REVISIÓN 0.5.17
 La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
 último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
@@ -19,7 +39,7 @@ el estado anterior. Un cambio físico de Bloq Mayús sigue teniendo prioridad.
 Se comprueban cruces iniciados en ambos equipos, con TLS y transporte híbrido.
 No añade esperas, sondeos, hilos ni consultas al recorrido del ratón.
 
-Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
+La validación de 0.5.17 registró 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
 nuevos reproducen el fallo anterior en la comparación local; también pasan
 256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
 cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
