@@ -1,0 +1,128 @@
+{
+  "edition": "0.5.16",
+  "source_commit": "27bd356e4ac8f798d22cede5bfe5edda238160b0",
+  "observed_at": "2026-10-18T07:08:57.425208+00:00",
+  "scope": "production_native_adapters_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Set the Mac wheel event location to the last ordered pointer position before posting",
+    "Preserve the scroll target while WindowServer has not applied preceding movement yet",
+    "Keep horizontal and vertical fractional deltas and negative/fractional display coordinates",
+    "Verify Windows ordered SendInput move/wheel records as a control in both transport modes",
+    "Use existing ordered state; no added waits, native cursor queries, threads, polling or protocol changes"
+  ],
+  "regressions": {
+    "reference_commit": "0c19c5ac35356614bdc10c17d82c0960bc1cbd26",
+    "reference_source_edition": "0.5.15",
+    "before": {
+      "tests": 22,
+      "failures": 12,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted_after": {
+      "tests": 186,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases_in_complete_suite": 22,
+    "cases": [
+      "Windows to Mac and Mac to Windows; reliable TLS and hybrid encrypted UDP",
+      "single and 24-scroll bursts interleaved with movement; both scroll axes and fractional deltas",
+      "native posting returns while the simulated OS cursor has not processed movement",
+      "compare each native wheel target with its ordered position, not just delivered protocol packets",
+      "negative and fractional Mac positions; absent ordered position; native event creation failure"
+    ],
+    "physical_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1615,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.85431250825519,
+    "mac_build": {
+      "edition": "0.5.16",
+      "built_at": "2026-10-18T07:01:06.043342+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "bb37d53a2a58d248ef3c01882119e74e73b9510d5d541a1edb3c280e9af91f74"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39106151394",
+    "head_sha": "27bd356e4ac8f798d22cede5bfe5edda238160b0",
+    "conclusion": "success",
+    "tests": {
+      "tests": 1615,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.05519225738948,
+    "packaged_native_check": {
+      "edition": "0.5.16",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-27bd356e4ac8f798d22cede5bfe5edda238160b0",
+      "id": 12128970626,
+      "sha256": "032a4ee566d778081c15a77977a4cea7e871baf3c8bc40405e16217361b40de7"
+    },
+    {
+      "name": "CleverSwitch-Windows-27bd356e4ac8f798d22cede5bfe5edda238160b0",
+      "id": 12128049627,
+      "sha256": "d1755db38e9eb8c38973cd1c5440a56236c04920a96921b4296faae88d7b221e"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input and delayed WindowServer application are simulated; no real input is captured or injected",
+    "Native compilation and loopback tests do not establish physical smoothness or Wi-Fi/display latency",
+    "Home Windows, Easy-Switch recovery, displays, sleep, DHCP and energy still require joint physical acceptance",
+    "No protections, permissions, firewall, router, VPN, pairing or login settings changed"
+  ],
+  "remaining": [
+    "Joint physical acceptance in both directions from the same candidate",
+    "Easy-Switch, display changes, sleep, DHCP and energy measurements"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.16.zip",
+      "sha256": "dab46b5e9e0e5b4d922ad79f196af9f4bc35f0a08a6299b99d832722c906f767"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.16.zip",
+      "sha256": "d1755db38e9eb8c38973cd1c5440a56236c04920a96921b4296faae88d7b221e"
+    }
+  }
+}
