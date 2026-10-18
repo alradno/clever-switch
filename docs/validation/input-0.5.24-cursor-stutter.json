@@ -1,14 +1,15 @@
 {
   "edition": "0.5.24",
-  "source_commit": null,
+  "source_commit": "e5b9f9311c7822de9f08139ebe18db245468e257",
   "reference_commit": "414e829f1f26dd75f90b1854a36ade22fdd34442",
-  "observed_at": "2026-10-18T18:26:02.491092+00:00",
-  "status": "mac_validated; Windows_native_CI_pending",
+  "observed_at": "2026-10-18T19:12:30.293154+00:00",
+  "status": "candidate_validated_on_both_platforms; physical_acceptance_pending",
   "scope": "simulated_native_input_and_real_TLS_UDP_loopback; read_only_native_clock_and_permission_probes",
   "corrections": [
     "Coalesce pending pointer positions across PING/PONG while preserving action, focus and hybrid serial boundaries.",
     "Calculate socket wait from current time after routing/decoding/native delivery, without extending liveness deadlines.",
-    "Date Quartz button events from the macOS uptime clock instead of the newly constructed event timestamp, observed as zero."
+    "Date Quartz button events from the macOS uptime clock instead of the newly constructed event timestamp, observed as zero.",
+    "Use the same high-resolution monotonic perf_counter domain throughout callbacks, sessions, native click-age conversion, readiness and transport; retain native OS timestamp domains."
   ],
   "instrumentation": {
     "storage": "fixed aggregates only; no event payloads, keys, positions or history",
@@ -40,34 +41,122 @@
       "skipped": 0
     },
     "corrected": "all cases included in full passing suite",
-    "new_cases": 75
+    "new_cases": 83,
+    "clock_baseline": {
+      "commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260",
+      "tests": 8,
+      "failures": 4,
+      "controls_passed": 4,
+      "corrected_tests_passed": 8,
+      "method": "Deterministic Windows-style coarse uptime clock on Mac; strict retry and duration checks retained."
+    }
   },
   "mac": {
     "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "python": "3.14.6",
     "suite": {
-      "tests": 2094,
+      "tests": 2102,
       "failures": 0,
       "errors": 0,
-      "skipped": 0
+      "skipped": 0,
+      "seconds": 119.242
     },
     "coverage_percent": 93.49021614017138,
     "ruff": "passed",
     "diff_check": "passed",
     "build": {
       "edition": "0.5.24",
-      "built_at": "2026-10-18T18:26:05.413278+00:00",
+      "built_at": "2026-10-18T18:55:57.581174+00:00",
       "signature_valid": true,
       "modules_match_sources": 27,
       "preview_exit_code": 0,
       "installed": false,
       "installed_edition": "0.5.23",
-      "executable_sha256": "aefe21141f3cd24b61e904aabbc86eb6c50758ad8eb6c4ff82b6f2d14a23216e"
+      "executable_sha256": "f06fbad196c742f28f27cf6594f0586a096b56bdb92192b00bf441ad61cef17f",
+      "source_commit": "e5b9f9311c7822de9f08139ebe18db245468e257"
     }
   },
   "windows": {
-    "status": "pending_native_CI",
-    "physical_acceptance": "pending"
+    "status": "validated_in_native_CI",
+    "run_url": "https://github.com/alradno/clever-switch/actions/runs/39156379856",
+    "source_commit": "e5b9f9311c7822de9f08139ebe18db245468e257",
+    "suite": {
+      "tests": 2102,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 526.823
+    },
+    "coverage_percent": 93.66607550038003,
+    "ruff": "passed",
+    "build": "passed",
+    "packaged_check": {
+      "edition": "0.5.24",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "manifest": {
+      "edition": "0.5.24",
+      "protocol": 2,
+      "files": {
+        "CleverSwitchTray.exe": "daf625dc4122f2c411799618a3e2ba76c7bccf8dbea92280c6b532892a10c11f",
+        "Install-CleverSwitch.ps1": "06dd4a02d6338b746408687376d1af6490d2e1791b69b092730ca43e284fd4bf",
+        "Configure-CleverSwitchFirewall.ps1": "3a3d0571dde1e0a12da3a35457b848a8634fe0700873aac58811119cef2f1a1b"
+      }
+    },
+    "installers_match_sources_except_Windows_CRLF": true,
+    "timing": {
+      "scope": "aggregate_CPU_microbenchmark_including_loop_and_clock_cost",
+      "clocks": {
+        "perf_counter": {
+          "implementation": "QueryPerformanceCounter()",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 1e-07
+        },
+        "monotonic": {
+          "implementation": "GetTickCount64()",
+          "monotonic": true,
+          "adjustable": false,
+          "resolution": 0.015625
+        }
+      },
+      "excludes": [
+        "native_API_cost",
+        "network",
+        "OS_scheduling",
+        "screen",
+        "physical_latency"
+      ],
+      "cases": [
+        {
+          "mode": "callback_aggregates",
+          "iterations": 100000,
+          "repeats": 5,
+          "median_microseconds_per_iteration": 1.908,
+          "maximum_run_average_microseconds": 2.161
+        },
+        {
+          "mode": "stage_aggregate",
+          "iterations": 100000,
+          "repeats": 5,
+          "median_microseconds_per_iteration": 1.085,
+          "maximum_run_average_microseconds": 1.219
+        },
+        {
+          "mode": "contended_stage_aggregate",
+          "iterations": 100000,
+          "repeats": 5,
+          "median_microseconds_per_iteration": 0.466,
+          "maximum_run_average_microseconds": 0.47
+        }
+      ]
+    },
+    "physical_acceptance": "pending",
+    "native_capture_or_injection_performed": false
   },
   "periodic_stalls": {
     "cases": 16,
@@ -360,7 +449,8 @@
         "requested_pause_ms": 140,
         "scope": "simulated_native_input_real_loopback; imposed_stalls_are_not_removed"
       }
-    ]
+    ],
+    "measured_source_commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260"
   },
   "frequency_model": {
     "scope": "ideal_continuous_motion_sampled_by_two_unsynchronized_clocks",
@@ -711,10 +801,25 @@
         "maximum_reports_per_frame": 5,
         "any_80ms_pause": false
       }
-    ]
+    ],
+    "measured_source_commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260"
   },
   "timing_overhead": {
     "scope": "aggregate_CPU_microbenchmark_including_loop_and_clock_cost",
+    "clocks": {
+      "perf_counter": {
+        "implementation": "mach_absolute_time()",
+        "monotonic": true,
+        "adjustable": false,
+        "resolution": 4.166666666666666e-08
+      },
+      "monotonic": {
+        "implementation": "mach_absolute_time()",
+        "monotonic": true,
+        "adjustable": false,
+        "resolution": 4.166666666666666e-08
+      }
+    },
     "excludes": [
       "native_API_cost",
       "network",
@@ -727,22 +832,22 @@
         "mode": "callback_aggregates",
         "iterations": 100000,
         "repeats": 5,
-        "median_microseconds_per_iteration": 0.499,
-        "maximum_run_average_microseconds": 0.501
+        "median_microseconds_per_iteration": 0.491,
+        "maximum_run_average_microseconds": 0.494
       },
       {
         "mode": "stage_aggregate",
         "iterations": 100000,
         "repeats": 5,
-        "median_microseconds_per_iteration": 0.261,
-        "maximum_run_average_microseconds": 0.266
+        "median_microseconds_per_iteration": 0.264,
+        "maximum_run_average_microseconds": 0.268
       },
       {
         "mode": "contended_stage_aggregate",
         "iterations": 100000,
         "repeats": 5,
-        "median_microseconds_per_iteration": 0.127,
-        "maximum_run_average_microseconds": 0.128
+        "median_microseconds_per_iteration": 0.129,
+        "maximum_run_average_microseconds": 0.131
       }
     ]
   },
@@ -751,7 +856,8 @@
     "iterations_per_run": 100000,
     "runs": 5,
     "median_microseconds": 0.831,
-    "maximum_run_average_microseconds": 0.853
+    "maximum_run_average_microseconds": 0.853,
+    "measured_source_commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260"
   },
   "native_event_clock": {
     "scope": "read_only_event_construction_without_post_or_capture",
@@ -775,7 +881,8 @@
         "timestamp_ns": 0
       }
     ],
-    "clock": "namespace(implementation='mach_absolute_time()', monotonic=True, adjustable=False, resolution=4.166666666666666e-08)"
+    "clock": "namespace(implementation='mach_absolute_time()', monotonic=True, adjustable=False, resolution=4.166666666666666e-08)",
+    "measured_source_commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260"
   },
   "installed_observations": {
     "mac": "0.5.23",
@@ -797,5 +904,184 @@
     "local override, ordering and releases",
     "existing firewall, permissions and protections"
   ],
-  "installed": false
+  "installed": false,
+  "local_tested_commit": "861fe27d047e4da1b6ba23ac42bfb64232580ec2",
+  "published_tree_identical_to_tested_tree": true,
+  "continuous_idle_keyboard": {
+    "scope": "continuous_synthetic_movement_idle_keyboard_real_pinned_TLS_UDP_loopback_on_one_Mac",
+    "imposed_stalls": false,
+    "does_not_measure": [
+      "native_capture",
+      "Bluetooth",
+      "WiFi",
+      "compositor",
+      "recording",
+      "physical_mouse_to_screen_latency"
+    ],
+    "cases": [
+      {
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "rate_hz": 125,
+        "seconds": 5,
+        "offered_moves": 625,
+        "delivered_moves": 624,
+        "maximum_source_gap_ms": 10.015,
+        "maximum_delivery_gap_ms": 15.724,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 1.848,
+        "completion_max_ms": 4.91,
+        "gc_collections": 0,
+        "gc_max_ms": 0
+      },
+      {
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "rate_hz": 125,
+        "seconds": 5,
+        "offered_moves": 625,
+        "delivered_moves": 624,
+        "maximum_source_gap_ms": 12.014,
+        "maximum_delivery_gap_ms": 15.046,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 2.204,
+        "completion_max_ms": 5.95,
+        "gc_collections": 0,
+        "gc_max_ms": 0
+      },
+      {
+        "direction": "windows_to_mac",
+        "hybrid": false,
+        "rate_hz": 1000,
+        "seconds": 5,
+        "offered_moves": 5000,
+        "delivered_moves": 4950,
+        "maximum_source_gap_ms": 9.394,
+        "maximum_delivery_gap_ms": 12.639,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 0.997,
+        "completion_max_ms": 4.246,
+        "gc_collections": 2,
+        "gc_max_ms": 1.637
+      },
+      {
+        "direction": "mac_to_windows",
+        "hybrid": false,
+        "rate_hz": 1000,
+        "seconds": 5,
+        "offered_moves": 5000,
+        "delivered_moves": 4939,
+        "maximum_source_gap_ms": 11.879,
+        "maximum_delivery_gap_ms": 21.705,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 1.107,
+        "completion_max_ms": 5.76,
+        "gc_collections": 3,
+        "gc_max_ms": 0.287
+      },
+      {
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "rate_hz": 125,
+        "seconds": 5,
+        "offered_moves": 625,
+        "delivered_moves": 625,
+        "maximum_source_gap_ms": 13.834,
+        "maximum_delivery_gap_ms": 14.214,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 2.041,
+        "completion_max_ms": 5.246,
+        "gc_collections": 0,
+        "gc_max_ms": 0
+      },
+      {
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "rate_hz": 125,
+        "seconds": 5,
+        "offered_moves": 625,
+        "delivered_moves": 625,
+        "maximum_source_gap_ms": 13.469,
+        "maximum_delivery_gap_ms": 13.087,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 2.115,
+        "completion_max_ms": 3.817,
+        "gc_collections": 1,
+        "gc_max_ms": 0.924
+      },
+      {
+        "direction": "windows_to_mac",
+        "hybrid": true,
+        "rate_hz": 1000,
+        "seconds": 5,
+        "offered_moves": 5000,
+        "delivered_moves": 4951,
+        "maximum_source_gap_ms": 12.019,
+        "maximum_delivery_gap_ms": 13.626,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 0.93,
+        "completion_max_ms": 13.054,
+        "gc_collections": 2,
+        "gc_max_ms": 0.224
+      },
+      {
+        "direction": "mac_to_windows",
+        "hybrid": true,
+        "rate_hz": 1000,
+        "seconds": 5,
+        "offered_moves": 5000,
+        "delivered_moves": 4962,
+        "maximum_source_gap_ms": 14.697,
+        "maximum_delivery_gap_ms": 15.11,
+        "delivery_gaps_at_least_80ms": 0,
+        "completion_p99_ms": 0.911,
+        "completion_max_ms": 3.307,
+        "gc_collections": 3,
+        "gc_max_ms": 0.363
+      }
+    ],
+    "measured_source_commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260"
+  },
+  "clock_resolution": {
+    "issue": "Python 3.12 Windows monotonic uses GetTickCount64; the tick can exceed the 8 ms retry and 16 ms checkpoint intervals.",
+    "correction": "perf_counter uses QueryPerformanceCounter on Windows; all interactive elapsed-time consumers share that domain.",
+    "native_domains_preserved": [
+      "Windows GetTickCount64 for native event timestamps",
+      "macOS monotonic_ns/mach_absolute_time for Quartz timestamps",
+      "network bootstrap time.monotonic deadlines"
+    ],
+    "system_timer_frequency_changed": false,
+    "source": "https://github.com/python/cpython/blob/v3.12.13/Python/pytime.c#L1054",
+    "previous_windows_ci": {
+      "url": "https://github.com/alradno/clever-switch/actions/runs/39155072272",
+      "commit": "4babe6acc898b3dfab0f6ec54096664b9ed12260",
+      "tests": 2094,
+      "failures": 4,
+      "reason": "A 40 ms imposed pause was measured as 31 ms in both directions/transports; full precision assertion was not relaxed."
+    }
+  },
+  "pointer_priority": {
+    "idle_keyboard": "During stable focus without key/device callbacks or lock-state transitions, idle keyboard does not enqueue key packets; PING/PONG is separate.",
+    "pending_motion": "Use newest safe position across maintenance traffic; do not wait for the keyboard.",
+    "ordering_preserved": [
+      "click location",
+      "drag buttons",
+      "keyboard modifiers",
+      "wheel",
+      "focus transitions"
+    ],
+    "physical_cause_established": false
+  },
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.24.zip",
+      "sha256": "b59273e7505fd9f8cab4ff08e6998fd7c2905e2d9914faa6edabf167af6c5b73",
+      "installed": false
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.24.zip",
+      "sha256": "1b36cbd0ec2fcf5a1a05c54a7e67831de0f4f54e1b3a69ae95721ba50e666557",
+      "installed": false
+    }
+  }
 }
