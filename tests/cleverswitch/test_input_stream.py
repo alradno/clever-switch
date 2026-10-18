@@ -402,3 +402,80 @@ def test_close_stops_current_receive_batch_and_unsent_input(closing_at):
     finally:
         channel.close()
         b.close()
+
+
+@pytest.mark.parametrize("barrier", [False, True])
+def test_unsent_motion_stays_fresh_until_socket_is_writable(barrier, mocker):
+    a, b = socket.socketpair()
+    b.settimeout(1)
+    channel = Channel(a, lambda packet: None, lambda: None)
+    waiting, release = threading.Event(), threading.Event()
+    import select
+
+    real_select = select.select
+
+    def blocked_writer(readers, writers, errors, timeout):
+        if a in writers:
+            waiting.set()
+            assert release.wait(1)
+        return real_select(readers, writers, errors, timeout)
+
+    mocker.patch("cleverswitch.flow.input_stream.select.select", side_effect=blocked_writer)
+    try:
+        channel.send(Packet(Kind.MOVE, 8, (1, 100)))
+        channel.start()
+        assert waiting.wait(1)
+        for x in range(2, 21):
+            channel.send(Packet(Kind.MOVE, 8, (x, 100)))
+            if barrier and x == 10:
+                channel.send(Packet(Kind.BUTTON, 8, (0, 1)))
+        if barrier:
+            channel.send(Packet(Kind.BUTTON, 8, (0, 0)))
+        release.set()
+        expected = [(Kind.MOVE, (20, 100))]
+        if barrier:
+            expected = [(Kind.MOVE, (10, 100)), (Kind.BUTTON, (0, 1)), *expected, (Kind.BUTTON, (0, 0))]
+        decoder, received = Decoder(), []
+        while len(received) < len(expected):
+            received.extend(decoder.feed(b.recv(8192)))
+        assert [(p.kind, p.values) for p in received] == expected
+        until(lambda: channel.sent >= len(expected))
+        assert channel.sent == len(expected)
+        assert channel.outbox.coalesced == (18 if barrier else 19)
+    finally:
+        release.set()
+        channel.close()
+        b.close()
+
+
+@pytest.mark.parametrize("retry", [ssl.SSLWantWriteError, BlockingIOError])
+def test_new_motion_cannot_replace_a_write_already_submitted_to_tls(retry):
+    a, b = socket.socketpair()
+    b.settimeout(1)
+    attempts = []
+
+    class Retrying:
+        def __getattr__(self, name):
+            return getattr(a, name)
+
+        def send(self, data):
+            attempts.append(bytes(data))
+            if len(attempts) == 1:
+                channel.send(Packet(Kind.MOVE, 4, (2, 20)))
+                raise retry()
+            return a.send(data)
+
+    channel = Channel(Retrying(), lambda packet: None, lambda: None)
+    try:
+        channel.send(Packet(Kind.MOVE, 4, (1, 20)))
+        channel.start()
+        decoder, received = Decoder(), []
+        while len(received) < 2:
+            received.extend(decoder.feed(b.recv(8192)))
+        assert attempts[0] == attempts[1]
+        assert [p.values for p in received] == [(1, 20), (2, 20)]
+        until(lambda: channel.sent == 2)
+        assert channel.failure is None
+    finally:
+        channel.close()
+        b.close()
