@@ -13,14 +13,14 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.18 experimental**, protocolo de control 2 y entrada 1.
-  Una pulsación entregada localmente conserva su repetición y liberación si
-  empieza la captura entre ambas. Evita teclas o arrastres que siguen pulsados.
-  Pasan 1.760 pruebas por plataforma, Ruff y ambas compilaciones. Hay 39 casos
-  nuevos de pulsaciones; 32 reproducen el fallo anterior. Pasan 227 pruebas focalizadas.
-  Se añaden otros 16 casos de movimiento y rueda con cola forzada.
+- Candidata conjunta actual: **0.5.19 experimental**, protocolo de control 2 y entrada 1.
+  Una tecla, clic, rueda o movimiento local posterior a un borde en cola cancela
+  el cruce al procesarse. Conserva posición, liberaciones, enlace y siguiente cruce.
+  El cursor quieto y los informes de un periodo local anterior no cancelan el foco.
+  Pasan 1.782 pruebas por plataforma, Ruff y ambas compilaciones. Hay 22 casos
+  nuevos; 16 reproducen el fallo anterior. Pasan 257 pruebas focalizadas.
   Las APIs de entrada son simuladas y TLS/UDP usan loopback real.
-  Véanse `validation/input-0.5.18-press-ownership.json` y [MOTION-LAB.md](MOTION-LAB.md).
+  Véanse `validation/input-0.5.19-queued-edge.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
