@@ -6,6 +6,45 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Reconexiones y paquetes tardíos en 0.5.19
+
+La validación ampliada de 0.5.19 añade 24 casos por plataforma: 64 reconexiones
+repetidas y ocho cortes de TLS en un solo sentido. Comprueba que se sueltan
+teclas y arrastres, se recupera una liberación rechazada temporalmente y funciona
+el siguiente cruce. Los trabajadores y observadores de entrada terminan al cerrar
+el enlace; sus avisos tardíos no borran pulsaciones de la conexión nueva.
+También se comprueba por UDP real que un paquete cifrado de un enlace anterior
+se rechaza durante un foco nuevo. Las APIs de entrada siguen simuladas.
+Esta ampliación no detectó otro fallo ni cambia el código o los paquetes 0.5.19;
+la fluidez y el consumo físicos siguen pendientes.
+
+La suite ampliada pasa 1.806 pruebas en Mac y Windows. Los 16 casos de
+reconexión alternan el origen físico durante cuatro ciclos cada uno, con TLS
+o transporte híbrido y cierre desde cualquiera de los extremos. Mantienen
+tres teclas y dos botones pulsados al cerrar, sin enviar sus liberaciones
+desde el origen. En 32 de los 64 ciclos, la API simulada rechaza una liberación
+de Shift: se conserva para un intento al preparar la conexión siguiente.
+
+Se comprueba el cierre de los trabajadores nativos y de comprobación de entrada,
+los observadores y las colas. La conexión nueva reutiliza servicios y adaptadores,
+negocia TLS y UDP de nuevo y permite escribir y hacer clic desde el otro origen.
+Los callbacks tardíos de los observadores anteriores no alteran esa entrada.
+El simulador de CFRunLoop reinicia su señal de parada entre ejecuciones; esto
+no prueba el reinicio del bucle nativo real de macOS.
+
+Otros ocho casos retienen una dirección del relé TCP hasta que vence el plazo
+del canal; la otra dirección y UDP permanecen disponibles. Tras liberar la
+entrada se abre un enlace nuevo. En los cuatro casos híbridos se reenvía un
+datagrama cifrado del enlace retirado: se observa su llegada real al listener
+y su rechazo, conservando el cursor, el foco y las nuevas pulsaciones.
+
+Los bancos de red, ráfagas, recuperación, UDP variable y precisión también
+pasan en Windows. Las fuentes operativas y ambos paquetes de la candidata
+0.5.19 conservan sus bytes. No se mide latencia doméstica, fluidez visual o
+batería; la aceptación física conjunta sigue pendiente.
+
+Evidencia: [reconexiones 0.5.19](validation/input-0.5.19-reconnect.json).
+
 ## Entrada local posterior a un borde en cola en 0.5.19
 
 La 0.5.19 conserva el control local si un cruce quedó en cola y después
