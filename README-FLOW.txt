@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.16, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.17, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,24 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.17
+La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
+último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
+un estado antiguo y alterar las mayúsculas o minúsculas al escribir.
+Si falla la creación, preparación o publicación nativa del evento, conserva
+el estado anterior. Un cambio físico de Bloq Mayús sigue teniendo prioridad.
+Se comprueban cruces iniciados en ambos equipos, con TLS y transporte híbrido.
+No añade esperas, sondeos, hilos ni consultas al recorrido del ratón.
+
+Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
+nuevos reproducen el fallo anterior en la comparación local; también pasan
+256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
+cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
+Las APIs de entrada y su aplicación tardía están simuladas; TLS/UDP usan loopback
+real. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.17-caps-order.json. Candidata sin instalar.
+
 REVISIÓN 0.5.16
 La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
 En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
@@ -19,7 +37,7 @@ las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
 eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
 No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
 
-Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
+La validación de 0.5.16 registró 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
 de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
 Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
 reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.

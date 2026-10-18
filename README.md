@@ -3,7 +3,7 @@
 Prototipo para coordinar un **MX Keys original y un MX Master 3** entre Windows
 (canal 1, pantalla izquierda) y Mac (canal 2, pantalla derecha).
 
-Versión candidata conjunta: **0.5.16 experimental**, protocolo de control **2**.
+Versión candidata conjunta: **0.5.17 experimental**, protocolo de control **2**.
 Mac y Windows se compilan
 desde el mismo commit; las correcciones compartidas se prueban en ambos sentidos.
 Ambos equipos deben ejecutar protocolo 2 para utilizar el traslado coordinado.
@@ -18,6 +18,14 @@ TLS persistente. Cada equipo conserva sus aplicaciones y su distribución de tec
 El menú «Ratón y teclado por red (experimental)» debe activarse expresamente en ambos.
 Este modo suspende el traslado Bluetooth por bordes y el seguimiento HID; conserva
 la vinculación, las reglas de firewall y los botones físicos Easy-Switch.
+
+La 0.5.17 conserva Bloq Mayús en los cruces rápidos. El nuevo cruce usa el
+último estado enviado aunque macOS aún no lo haya aplicado. Evita recuperar
+un estado antiguo y alterar las mayúsculas o minúsculas al escribir.
+Si falla la creación, preparación o publicación nativa del evento, conserva
+el estado anterior. Un cambio físico de Bloq Mayús sigue teniendo prioridad.
+Se comprueban cruces iniciados en ambos equipos, con TLS y transporte híbrido.
+No añade esperas, sondeos, hilos ni consultas al recorrido del ratón.
 
 La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
 En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
@@ -154,17 +162,13 @@ conserva las acciones ya encoladas al volver al equipo de origen. Mantiene la
 recuperación del teclado tras Easy-Switch, los avisos de cambios de pantalla,
 la liberación de teclas y botones y la reconexión finita por eventos.
 
-Pasan 1.679 pruebas por plataforma, Ruff y ambas compilaciones. La corrección
-de rueda conserva sus 22 casos: 12 reproducían el fallo anterior y 10 ya pasaban.
-Se añaden 64 secuencias de continuidad con 6.144 operaciones generadas: mezclan
-reconexiones de teclado y ratón, escritura, arrastre, rueda y movimiento.
-Se comprueban ambos orígenes, TLS/híbrido y entrega inmediata o en cola. Cada
-acción conserva orden y posición; las teclas y botones pendientes se liberan,
-el canal sigue abierto y funciona el siguiente cruce. La prueba ampliada no
-detectó otro fallo y no cambió el código operativo de 0.5.16.
-Las APIs nativas están simuladas y TLS/UDP usan loopback real.
-La aceptación física de fluidez, recuperación y consumo sigue pendiente. Mac verifica
-firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.16](docs/validation/input-0.5.16-scroll-position.json).
+Pasan 1.705 pruebas por plataforma, Ruff y ambas compilaciones. Los 26 casos
+nuevos reproducen el fallo anterior en la comparación local; también pasan
+256 pruebas focalizadas. Se comprueban Bloq Mayús activado y desactivado,
+cruces rápidos con eventos nativos pendientes y fallos de preparación del evento.
+Las APIs de entrada y su aplicación tardía están simuladas; TLS/UDP usan loopback
+real. La aceptación física de fluidez, recuperación y consumo sigue pendiente. Mac verifica
+firma y vista previa; Windows comprueba el ejecutable empaquetado. Evidencia: [validación 0.5.17](docs/validation/input-0.5.17-caps-order.json).
 [Diseño y límites](docs/MOTION-LAB.md); [uso de entrada por red](docs/INPUT-LAN.txt).
 La candidata queda preparada para una única prueba conjunta al volver el usuario.
 No se instalan versiones intermedias: Aplicaciones conserva 0.5.1; el último
