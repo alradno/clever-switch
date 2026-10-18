@@ -1,8 +1,17 @@
-CLEVERSWITCH 0.5.15 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.16 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.15-capture-race.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.16-scroll-position.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.16
+La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
+En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
+aunque WindowServer todavía no lo haya aplicado. Evita desplazar la zona donde
+estaba antes el cursor. Conserva ambas direcciones de rueda, sus fracciones y
+las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
+eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
+No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
 
 MEJORAS 0.5.15
 La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
@@ -335,6 +344,9 @@ locales y remotos en posiciones distintas no debe abrir un doble clic falso.
 Para 0.5.15, iniciar escritura, clic o rueda al cruzar: cada acción debe
 llegar a un solo equipo. Si permanece local, el cursor debe conservar su
 posición y permitir otro cruce al volver hacia el interior y al borde.
+Para 0.5.16, mover entre dos paneles desplazables y usar la rueda enseguida:
+debe desplazarse el panel bajo la posición nueva, también horizontalmente.
+Repetir en ambos sentidos y con monitores secundarios.
 Las teclas multimedia/Fn y pantallas protegidas no están resueltas por el protocolo
 de teclas estándar. UAC, pantalla de acceso, Secure Input y aplicaciones que
 rechazan entrada sintética no se eluden. No es una promesa de compatibilidad

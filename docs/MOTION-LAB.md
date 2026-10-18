@@ -6,6 +6,47 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Destino de la rueda con movimiento nativo pendiente en 0.5.16
+
+La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
+En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
+aunque WindowServer todavía no lo haya aplicado. Evita desplazar la zona donde
+estaba antes el cursor. Conserva ambas direcciones de rueda, sus fracciones y
+las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
+eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
+No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
+
+Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+22 casos: 12 reproducían el fallo anterior y 10 controles ya pasaban. También
+pasan 186 pruebas focalizadas. Se comprueba cada destino de rueda en eventos
+nativos simulados, con movimientos intercalados, ambas direcciones y ráfagas
+de 24 desplazamientos. TLS/UDP son reales en loopback; las APIs de entrada y
+la aplicación tardía del movimiento por el sistema están simuladas.
+La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+El transporte ya conservaba la posición exacta de cada acción. Al convertirla
+en una rueda de Quartz, faltaba trasladar esa posición al evento nativo. Crear
+y publicar un movimiento no implica que WindowServer ya haya actualizado el
+cursor: la rueda podía heredar una ubicación anterior. `CGEventSetLocation`
+asigna ahora la posición ya conocida antes de publicar la rueda. No consulta
+el cursor ni espera a que el sistema termine de aplicar el movimiento.
+
+La prueba conserva el cursor del sistema simulado en una posición anterior
+mientras recoge los eventos nativos. Comprueba la ubicación de cada rueda,
+además de sus deltas. Recorre ambos orígenes, TLS e híbrido, ambos ejes y lotes
+de uno o 24 desplazamientos intercalados con movimiento. Windows decodifica
+independientemente las coordenadas absolutas de los registros `SendInput`.
+Otros controles cubren coordenadas negativas/fraccionarias, ausencia de una
+posición ordenada y fallo al crear el evento. La referencia es 0.5.15
+(`0c19c5ac35356614bdc10c17d82c0960bc1cbd26`): 12 fallan y 10 ya pasan.
+
+Los bancos existentes de red, ráfagas, recuperación UDP y precisión vuelven
+a pasar en Windows. No se captura ni inyecta entrada real. La prueba física
+debe mover entre paneles desplazables y usar inmediatamente ambas ruedas,
+en los dos sentidos y con monitores secundarios.
+
+Evidencia: [validación 0.5.16](validation/input-0.5.16-scroll-position.json).
+
 ## Entrada local durante la preparación de un cruce en 0.5.15
 
 La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación

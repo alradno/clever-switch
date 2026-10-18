@@ -13,17 +13,16 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.15 experimental**, protocolo de control 2 y entrada 1.
-  Una entrada que llegó localmente durante la preparación de la captura ya no se
-  reenvía al compañero: cancela ese cruce, conserva su destino y restaura la posición
-  física del cursor. La entrada ya capturada sigue al destino; un cursor quieto
-  no cancela. Conserva el canal y el siguiente cruce, sin sondeos ni hilos nuevos.
-  Mantiene precisión, prioridad local y recuperación de enlace, UDP, teclado y ratón.
-  Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones; 48 casos nuevos,
-  24 fallos previos reproducidos y 200 pruebas focalizadas. La limpieza fallida
-  recibe su aviso después de liberar el callback nativo, sin esperar al reposo.
-  Las APIs de entrada están simuladas; TLS/UDP son reales en loopback.
-  Véanse `validation/input-0.5.15-capture-race.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.16 experimental**, protocolo de control 2 y entrada 1.
+  La rueda del Mac conserva la posición del movimiento anterior aunque el sistema
+  todavía no lo haya aplicado. Evita usar la zona anterior al mover y desplazar
+  enseguida. Windows conserva su orden nativo; se prueban ambos sentidos con TLS
+  y transporte híbrido. Sin nuevas esperas, consultas del cursor, sondeos ni hilos.
+  Mantiene prioridad local y recuperación de enlace, UDP, teclado y ratón.
+  Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones; 22 casos nuevos,
+  12 fallos previos reproducidos y 186 pruebas focalizadas. Las APIs de entrada y
+  la aplicación tardía del movimiento son simuladas; TLS/UDP usan loopback real.
+  Véanse `validation/input-0.5.16-scroll-position.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

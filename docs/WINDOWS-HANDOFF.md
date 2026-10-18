@@ -1,7 +1,15 @@
-# Continuación en Windows — candidata conjunta 0.5.15 experimental
+# Continuación en Windows — candidata conjunta 0.5.16 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.16 conserva el destino de la rueda al mover y desplazar enseguida.
+En Mac, cada evento de rueda usa la posición ordenada del movimiento anterior,
+aunque WindowServer todavía no lo haya aplicado. Evita desplazar la zona donde
+estaba antes el cursor. Conserva ambas direcciones de rueda, sus fracciones y
+las coordenadas negativas o fraccionarias. Windows mantiene el orden de sus
+eventos nativos; ambos sentidos se comprueban con TLS y transporte híbrido.
+No añade esperas, consultas del cursor, sondeos, hilos ni cambios de protocolo.
 
 La 0.5.15 evita enviar dos veces una entrada que coincide con la preparación
 de un cruce. Si una tecla, clic, rueda o movimiento ya llegó a las aplicaciones
@@ -125,16 +133,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.593 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
-48 casos y pasan 200 pruebas focalizadas. Se reprodujeron 24 fallos previos:
-16 al preparar la captura y ocho al completar una liberación fallida.
-Se comprueban teclas, clics, rueda y movimiento durante la preparación del cruce,
-antes y después de la captura, en ambos sentidos y con TLS o transporte híbrido.
-Se conserva el destino de cada entrada, la posición local, el canal y el siguiente
-cruce. Las APIs de entrada están simuladas y TLS/UDP usan loopback.
+Pasan 1.615 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+22 casos: 12 reproducían el fallo anterior y 10 controles ya pasaban. También
+pasan 186 pruebas focalizadas. Se comprueba cada destino de rueda en eventos
+nativos simulados, con movimientos intercalados, ambas direcciones y ráfagas
+de 24 desplazamientos. TLS/UDP son reales en loopback; las APIs de entrada y
+la aplicación tardía del movimiento por el sistema están simuladas.
 La aceptación física de fluidez, recuperación y consumo sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.15-capture-race.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.16-scroll-position.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 
