@@ -109,7 +109,10 @@ class Service:
         self.can_start = can_start or (lambda: True)
         self.next_check = 0
         self.next_geometry = 0
-        self.deferred = queue.Queue(maxsize=256)
+        # A 1000 Hz source can queue ~600 reports within the channel's normal
+        # liveness budget. Leave room for actions without extending that budget
+        # or dropping path segments that can cross an edge or surround a click.
+        self.deferred = queue.Queue(maxsize=1024)
         self.draining = threading.Event()
         if self.enabled:
             link.input_accept = self.accept
@@ -380,6 +383,10 @@ class Service:
                 held = self.keys if method.__name__ == "key" else self.buttons
                 code, down = args[:2]
                 held.add(code) if down else held.discard(code)
+        if self.channel is not None and not self.deferred.empty():
+            # A read may already have consumed the producer's wake. Give the
+            # socket a turn, then continue this bounded batch without a timer.
+            self.channel._wake()
 
     def _ended(self, session):
         session.close()
