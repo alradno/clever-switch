@@ -1,0 +1,858 @@
+{
+  "edition": "0.5.21",
+  "validation_commit": "39004a3d6e9445b618797570b5cc84ecfda04b67",
+  "previous_head": "8d6df32ed1d4cf183a263f7574e7642e47beecb0",
+  "original_package_source_commit": "e6a76245c472451ccb74132cdc44da2fd4e43a38",
+  "application_sources_and_candidate_packages_unchanged": true,
+  "observed_at": "2026-10-18T11:27:20.328287+00:00",
+  "scope": "production_native_adapters_fake_OS_real_TLS_UDP_loopback",
+  "new_cases_per_platform": 40,
+  "offered_synthetic_moves_per_platform": 19800,
+  "ordered_actions_verified_per_platform": 720,
+  "keyboard_reconnects_per_platform": 60,
+  "verified": [
+    "Both source roles through production callbacks, Service, TLS/UDP and native adapters with fake OS APIs",
+    "Nominal rates of 125 and 1000 reports/s; simulated receiver cost of 0, 2 or 5 ms per injection",
+    "Eight cases additionally pause receiver injection for 40 ms while the source continues",
+    "Movement reaches the final offered position without backward motion; every click, key and wheel retains order and position",
+    "Keyboard channel-change notifications release a lost key-up while preserving mouse drag and subsequent typing",
+    "The stream stays available, releases held Shift and mouse button on leave and supports a fresh crossing",
+    "Measurement timestamps follow the adapter call and all simulated receiver costs"
+  ],
+  "mac": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1916,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.26343381389253,
+    "ruff": "passed",
+    "synthetic_completion_observations": {
+      "scope": "production_native_adapters_fake_OS_real_TLS_UDP_loopback",
+      "cases": [
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.627,
+            "p50": 0.424,
+            "p99": 0.588
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.628,
+            "p50": 0.45,
+            "p99": 0.589
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.715,
+            "p50": 0.45,
+            "p99": 0.622
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.663,
+            "p50": 0.464,
+            "p99": 0.644
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.456,
+            "p50": 0.23,
+            "p99": 0.415
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.516,
+            "p50": 0.233,
+            "p99": 0.43
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.61,
+            "p50": 0.218,
+            "p99": 0.417
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.575,
+            "p50": 0.24,
+            "p99": 0.463
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 223,
+          "completion_ms": {
+            "max": 23.094,
+            "p50": 3.25,
+            "p99": 19.027
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 222,
+          "completion_ms": {
+            "max": 23.207,
+            "p50": 3.197,
+            "p99": 19.06
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 216,
+          "completion_ms": {
+            "max": 28.314,
+            "p50": 3.183,
+            "p99": 21.646
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 212,
+          "completion_ms": {
+            "max": 27.488,
+            "p50": 3.306,
+            "p99": 21.521
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 85,
+          "completion_ms": {
+            "max": 57.017,
+            "p50": 7.095,
+            "p99": 55.608
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 85,
+          "completion_ms": {
+            "max": 68.131,
+            "p50": 7.218,
+            "p99": 62.401
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 79,
+          "completion_ms": {
+            "max": 79.474,
+            "p50": 7.082,
+            "p99": 67.005
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 78,
+          "completion_ms": {
+            "max": 68.342,
+            "p50": 7.27,
+            "p99": 67.4
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 206,
+          "completion_ms": {
+            "max": 62.57,
+            "p50": 3.207,
+            "p99": 51.003
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 204,
+          "completion_ms": {
+            "max": 62.805,
+            "p50": 3.226,
+            "p99": 51.218
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 201,
+          "completion_ms": {
+            "max": 66.664,
+            "p50": 3.197,
+            "p99": 56.122
+          },
+          "direction": "windows_to_mac",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 196,
+          "completion_ms": {
+            "max": 71.053,
+            "p50": 3.209,
+            "p99": 60.23
+          },
+          "direction": "mac_to_windows",
+          "hybrid": false,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 1.112,
+            "p50": 0.558,
+            "p99": 1.005
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.883,
+            "p50": 0.567,
+            "p99": 0.751
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 0.702,
+            "p50": 0.527,
+            "p99": 0.69
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 75,
+          "completion_ms": {
+            "max": 4.457,
+            "p50": 0.581,
+            "p99": 0.766
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 75,
+          "rate_hz": 125,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.658,
+            "p50": 0.299,
+            "p99": 0.501
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.795,
+            "p50": 0.325,
+            "p99": 0.55
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 600,
+          "completion_ms": {
+            "max": 0.773,
+            "p50": 0.306,
+            "p99": 0.612
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 597,
+          "completion_ms": {
+            "max": 0.874,
+            "p50": 0.324,
+            "p99": 0.577
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 1,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 220,
+          "completion_ms": {
+            "max": 24.273,
+            "p50": 3.486,
+            "p99": 20.216
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 217,
+          "completion_ms": {
+            "max": 23.561,
+            "p50": 3.497,
+            "p99": 19.441
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 213,
+          "completion_ms": {
+            "max": 29.581,
+            "p50": 3.453,
+            "p99": 21.165
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 211,
+          "completion_ms": {
+            "max": 28.033,
+            "p50": 3.503,
+            "p99": 22.078
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 84,
+          "completion_ms": {
+            "max": 56.535,
+            "p50": 7.107,
+            "p99": 55.025
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 79,
+          "completion_ms": {
+            "max": 62.279,
+            "p50": 7.706,
+            "p99": 57.416
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 6,
+          "scheduler_late": 2,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 78,
+          "completion_ms": {
+            "max": 68.041,
+            "p50": 7.306,
+            "p99": 59.519
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 78,
+          "completion_ms": {
+            "max": 67.867,
+            "p50": 7.211,
+            "p99": 60.74
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 5.0,
+          "receiver_pause_ms": 0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 201,
+          "completion_ms": {
+            "max": 66.368,
+            "p50": 3.444,
+            "p99": 57.891
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 198,
+          "completion_ms": {
+            "max": 64.332,
+            "p50": 3.598,
+            "p99": 56.069
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 0,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 2,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 15
+        },
+        {
+          "completed_moves": 195,
+          "completion_ms": {
+            "max": 67.071,
+            "p50": 3.4,
+            "p99": 57.079
+          },
+          "direction": "windows_to_mac",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 0,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        },
+        {
+          "completed_moves": 191,
+          "completion_ms": {
+            "max": 66.798,
+            "p50": 3.512,
+            "p99": 56.072
+          },
+          "direction": "mac_to_windows",
+          "hybrid": true,
+          "keyboard_reconnects": 3,
+          "offered_moves": 600,
+          "rate_hz": 1000,
+          "receiver_cost_ms": 2.0,
+          "receiver_pause_ms": 40.0,
+          "sampled_peak_outbox": 3,
+          "scheduler_late": 2,
+          "scope": "native_adapters_fake_OS_real_loopback_completion",
+          "verified_actions": 21
+        }
+      ],
+      "offered_moves": 19800,
+      "verified_actions": 720,
+      "keyboard_reconnects": 60,
+      "not_measured": [
+        "home_network",
+        "physical_input",
+        "display_refresh",
+        "application_delivery",
+        "battery"
+      ]
+    },
+    "build": "not_repeated_application_sources_unchanged"
+  },
+  "windows": {
+    "tests": {
+      "tests": 1916,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.45879299156393,
+    "ci": "https://github.com/alradno/clever-switch/actions/runs/39122547465",
+    "conclusion": "success",
+    "head_sha": "39004a3d6e9445b618797570b5cc84ecfda04b67",
+    "packaged_read_only_check": {
+      "edition": "0.5.21",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "build": "passed",
+    "ruff": "passed",
+    "existing_benchmarks": "passed",
+    "validation_artifact_sha256": "cbd9c79f7e5c72b58ada6c0fd1a02c3fdbc01fad0b432f9629f0a3e2baa753e9"
+  },
+  "original_candidate_validation": "input-0.5.21-display-recovery.json",
+  "original_packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.21.zip",
+      "sha256": "4b06f94b541344de252ef5f07135314e5147f63e760a2276b809d68760d22915"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.21.zip",
+      "sha256": "2102edd9d5d78fad9b7526340cb52da27bf8664bd40c86f669f8b291515373c8"
+    }
+  },
+  "limits": [
+    "This adds regression coverage and found no new application defect; it is not a new performance fix",
+    "Synthetic timings cover callback to fake OS API completion, not delivery to a real application or display",
+    "The imposed pauses remain visible; no zero-latency, physical smoothness or battery claim is made",
+    "No native capture/injection, installation, permission, security, network or pairing changes were used",
+    "Joint physical acceptance on the home Mac and Windows remains pending"
+  ]
+}
