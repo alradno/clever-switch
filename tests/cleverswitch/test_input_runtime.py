@@ -132,7 +132,7 @@ def test_unstable_streams_do_not_reset_retry_budget_forever(tmp_path, mocker):
     runtime.input_budget = Reconnect(clock=lambda: now[0], jitter=lambda delay: delay)
     service = runtime.input_service
 
-    def open_stream():
+    def open_stream(capabilities=None):
         service.channel = Mock(finished=threading.Event())
         return True
 
@@ -216,7 +216,7 @@ def test_repeated_local_display_changes_get_a_fresh_bounded_retry_window(tmp_pat
     runtime.input_budget = Reconnect(clock=lambda: now[0], jitter=lambda delay: delay)
     service = runtime.input_service
 
-    def open_stream():
+    def open_stream(capabilities=None):
         service.channel = Mock(finished=threading.Event(), failure=None)
         return True
 

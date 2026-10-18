@@ -425,9 +425,7 @@ def test_discovery_reply_does_not_echo_and_failed_reply_keeps_listener(paired, m
     reply.assert_called_once_with("reply")
 
 
-def test_real_udp_notice_updates_both_addresses_then_mutual_tls_reconnects(paired_tls, mocker):
-    from cleverswitch.flow import network
-
+def test_real_udp_notice_updates_both_addresses_then_mutual_tls_reconnects(paired_tls):
     la = Link(paired_tls[0], lambda *args: {"ready": True, "protocol": 2}, 0)
     lb = Link(paired_tls[1], lambda *args: {"ready": True, "protocol": 2}, 0)
     da, db = Discovery(la), Discovery(lb)
@@ -446,7 +444,7 @@ def test_real_udp_notice_updates_both_addresses_then_mutual_tls_reconnects(paire
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sender:
             sender.bind((lb.address, 0))
             sender.settimeout(2)
-            mocker.patch.object(network, "PORT", sender.getsockname()[1] - 1)
+            da.peer_port = sender.getsockname()[1]
             sender.sendto(db.packet(), da.socket.getsockname())
             reply, address = sender.recvfrom(513)
             assert db.accept(reply, address[0]) == "reply"
