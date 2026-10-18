@@ -320,15 +320,23 @@ class Service:
                         not epoch and session.phase == "local" and generation == session.local_generation
                         and method.__name__ == "motion"
                     )
+                    # A queued edge can start capture before the next report
+                    # from that same local period is drained. Those reports
+                    # already reached local apps and still own local priority.
+                    local_departure = (
+                        not epoch and session.phase in ("requesting", "sending")
+                        and generation == session.local_generation
+                    )
                     if session is self.session and (
-                        same_focus or local_arrival or local_motion
+                        same_focus or local_arrival or local_motion or local_departure
                         or method.__name__ in ("keyboard_changed", "mouse_changed")
                     ):
                         # ENTER owns its epoch before native capture is ready.
                         # A callback passed to local apps during that window
                         # cannot also be forwarded once capture completes.
                         local_outgoing = (
-                            same_focus and not swallowed and session.phase in ("requesting", "sending")
+                            (same_focus or local_departure)
+                            and not swallowed and session.phase in ("requesting", "sending")
                             and (
                                 method.__name__ in ("key", "button", "wheel")
                                 or (method.__name__ == "motion" and (args[2] or args[3]))
