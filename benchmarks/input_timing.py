@@ -18,10 +18,10 @@ def run(count=100000, repeats=5):
             try:
                 started = time.perf_counter()
                 for _ in range(count):
-                    now = time.monotonic()
+                    now = time.perf_counter()
                     if mode == "callback_aggregates":
                         routing.motion(now)
-                        routing.motion_callback.observe(time.monotonic() - now)
+                        routing.motion_callback.observe(time.perf_counter() - now)
                     else:
                         duration.observe(.008)
                 samples.append((time.perf_counter() - started) * 1_000_000 / count)
@@ -35,6 +35,7 @@ def run(count=100000, repeats=5):
                       "median_microseconds_per_iteration": round(statistics.median(samples), 3),
                       "maximum_run_average_microseconds": round(max(samples), 3)})
     return {"scope": "aggregate_CPU_microbenchmark_including_loop_and_clock_cost",
+            "clocks": {name: vars(time.get_clock_info(name)) for name in ("perf_counter", "monotonic")},
             "excludes": ["native_API_cost", "network", "OS_scheduling", "screen", "physical_latency"],
             "cases": cases}
 

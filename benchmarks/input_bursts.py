@@ -57,7 +57,7 @@ def run_case(directory, source, count, cost_ms, expected):
             if not emitted.is_set():
                 for index in range(count):
                     sender.channel.lane.outgoing(
-                        Packet(Kind.MOVE, sender.session.epoch, (100 + index, 400)), time.monotonic()
+                        Packet(Kind.MOVE, sender.session.epoch, (100 + index, 400)), time.perf_counter()
                     )
                 emitted.set()
                 # Avoid adding retries to the controlled backlog. Both modes
