@@ -1,0 +1,128 @@
+{
+  "edition": "0.5.21",
+  "source_commit": "e6a76245c472451ccb74132cdc44da2fd4e43a38",
+  "observed_at": "2026-10-18T10:57:06.193995+00:00",
+  "scope": "native_display_recovery_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Both adapters stop the readiness worker even when cursor restoration fails during display reconfiguration",
+    "Failed native cleanup remains owned until a later availability check or authenticated stream preparation completes it",
+    "A cleanup failure still notifies the runtime; suspension retains the existing bounded presence wait instead of parking the runtime",
+    "No new hooks are started before old cleanup finishes; the diagnostic retains pending release state",
+    "No new periodic search, input-path delay, protocol change or system-setting change"
+  ],
+  "regression": {
+    "reference_commit": "e6f3991900cf387e12fef06cacefa2eee601102c",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_source_sha256": {
+      "input_macos.py": "6b03b7104a96e62a76c736fd5a870a00dd91a1334767e8d37c31e1f3346c6ced",
+      "input_windows.py": "9c224bdb6ec21d6ead32d5a1019bcc408210fb0923587edd07658ada9a0c1e5e",
+      "input_service.py": "a48e6fcf6280db8cde5b5dcb67099befb3d5544f815d5be48347fc782c3df48c",
+      "runtime.py": "c754be9abce7e00d64c9df3d0a11ca0c57b4bd219f07eda5b5c588d447bb5af5"
+    },
+    "baseline": {
+      "tests": 40,
+      "failures": 16,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 220,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases": 40,
+    "reproduced_failures": 16,
+    "preexisting_successful_controls": 24,
+    "tests": "Both native adapters, both source roles, TLS/hybrid; resize, relocation and extra monitor; transient missing displays, stopped readiness workers and resumed input through availability or handshake",
+    "native_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1876,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 93.27653997378768,
+    "mac_build": {
+      "edition": "0.5.21",
+      "built_at": "2026-10-18T10:48:30.041178+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "d472963660902e89d3f1b5d4c50c541a92382dd93ea9cb65d08c5c820114bc75",
+      "application_source_matches_validated_commit": "e6a76245c472451ccb74132cdc44da2fd4e43a38"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39120795074",
+    "head_sha": "e6a76245c472451ccb74132cdc44da2fd4e43a38",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1876,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.44581440622972,
+    "packaged_native_check": {
+      "edition": "0.5.21",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "jitter_cases": 24,
+      "ordered_jitter_actions": 48,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-e6a76245c472451ccb74132cdc44da2fd4e43a38",
+      "id": 12134416528,
+      "sha256": "2102edd9d5d78fad9b7526340cb52da27bf8664bd40c86f669f8b291515373c8"
+    },
+    {
+      "name": "Windows-validation-e6a76245c472451ccb74132cdc44da2fd4e43a38",
+      "id": 12134282609,
+      "sha256": "b36fdbb484a80eda9987594113c1bb719c52d1b76d482e0b64f8f3630626c942"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and local application delivery are simulated; TLS/UDP loopback is real",
+    "The reproduced display cleanup failure is verified; it does not attribute home microcuts or prove physical display, Wi-Fi or battery behavior",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.21.zip",
+      "sha256": "4b06f94b541344de252ef5f07135314e5147f63e760a2276b809d68760d22915"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.21.zip",
+      "sha256": "2102edd9d5d78fad9b7526340cb52da27bf8664bd40c86f669f8b291515373c8"
+    }
+  }
+}
