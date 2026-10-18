@@ -55,7 +55,7 @@ Bluetooth o autonomía. No describen la latencia doméstica ni garantizan fluide
 física. Si toda la red deja de entregar datos, ninguna de las dos vías puede
 reconstruir movimientos que aún no ha recibido.
 
-La suite específica pasa 72 pruebas, con 96,58 % de cobertura del prototipo.
+La primera fase del laboratorio pasó 72 pruebas, con 96,58 % de cobertura local.
 Incluye UDP real en loopback, pérdida/reordenación, alteración de cada byte,
 sesión equivocada, claves retiradas, nonce agotado, barreras, foco cancelado,
 reintentos finitos y liberación mediante la máquina de sesión existente.
@@ -67,21 +67,52 @@ Evidencia: [validación del laboratorio](validation/motion-lab-2026-10-18.json).
 Reproducir desde la raíz con las dependencias de desarrollo:
 
 ```sh
-python -m pytest experiments/test_motion_lane.py -o addopts='' --cov=experiments.motion_lane --cov-fail-under=95
+python -m pytest experiments -o addopts='' --cov=experiments.motion_lane --cov=experiments.motion_link --cov-fail-under=95
 PYTHONPATH=src python experiments/benchmark_motion.py
 ```
 
+## Conexión del laboratorio al TLS real
+
+La segunda fase, `experiments/motion_link.py`, intercambia el material efímero
+por una conexión TLS real de `Link`, con el certificado del compañero comprobado.
+La negociación sólo empieza cuando los dos extremos han seleccionado la capacidad.
+Cada conexión tiene un desafío nuevo y claves nuevas; una respuesta de otra
+conexión, una identidad distinta o un cierre atrasado no puede reactivar la anterior.
+Un fallo o el cierre de TLS retira las claves. No se escriben en disco ni se
+modifican los archivos de vinculación.
+
+También se prueba un receptor compartido para los avisos de disponibilidad y el
+movimiento. Rechaza mensajes de otra dirección, puerto, subred o sesión. La cola
+conserva como máximo 64 datagramas y despierta al consumidor al pasar de cola vacía
+a pendiente; el hilo receptor no descifra ni aplica entrada. El dueño del canal recoge los
+mensajes y conserva la autenticación criptográfica. Esto permite reutilizar el
+puerto UDP existente cuando se conecte el componente a la aplicación.
+
+Las pruebas usan TLS mutuo y UDP reales en loopback, en ambos sentidos. Incluyen
+reconexión, fallo del certificado, respuesta incompleta, cierre, limpieza de
+claves y mezcla de descubrimiento/movimiento en un socket. El servicio de entrada
+actual, sin modificar, conserva el modo fiable con un extremo de laboratorio
+que no selecciona la capacidad. La selección se realiza mediante un adaptador
+de prueba; todavía no está conectada al anuncio de capacidades de la aplicación.
+
+La suite ampliada pasa 138 pruebas locales, con 97,90 % de cobertura conjunta
+(100 % del módulo nuevo). Las 138 pruebas pasan también en Windows y macOS,
+con 97,96 % de cobertura y sin exclusiones. Los artefactos descargados coinciden
+con sus hashes publicados y los 160 casos del modelo mantienen idénticos resultados.
+[CI de la negociación](https://github.com/alradno/clever-switch/actions/runs/39085575993);
+[evidencia y límites](validation/motion-link-2026-10-18.json).
+
 ## Trabajo necesario para incorporarlo a la app
 
-El laboratorio entrega material efímero directamente entre sus extremos en
-memoria. Falta negociarlo mediante el TLS mutuo con pinning de CleverSwitch y
-retirarlo al cerrar esa conexión; las claves de vinculación existentes no deben
-usarse como claves de este transporte ni cambiarse.
+Falta conectar estos componentes al `Service` y `Discovery` de producción y al
+bucle que multiplexa TLS, UDP y plazos en un único dueño del estado. También
+falta codificar las acciones con sus barreras en el flujo real y enlazar su vida
+con el foco, la cancelación, el reposo y la reconexión de la aplicación. El banco
+actual prueba esas piezas por separado; aún no recorre ese circuito completo.
 
-También falta integrar la negociación de capacidades, el socket UDP compartido,
-la validación del compañero y la subred, los límites de recepción, el propietario
-único del estado y el cierre/reconexión. La integración debe conservar las reglas
-de firewall y la espera pasiva y probarse con sockets reales bajo fallos, además
-del modelo. No se han cambiado puertos, reglas, router, VPN, permisos ni controles
-de seguridad. Después corresponderá compilar una candidata conjunta y probarla
-con los periféricos reales al volver el usuario.
+La integración debe conservar el puerto, las reglas de firewall y la espera
+pasiva y probarse con sockets reales bajo fallos, además del modelo. Los tiempos
+del modelo anterior siguen siendo simulados; la prueba de negociación no los
+convierte en mediciones físicas. Después corresponderá compilar una candidata
+conjunta y probarla con los periféricos reales al volver el usuario. La candidata
+disponible sigue siendo 0.5.4 y no se ha instalado una app nueva.
