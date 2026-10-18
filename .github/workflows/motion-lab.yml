@@ -5,6 +5,7 @@ on:
     branches: [feature/lan-input]
     paths:
       - 'experiments/**'
+      - 'src/cleverswitch/flow/input_motion*.py'
       - '.github/workflows/motion-lab.yml'
   workflow_dispatch:
 
@@ -31,7 +32,7 @@ jobs:
       - name: Check experiment source
         run: python -m ruff check experiments
       - name: Test pinned TLS bootstrap, shared UDP, ordering and bounded recovery
-        run: python -m pytest experiments -o addopts='' --cov=experiments.motion_lane --cov=experiments.motion_link --cov-report=term-missing --cov-report=json:motion-lab-coverage.json --cov-fail-under=95 --junitxml=motion-lab-tests.xml
+        run: python -m pytest experiments -o addopts='' --cov=cleverswitch.flow.input_motion --cov=cleverswitch.flow.input_motion_link --cov-report=term-missing --cov-report=json:motion-lab-coverage.json --cov-fail-under=95 --junitxml=motion-lab-tests.xml
       - name: Compare both transports under identical modeled failures
         run: python experiments/benchmark_motion.py > motion-lab-model.json
       - name: Upload lab evidence

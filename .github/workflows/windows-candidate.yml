@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'experiments/**'
+      - 'benchmarks/**'
       - '*.py'
       - '*.ps1'
       - 'pyproject.toml'
@@ -33,9 +35,13 @@ jobs:
         shell: pwsh
         run: Copy-Item hidapi.dll (Split-Path (Get-Command python).Source)
       - name: Check source
-        run: python -m ruff check src tests benchmarks build_tray.py tray_main.py
+        run: python -m ruff check src tests experiments benchmarks build_tray.py tray_main.py
       - name: Run Windows tests
-        run: python -m pytest --junitxml=windows-tests.xml
+        run: python -m pytest --junitxml=windows-tests.xml --cov-report=json:windows-coverage.json
+      - name: Measure integrated input with delayed TLS and dropped UDP
+        env:
+          PYTHONPATH: src
+        run: python benchmarks/input_hybrid.py > windows-hybrid-network.json
       - name: Build Windows candidate
         run: python build_tray.py
       - name: Check packaged executable without capturing input
@@ -79,4 +85,6 @@ jobs:
           path: |
             windows-tests.xml
             windows-input-check.json
+            windows-coverage.json
+            windows-hybrid-network.json
           retention-days: 14
