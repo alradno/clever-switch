@@ -1,0 +1,130 @@
+{
+  "edition": "0.5.9",
+  "source_commit": "34fe566f8623d3801ebe90f71c4a46ee2b22ad92",
+  "observed_at": "2026-10-18T03:46:38.923424+00:00",
+  "scope": "shared_production_input_engine_with_simulated_native_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Physical local activity deferred during a remote arrival keeps priority over that incoming focus",
+    "Cancellation preserves the authenticated link and prevents pending remote keys from replaying after local takeover"
+  ],
+  "regressions": {
+    "reference_commit": "f949775bd19e742bbb2e413fb321cc286a6ff2e1",
+    "before": {
+      "tests": 20,
+      "failures": 16,
+      "errors": 0,
+      "skipped": 0
+    },
+    "before_note": "Initial focused reproduction also reported whole-project coverage below its default gate; all 16 assertion failures were local-priority timeouts. The after tests additionally verify no remote key replay and a subsequent successful crossing.",
+    "targeted_after": {
+      "tests": 78,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "new_cases_in_complete_suite": 20,
+    "activity_cases": 16,
+    "stationary_controls": 4,
+    "rapid_native_round_trips_preserved": 64,
+    "simulated_APIs": "User32 and Quartz doubles only; no native hooks, taps or injection",
+    "transports": [
+      "mutual TLS only",
+      "mutual TLS plus encrypted UDP"
+    ],
+    "directions": [
+      "Windows source / Mac target",
+      "Mac source / Windows target"
+    ],
+    "activities": [
+      "key",
+      "mouse button",
+      "wheel",
+      "pointer motion"
+    ]
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1289,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.56455319724212,
+    "mac_build": {
+      "edition": "0.5.9",
+      "built_at": "2026-10-18T03:38:37.886291+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "98e9fd89cc3978c21280064ff6c13e0f33adf6ac0630d14308a33fcd74d88577"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39094424230",
+    "head_sha": "34fe566f8623d3801ebe90f71c4a46ee2b22ad92",
+    "conclusion": "success",
+    "package_manifest_verified": true,
+    "tests": {
+      "tests": 1289,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 92.8399357601713,
+    "packaged_native_check": {
+      "edition": "0.5.9",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_actions": 104,
+      "burst_cases": 54,
+      "final_positions_and_releases_verified": true
+    }
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "CleverSwitch-Windows-34fe566f8623d3801ebe90f71c4a46ee2b22ad92",
+      "id": 12124535852,
+      "sha256": "994036191b40b1ab3c906e8f01d5d288f8db6004041fd00bc1860abd7e1c3c31"
+    },
+    {
+      "name": "Windows-validation-34fe566f8623d3801ebe90f71c4a46ee2b22ad92",
+      "id": 12123918277,
+      "sha256": "dd63b57021ab4cba5b66958daf4896e65fcf402a1c37fca678bf42f75a1db1bb"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Loopback tests and native builds do not prove physical mouse/keyboard smoothness or Wi-Fi latency",
+    "Home Windows, actual keyboard recovery, displays, sleep, DHCP and energy have not been accepted with this candidate",
+    "No OS protection, permissions, firewall, router, VPN, pairing or login configuration changed"
+  ],
+  "remaining": [
+    "Joint physical acceptance in both directions from the same candidate",
+    "Easy-Switch, monitor changes, sleep, DHCP and energy measurements"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.9.zip",
+      "sha256": "87612cb3f98e148554181df4c0d5e7b4ec73a1c15bd708dfb7417b6ead300001"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.9.zip",
+      "sha256": "994036191b40b1ab3c906e8f01d5d288f8db6004041fd00bc1860abd7e1c3c31"
+    }
+  }
+}
