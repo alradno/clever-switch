@@ -1,0 +1,125 @@
+{
+  "edition": "0.5.17",
+  "source_commit": "94e3668c30b44698f7b193d9a666d7b685a6de2b",
+  "observed_at": "2026-10-18T07:50:13.743406+00:00",
+  "scope": "production_native_adapters_with_simulated_OS_APIs_and_real_loopback_TLS_UDP",
+  "changes": [
+    "Mac lock synchronization uses its last successfully posted Caps Lock state before WindowServer applies the queue",
+    "Failed native event preparation or posting restores the previously recorded Caps Lock state",
+    "Physical Caps Lock events continue to override the posted state; no new polling, threads, input delay or protocol changes"
+  ],
+  "regression": {
+    "reference_commit": "09b041ee2486e61ecead70a581163c3a791c0572",
+    "baseline_platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "baseline_adapter_sha256": "2a453eb8779b85ab653d1eaca0e2bce9a3772beb0219efba735a0d4dc00b890d",
+    "baseline": {
+      "tests": 26,
+      "failures": 26,
+      "errors": 0,
+      "skipped": 0
+    },
+    "targeted": {
+      "tests": 256,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cases_added": 26,
+    "quick_crossing_cases": 8,
+    "native_ordering_cases": 2,
+    "native_failure_cases": 16,
+    "checks": [
+      "Caps Lock initially enabled and disabled; both source roles and TLS/hybrid transport",
+      "Mac becomes the source before its queued native Caps Lock posts are applied",
+      "The first subsequent Windows key uses the expected Caps Lock state; channel remains available",
+      "Repeated synchronization and following key flags preserve ordered state without waiting for the OS queue",
+      "Empty event, creation exception, metadata exception and post exception preserve state with or without an earlier queued toggle"
+    ],
+    "native_input": false
+  },
+  "local": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "tests": {
+      "tests": 1705,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "ruff": "passed",
+    "coverage_percent": 92.86185512600606,
+    "mac_build": {
+      "edition": "0.5.17",
+      "built_at": "2026-10-18T07:42:30.396794+00:00",
+      "signature_valid": true,
+      "modules_match_sources": 26,
+      "preview_exit_code": 0,
+      "installed": false,
+      "installed_edition": "0.5.1",
+      "executable_sha256": "a298276b01ecfbf8d720afd5d366962fea5c4782a53d1e88f1014b6e9d689fc1"
+    }
+  },
+  "ci_windows": {
+    "url": "https://github.com/alradno/clever-switch/actions/runs/39108698172",
+    "head_sha": "94e3668c30b44698f7b193d9a666d7b685a6de2b",
+    "conclusion": "success",
+    "tests": {
+      "tests": 1705,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage_percent": 93.04938594199112,
+    "packaged_native_check": {
+      "edition": "0.5.17",
+      "platform": "win32",
+      "ready": true,
+      "checks": {
+        "interactive_session": true
+      }
+    },
+    "existing_benchmarks": {
+      "network_cases": 52,
+      "ordered_network_actions": 104,
+      "burst_cases": 54,
+      "recovery_cases": 36,
+      "ordered_recovery_actions": 144,
+      "pixels_checked": 53000,
+      "incorrect_pixels": 0,
+      "positions_order_releases_and_finite_recovery_verified": true
+    },
+    "package_manifest_verified": true
+  },
+  "downloaded_artifacts": [
+    {
+      "name": "Windows-validation-94e3668c30b44698f7b193d9a666d7b685a6de2b",
+      "id": 12129945360,
+      "sha256": "d520991ed689ab437ce32c03ef02bec30cae97e97d679e41f4d7b7550b36576d"
+    },
+    {
+      "name": "CleverSwitch-Windows-94e3668c30b44698f7b193d9a666d7b685a6de2b",
+      "id": 12128958713,
+      "sha256": "0691d925bcc7530fc32c761d139e6548fabce65314e3d01f3fdbaadb1db46966"
+    }
+  ],
+  "installed": {
+    "mac_rechecked": "0.5.1",
+    "windows_last_observed_not_rechecked": "0.5.0",
+    "new_candidate_installed": false
+  },
+  "limits": [
+    "Native input APIs and delayed application of Caps Lock events are simulated; TLS/UDP loopback is real",
+    "This proves the tested ordering and failure cases, not physical Wi-Fi latency or peripheral acceptance",
+    "Fluency, Easy-Switch, displays, sleep/DHCP and battery still require joint physical acceptance"
+  ],
+  "packages": {
+    "Mac": {
+      "file": "CleverSwitch-Mac-0.5.17.zip",
+      "sha256": "19b40505c0b56c125c440f4af366febc0cbc5a4b5067c3d22ea5458341d7bde2"
+    },
+    "Windows": {
+      "file": "CleverSwitch-Windows-0.5.17.zip",
+      "sha256": "0691d925bcc7530fc32c761d139e6548fabce65314e3d01f3fdbaadb1db46966"
+    }
+  }
+}
