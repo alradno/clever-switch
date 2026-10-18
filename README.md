@@ -38,6 +38,11 @@ causando pausas de 81–88 ms en la entrega. No mide la red doméstica ni reprod
 pérdida de paquetes. La coalescencia no puede eliminar una pausa de transporte.
 [Medidas y límites](docs/validation/input-0.5.4-network-delay.json).
 
+El [laboratorio de movimiento](docs/MOTION-LAB.md) estudia una vía cifrada que
+tolera pérdidas sin detener los movimientos posteriores y conserva las posiciones
+de las acciones. Es un prototipo independiente; todavía no está incluido en la
+candidata 0.5.4 ni en las apps instaladas.
+
 Se conserva la recuperación de pantallas de 0.5.3, que responde a los avisos
 nativos de cambio de pantalla en ambos equipos.
 Cancela la entrada que usa coordenadas antiguas, libera teclas y botones y vuelve
