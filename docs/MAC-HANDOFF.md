@@ -24,6 +24,11 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.
+- Validación adicional 0.5.18: 24 escenarios por plataforma con retrasos UDP
+  variables, reordenamiento, pérdidas y retención de 40 ms, desde la negociación.
+  Se verifican 48 acciones por ejecución, posición final, liberaciones y ausencia
+  de retrocesos. Código y paquetes sin cambios; la pausa de red sigue siendo
+  perceptible. Véase `validation/input-0.5.18-datagram-jitter.json`.
 - Rendimiento 0.4.6: borde de 80 ms y cursor colocado al confirmar el ratón,
   sin esperar al teclado ni repetir la colocación tras perder un ACK. Seguimiento
   del teclado en un único hilo separado, con descarte tras reconexión; descubrimiento
