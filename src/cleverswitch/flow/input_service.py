@@ -199,6 +199,10 @@ class Service:
             return session.phase, session.epoch
 
     def _active(self, channel, active):
+        if active:
+            # A remote arrival must not reuse arming from the earlier local
+            # cursor. Fresh local motion will rearm after this focus ends.
+            self.armed = False
         channel.set_active(active)
         if hasattr(self.backend, "set_active"):
             self.backend.set_active(active)

@@ -418,6 +418,7 @@ class MacInput:
                 # Posting is asynchronous: a following click must use this
                 # ordered position, not a stale WindowServer cursor snapshot.
                 self.injected_point = point
+                self.previous = tuple(point)
         elif packet.kind == Kind.WHEEL:
             horizontal, vertical = packet.values
             event = q.CGEventCreateScrollWheelEvent(
