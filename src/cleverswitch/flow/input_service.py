@@ -346,7 +346,7 @@ class Service:
         session = self.session
         if session.phase == "receiving":
             if dx or dy:
-                session.cancel("physical")
+                self._pointer_takeover()
                 self.armed = self._local_interior(x, y)
             return False
         if session.phase in ("sending", "requesting"):
@@ -393,12 +393,28 @@ class Service:
             self.armed = False
             return True
         if self.session.phase == "receiving":
-            self.session.cancel("physical")
+            if kind == Kind.BUTTON:
+                self._pointer_takeover()
+            else:
+                self.session.cancel("physical")
             return False
         return self.session.input(kind, code, down)
 
     def _escape_chord(self):
         return all(self.keys & pair for pair in ({0xE0, 0xE4}, {0xE1, 0xE5}, {0xE2, 0xE6}))
+
+    def _pointer_takeover(self):
+        point = None
+        try:
+            point = getattr(self.backend, "local_takeover", lambda: None)()
+        finally:
+            try:
+                self.session.cancel("physical")
+            finally:
+                if point is not None and not (
+                    self.session.unreleased or self.session.pending_locks is not None or self.session.pending_capture
+                ):
+                    self.backend.restore(point)
 
     @native_callback
     def key(self, code, down):
@@ -431,7 +447,7 @@ class Service:
         if not self._available():
             return False
         if self.session.phase == "receiving":
-            self.session.cancel("physical")
+            self._pointer_takeover()
             return False
         return self.session.input(Kind.WHEEL, horizontal, vertical)
 

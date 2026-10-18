@@ -105,6 +105,7 @@ class WindowsInput:
         self.hidden = False
         self.restore_pending = None
         self.anchor = self.saved = self.previous = None
+        self.physical_position = None
         self.held_keys, self.held_buttons = set(), set()
         self.wheel_remainder = [0.0, 0.0]
         self.dispatch = Dispatch(self._wake_control)
@@ -351,6 +352,10 @@ class WindowsInput:
         if event.extra == EVENT_TAG or event.flags & 1:
             return self._next(code, message, raw)
         try:
+            if not self.captured:
+                self.physical_position = event.point.x, event.point.y
+                if message != 0x200:
+                    self.previous = self.physical_position
             swallowed = False
             if message == 0x200:
                 point = event.point.x, event.point.y
@@ -380,6 +385,14 @@ class WindowsInput:
         # UIPI failures are terminal for this focus. Never retry in a busy loop.
         if self.api.SendInput(1, c.byref(event), c.sizeof(Input)) != 1:
             raise PermissionError("Windows rechazó la entrada")
+
+    def local_takeover(self):
+        if self.physical_position is not None and self.previous != self.physical_position:
+            # A queued local cancellation owns its physical position even if
+            # a remote SendInput completed while the session lock was held.
+            # Restore only after releasing the remote drag and modifiers.
+            return self.physical_position
+        return None
 
     def _mouse_input(self, flags, data=0, x=0, y=0):
         event = Input(kind=0)
@@ -496,6 +509,7 @@ class WindowsInput:
         self.held_buttons.clear()
         self.capture(False)
         self.pointer_desktop = None
+        self.physical_position = None
         self.health.close()
         if self.device_monitor is None and self.display_monitor is None:
             self.display_invalidated = False

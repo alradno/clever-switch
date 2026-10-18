@@ -66,6 +66,7 @@ class MacInput:
         self.caps = False
         self.last_click = None
         self.injected_point = None
+        self.physical_position = None
         self.injected_caps = None
 
     @property
@@ -256,6 +257,7 @@ class MacInput:
             self.held_keys.add(usage) if down else self.held_keys.discard(usage)
             return self.sink.key(usage, down)
         if kind == q.kCGEventScrollWheel:
+            self._mouse_point(event)
             # Quartz fixed-point deltas are exposed as doubles by this API.
             vertical = q.CGEventGetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis1)
             horizontal = -q.CGEventGetDoubleValueField(event, q.kCGScrollWheelEventFixedPtDeltaAxis2)
@@ -266,8 +268,7 @@ class MacInput:
             q.kCGEventRightMouseDragged,
             q.kCGEventOtherMouseDragged,
         ):
-            location = q.CGEventGetLocation(event)
-            point = location.x, location.y
+            point = self._mouse_point(event)
             previous = self.anchor if self.captured else self.previous or point
             self.previous = point
             if self.captured and point == self.anchor:
@@ -284,9 +285,38 @@ class MacInput:
             buttons[kind] = button, int(kind == q.kCGEventOtherMouseDown)
         if kind in buttons:
             button, down = buttons[kind]
+            point = self._mouse_point(event)
             self.held_buttons.add(button) if down else self.held_buttons.discard(button)
-            return self.sink.button(button, down)
+            swallowed = self.sink.button(button, down)
+            if down and not swallowed:
+                # Quartz counted this local click. Keep it in the same history
+                # as delivered remote clicks, without counting forwarded or
+                # tagged events that never reached local applications.
+                count = q.CGEventGetIntegerValueField(event, q.kCGMouseEventClickState)
+                self.last_click = self.clock(), button, point, max(1, min(3, count))
+            return swallowed
         return False
+
+    def _mouse_point(self, event):
+        location = self.q.CGEventGetLocation(event)
+        point = location.x, location.y
+        if not self.captured:
+            # A local event can cancel remote dragging synchronously. Release
+            # its buttons at this position, not at the last remote coordinate.
+            self.injected_point = point
+            self.physical_position = point
+        return point
+
+    def local_takeover(self):
+        """Prepare releases and return any position to restore after them."""
+        point = self.physical_position
+        if point is not None:
+            displaced = self.injected_point != point
+            self.injected_point = point
+            self.previous = point
+            if displaced:
+                return point
+        return None
 
     def _position(self):
         event = self.q.CGEventCreate(None)
@@ -398,7 +428,7 @@ class MacInput:
             event = q.CGEventCreateMouseEvent(None, kind, point, button)
             if packet.kind == Kind.BUTTON and event is not None:
                 count = 1
-                now = time.monotonic()
+                now = self.clock()
                 if down:
                     if self.last_click is not None:
                         previous_time, previous_button, previous_point, previous_count = self.last_click
@@ -442,7 +472,9 @@ class MacInput:
         self.held_keys.clear()
         self.held_buttons.clear()
         self.injected_point = None
+        self.physical_position = None
         self.injected_caps = None
+        self.last_click = None
         self.health.close()
         if self.device_monitor is None and self.display_monitor is None:
             self.display_invalidated = False
