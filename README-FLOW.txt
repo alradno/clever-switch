@@ -1,4 +1,4 @@
-CLEVERSWITCH FLOW — candidata experimental 0.5.13, Windows 1 y Mac 2
+CLEVERSWITCH FLOW — candidata experimental 0.5.14, Windows 1 y Mac 2
 
 Para MX Keys original + MX Master 3. Windows delante/a la izquierda, Mac a la derecha.
 Basado en CleverSwitch v1.5.7 (de0a4f4f4b996a63bbdf2e368c93eb3843eb2732), GPL-3.0-or-later.
@@ -10,6 +10,25 @@ No transmite el escritorio. Conserva el enlace, protocolo de control 2, protocol
 de entrada 1 y los puertos. El menú Ratón y teclado por red (experimental) requiere
 activación explícita en ambos. Easy-Switch permanece en el propio dispositivo.
 
+REVISIÓN 0.5.14
+La 0.5.14 evita que un estado antiguo de compañero no disponible cierre
+una conexión de entrada que ya se ha autenticado y está preparada. Al recuperar
+la disponibilidad, conserva ese canal y sus observadores en Mac y Windows.
+La sesión y los permisos locales siguen comprobándose; un fallo local libera
+la entrada. Sin un canal preparado, el estado no disponible sigue impidiendo
+iniciar la captura o reintentar la conexión. No añade sondeos, hilos ni cambios
+de protocolo y conserva la espera pasiva cuando el compañero está ausente.
+
+Pasan 1.545 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+26 casos y pasan 110 pruebas focalizadas. De los 26 casos, 16 fallaban con 0.5.13.
+Se comprueba el estado antiguo en cualquiera de los extremos, con el control
+local o remoto, en ambos sentidos y con TLS o transporte híbrido. Se conservan
+las teclas, el arrastre, el canal y los observadores; la indisponibilidad local
+sigue liberando ambos dispositivos. Las APIs de entrada están simuladas y TLS/UDP
+usan loopback. La aceptación física de fluidez, recuperación y consumo sigue pendiente.
+
+Evidencia: docs/validation/input-0.5.14-readiness.json. Candidata sin instalar.
+
 REVISIÓN 0.5.13
 La 0.5.13 conserva la posición del ratón local cuando recupera el control
 durante un arrastre remoto. Si había un movimiento remoto en curso, primero
@@ -20,7 +39,7 @@ También corrige el historial de clics del Mac: un clic local intermedio rompe
 la secuencia remota anterior, y un doble o triple clic local conserva el contador
 que entrega macOS. No añade sondeos, hilos ni consultas de pantalla por movimiento.
 
-Pasan 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
+La validación de 0.5.13 registró 1.519 pruebas por plataforma, Ruff y ambas compilaciones. Se añadieron
 70 casos y pasan 293 pruebas focalizadas. De 56 casos comparados con 0.5.12,
 44 fallaban antes y 12 ya pasaban. Otros 12 casos comprueban fallos de preparación,
 restauración y liberación. Se prueba movimiento, clic y rueda locales durante
