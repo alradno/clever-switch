@@ -1,7 +1,16 @@
-# Continuación en Windows — candidata conjunta 0.5.7 experimental
+# Continuación en Windows — candidata conjunta 0.5.8 experimental
 
 Usar este repositorio como fuente común. Revisar `git status` antes de
 `git pull --ff-only` y conservar cambios locales. No partir de ZIP anteriores.
+
+La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
+junto al borde después de recibir control remoto. Cada nuevo foco descarta la
+habilitación anterior del borde; un movimiento local nuevo hacia el interior
+lo vuelve a habilitar. Se aplica en ambos sentidos y también tras cancelar con
+un teclado o ratón local. Si el movimiento físico ya entra en el interior,
+permite cruzar en el siguiente movimiento, sin otro paso previo. En Mac, el primer
+movimiento local usa la última posición recibida, igual que Windows, sin calcular
+un salto desde una posición antigua.
 
 La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
 ordenador de origen. Calcula la altura donde la trayectoria toca el borde,
@@ -51,13 +60,15 @@ sintética, no latencia de Wi-Fi o de periféricos. Una acción retenida sigue
 frenando el movimiento que la sucede para conservar su significado.
 Reproducir con benchmarks/input_hybrid.py.
 
-Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Las 201 pruebas
-centradas en estos cambios incluyen 64 ciclos de ida y vuelta rápida, con las
-APIs de ambos sistemas simuladas y TLS/UDP reales en loopback. Se reprodujeron
-21 casos de fallo antes de corregirlos. La prueba física de fluidez y estabilidad
-sigue pendiente; estos resultados no miden la latencia del ratón por Wi-Fi. La comprobación
+Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
+cubren llegada, regreso, cancelación local y el primer desplazamiento en ambos
+adaptadores, con y sin notificación del evento generado. También comprueban la
+inversión inmediata tras recuperar control moviendo físicamente hacia el interior.
+Catorce fallaban antes de sus respectivas correcciones.
+Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback;
+conservan además los 64 ciclos de ida y vuelta rápida. La aceptación física sigue pendiente. La comprobación
 del ejecutable Windows y las medidas del banco en CI se registran con su commit
-en `validation/input-0.5.7-crossing.json`. `experiments/` reutiliza los módulos de
+en `validation/input-0.5.8-arrival.json`. `experiments/` reutiliza los módulos de
 producción; la vía rápida ya forma parte de la candidata. Mac y Windows deben
 probarse desde el mismo commit y edición.
 

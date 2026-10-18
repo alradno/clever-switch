@@ -6,6 +6,34 @@ Los módulos de producción son `input_motion.py`, `input_motion_link.py` e
 ya no mantienen una segunda implementación. No se ha instalado la candidata.
 La validación utiliza entrada sintética y sockets reales en loopback.
 
+## Control local después de una llegada en 0.5.8
+
+La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
+junto al borde después de recibir control remoto. Cada nuevo foco descarta la
+habilitación anterior del borde; un movimiento local nuevo hacia el interior
+lo vuelve a habilitar. Se aplica en ambos sentidos y también tras cancelar con
+un teclado o ratón local. Si el movimiento físico ya entra en el interior,
+permite cruzar en el siguiente movimiento, sin otro paso previo. En Mac, el primer
+movimiento local usa la última posición recibida, igual que Windows, sin calcular
+un salto desde una posición antigua.
+
+Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Los 16 casos nuevos
+cubren llegada, regreso, cancelación local y el primer desplazamiento en ambos
+adaptadores, con y sin notificación del evento generado. También comprueban la
+inversión inmediata tras recuperar control moviendo físicamente hacia el interior.
+Catorce fallaban antes de sus respectivas correcciones.
+Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback;
+conservan además los 64 ciclos de ida y vuelta rápida. La aceptación física sigue pendiente.
+
+La regresión empieza con el borde del destino habilitado por uso local previo.
+Recibe el control remoto y lo termina mediante regreso normal o pulsación local.
+Un movimiento de una unidad hasta el borde debe quedarse local; entrar hacia el
+interior y cruzar después debe funcionar. Se prueba con los dos orígenes y con
+TLS solo o TLS/UDP. Otra prueba comprueba el primer delta tras la última posición
+inyectada, tanto si llega su notificación marcada como si no llega.
+
+Evidencia: [validación 0.5.8](validation/input-0.5.8-arrival.json).
+
 ## Continuidad del cruce en 0.5.7
 
 La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al

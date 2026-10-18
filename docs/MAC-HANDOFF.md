@@ -13,18 +13,18 @@ fallos intermitentes. No hay aún validación física de 0.4.0 en los dos equipo
 
 ## Estado disponible
 
-- Candidata conjunta actual: **0.5.7 experimental**, protocolo de control 2 y entrada 1.
-  Conserva el recorrido restante y la altura del punto de cruce al volver al origen,
-  evita cruzar por huecos entre monitores y conserva el primer movimiento local.
-  Los regresos amplios permiten invertir el recorrido enseguida; los pequeños
-  mantienen la protección contra rebotes. Corrige el cierre de una conexión sana
-  durante una restauración de teclado todavía en curso.
-  Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones; cobertura Mac
-  92,56 % y Windows 92,79 %.
-  Las 201 pruebas focalizadas incluyen 64 ciclos de ida y vuelta rápida en los dos
-  sentidos y transportes. APIs de entrada simuladas, TLS/UDP reales en loopback.
-  Se reprodujeron 21 casos de fallo antes de sus correcciones. No es aceptación física.
-  Véanse `validation/input-0.5.7-crossing.json` y [MOTION-LAB.md](MOTION-LAB.md).
+- Candidata conjunta actual: **0.5.8 experimental**, protocolo de control 2 y entrada 1.
+  Cada nuevo foco retira la habilitación previa del borde para evitar que un pequeño
+  movimiento local reclame al compañero tras recibir control remoto. El primer
+  desplazamiento local del Mac usa la última posición recibida, igual que Windows.
+  Recuperar el control moviendo hacia el interior permite cruzar en el siguiente
+  movimiento, sin otro paso previo.
+  Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Hay 16 casos nuevos:
+  14 fallaban antes de sus respectivas correcciones; los dos controles Windows
+  del primer delta ya eran correctos.
+  Las 157 pruebas focalizadas usan APIs simuladas y TLS/UDP reales en loopback.
+  Se conservan los 64 ciclos rápidos y las mejoras geométricas de 0.5.7.
+  Véanse `validation/input-0.5.8-arrival.json` y [MOTION-LAB.md](MOTION-LAB.md).
   No instalar candidatas intermedias ni pedir pruebas al usuario ausente. Mac conserva
   0.5.1; el último Windows doméstico observado tenía 0.5.0. Quedan pendientes fluidez,
   Easy-Switch, pantallas, reposo/DHCP y consumo con hardware real en ambos sentidos.

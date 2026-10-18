@@ -1,8 +1,18 @@
-CLEVERSWITCH 0.5.7 — ENTRADA POR LAN EXPERIMENTAL
+CLEVERSWITCH 0.5.8 — ENTRADA POR LAN EXPERIMENTAL
 Candidata conjunta del 18 de octubre de 2026. Prueba física al volver el usuario.
-Pasan 1.253 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
-validation/input-0.5.7-crossing.json. No instalada: Mac conserva 0.5.1;
+Pasan 1.269 pruebas por plataforma, Ruff y ambas compilaciones. Evidencia:
+validation/input-0.5.8-arrival.json. No instalada: Mac conserva 0.5.1;
 el último estado observado del Windows doméstico corresponde a 0.5.0.
+
+MEJORAS 0.5.8
+La 0.5.8 evita que el destino reclame al otro equipo con un pequeño movimiento
+junto al borde después de recibir control remoto. Cada nuevo foco descarta la
+habilitación anterior del borde; un movimiento local nuevo hacia el interior
+lo vuelve a habilitar. Se aplica en ambos sentidos y también tras cancelar con
+un teclado o ratón local. Si el movimiento físico ya entra en el interior,
+permite cruzar en el siguiente movimiento, sin otro paso previo. En Mac, el primer
+movimiento local usa la última posición recibida, igual que Windows, sin calcular
+un salto desde una posición antigua.
 
 MEJORAS 0.5.7
 La 0.5.7 conserva el movimiento que queda después de cruzar de vuelta al
