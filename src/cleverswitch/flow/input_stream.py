@@ -10,19 +10,29 @@ import ssl
 import threading
 import time
 
-from .input_protocol import Decoder, Kind, Outbox, Packet
+from .input_hybrid import MotionLane
+from .input_motion_link import bootstrap
+from .input_protocol import Decoder, Kind, Outbox, Packet, Routed
 
 
 class Channel:
-    def __init__(self, connection, on_packet, on_close, on_tick=None, active_interval=0.1, active_timeout=0.6):
+    def __init__(
+        self, connection, on_packet, on_close, on_tick=None, active_interval=0.1, active_timeout=0.6,
+        *, motion_link=None, focus=None,
+    ):
         if not 0.01 <= active_interval < active_timeout <= 5:
             raise ValueError("Plazos de entrada inválidos")
         self.connection, self.on_packet, self.on_close = connection, on_packet, on_close
         self.on_tick = on_tick or (lambda: None)
         self.interval, self.timeout = active_interval, active_timeout
         self.outbox = Outbox()
+        self.wirebox = Outbox() if motion_link is not None else self.outbox
+        self.motion_link, self.focus = motion_link, focus
+        self.negotiation = self.lane = self.inbox = self.transport = None
+        self._start_lock = threading.RLock()
         self.stop = threading.Event()
         self.finished = threading.Event()
+        self.ready = threading.Event()
         self.active = threading.Event()
         self.wake_reader, self.wake_writer = socket.socketpair()
         self.wake_reader.setblocking(False)
@@ -37,11 +47,33 @@ class Channel:
         self._finalize_lock = threading.Lock()
 
     def start(self):
-        if self.worker is not None or self.stop.is_set():
-            raise RuntimeError("Canal de entrada ya iniciado o cerrado")
-        self.connection.setblocking(False)
-        self.worker = threading.Thread(target=self._run, name="flow-input-tls", daemon=True)
-        self.worker.start()
+        with self._start_lock:
+            if self.worker is not None or self.stop.is_set():
+                raise RuntimeError("Canal de entrada ya iniciado o cerrado")
+            try:
+                if self.motion_link is not None:
+                    self.transport = self.motion_link.motion_transport
+                    if self.transport is None or not self.transport.motion_ready() or self.focus is None:
+                        raise ConnectionError("Transporte de movimiento no disponible")
+                    self.negotiation = bootstrap(self.connection, self.motion_link)
+                    peer = self.connection.getpeername()[0], self.transport.peer_port
+                    self.inbox = self.transport.motion.register(
+                        self.negotiation.codec, peer, self.motion_link.config["network"], self._wake,
+                        testing=self.motion_link.pairing.testing,
+                    )
+                    self.lane = MotionLane(
+                        self.negotiation.codec, lambda raw: self.transport.send_motion(raw, peer),
+                        self.wirebox.put, self.on_packet, self.focus,
+                    )
+                if self.stop.is_set():
+                    raise ConnectionError("Canal de entrada cancelado")
+                self.connection.setblocking(False)
+                worker = threading.Thread(target=self._run, name="flow-input-tls", daemon=True)
+                worker.start()
+                self.worker = worker
+            except Exception:
+                self._finalize()
+                raise
 
     def _wake(self):
         try:
@@ -122,6 +154,8 @@ class Channel:
                     and packets
                     and packets[-1].kind == Kind.MOVE
                     and packet.epoch == packets[-1].epoch
+                    and type(packet) is type(packets[-1])
+                    and (not isinstance(packet, Routed) or packet.action == packets[-1].action)
                 ):
                     packets[-1] = packet
                     self.received_coalesced += 1
@@ -132,7 +166,7 @@ class Channel:
         return packets, needs_write
 
     def _run(self):
-        decoder = Decoder()
+        decoder = Decoder(routed=self.lane is not None)
         tx = b""
         tx_count = 0
         sequence = ping = 0
@@ -142,6 +176,9 @@ class Channel:
         next_ping, last_rx, active_since = now + 15, now, now
         write_waits_read = read_waits_write = False
         try:
+            if self.lane is not None:
+                self.lane.start(now)
+            self.ready.set()
             while not self.stop.is_set():
                 now = time.monotonic()
                 active = self.active.is_set()
@@ -153,6 +190,14 @@ class Channel:
                 self.on_tick()
                 if self.stop.is_set():
                     break
+                if self.lane is not None:
+                    for raw in self.inbox.take():
+                        if self.stop.is_set():
+                            break
+                        self.lane.receive_datagram(raw, time.monotonic())
+                    self.lane.tick(time.monotonic())
+                    for packet in self.outbox.take():
+                        self.lane.outgoing(packet, time.monotonic())
                 if (pending_ping and now >= pending_ping[1]) or (
                     active and now - max(last_rx, active_since) >= self.timeout
                 ):
@@ -166,9 +211,14 @@ class Channel:
                 # transfer. An idle connected session sleeps for up to 15 s.
                 deadlines = [now + (self.interval if active else 15)]
                 deadlines.append(pending_ping[1] if pending_ping else next_ping)
+                if self.lane is not None:
+                    if self.lane.deadline is not None:
+                        deadlines.append(self.lane.deadline)
+                    if self.outbox.pending():
+                        deadlines.append(now)
                 timeout = max(0, min(deadlines) - now)
                 pending = self.connection.pending() if hasattr(self.connection, "pending") else 0
-                wants_write = (tx or self.outbox.pending()) and not write_waits_read
+                wants_write = (tx or self.wirebox.pending()) and not write_waits_read
                 readable, writable, _ = select.select(
                     [self.connection, self.wake_reader],
                     [self.connection] if wants_write or read_waits_write else [],
@@ -196,7 +246,10 @@ class Channel:
                                     pending_ping = None
                             else:
                                 self.received += 1
-                                self.on_packet(packet)
+                                if self.lane is None:
+                                    self.on_packet(packet)
+                                else:
+                                    self.lane.receive_reliable(packet)
                     except (ssl.SSLWantReadError, BlockingIOError):
                         read_waits_write = False
                     except ssl.SSLWantWriteError:
@@ -207,7 +260,7 @@ class Channel:
                     # Keep unsent motion coalescible while the socket is busy.
                     # Freeze a batch only just before its first write; after a
                     # TLS retry or partial write the exact bytes must survive.
-                    items = self.outbox.take()
+                    items = self.wirebox.take()
                     tx_count = len(items)
                     tx = b"".join(item.encode(sequence + i) for i, item in enumerate(items, 1))
                     sequence += tx_count
@@ -242,7 +295,15 @@ class Channel:
                 return
             self._finalized = True
         self.stop.set()
+        self.ready.clear()
         self.outbox.close()
+        self.wirebox.close()
+        if self.inbox is not None:
+            self.transport.motion.unregister(self.inbox)
+        if self.lane is not None:
+            self.lane.close()
+        if self.negotiation is not None:
+            self.negotiation.close()
         for sock in (self.connection, self.wake_reader, self.wake_writer):
             try:
                 sock.close()
@@ -257,11 +318,13 @@ class Channel:
 
     def close(self):
         self.request_close()
-        if self.worker is None:
-            self._finalize()
-        elif self.worker is not threading.current_thread():
-            self.worker.join(timeout=2)
-            if self.worker.is_alive():
+        with self._start_lock:
+            worker = self.worker
+            if worker is None:
+                self._finalize()
+        if worker is not None and worker is not threading.current_thread():
+            worker.join(timeout=2)
+            if worker.is_alive():
                 raise RuntimeError("El trabajador de entrada no ha terminado")
 
     def request_close(self):

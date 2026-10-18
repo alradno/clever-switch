@@ -82,6 +82,7 @@ class Link:
         self.input_channel = None
         self.input_lock = threading.Lock()
         self.input_opening = False
+        self.motion_transport = None
 
     def start(self):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -280,8 +281,12 @@ class Discovery:
     _epoch_lock = threading.Lock()
     _last_epoch = 0
 
-    def __init__(self, link):
+    def __init__(self, link, port=PORT + 1):
+        from .input_motion_link import DatagramMux
+
         self.link = link
+        self.port = self.peer_port = port
+        self.motion = DatagramMux(self.accept)
         self.secret = base64.b64decode(link.config["secret"])
         self.seen = collections.deque(maxlen=256)
         self.worker = None
@@ -389,8 +394,11 @@ class Discovery:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         # Broadcast reception requires wildcard UDP binding. Packets cannot issue
         # commands and must pass HMAC + subnet checks; control uses private-IP TLS.
-        sock.bind(("0.0.0.0", PORT + 1))
+        sock.bind(("0.0.0.0", self.port))
+        self.port = sock.getsockname()[1]
+        sock.setblocking(False)
         self.wake_reader, self.wake_writer = socket.socketpair()
+        self.link.motion_transport = self
         self.worker = threading.Thread(target=self._run, name="flow-discovery", daemon=True)
         self.worker.start()
 
@@ -402,7 +410,9 @@ class Discovery:
                 if self.wake_reader in readable:
                     return
                 raw, sender = self.socket.recvfrom(513)
-                kind = self.accept(raw, sender[0])
+                kind = self.motion.receive(raw, sender)
+            except BlockingIOError:
+                continue
             except OSError:
                 return
             if kind == "available":
@@ -427,15 +437,33 @@ class Discovery:
             sent, error = False, None
             for target in dict.fromkeys(targets):
                 try:
-                    sender.sendto(packet, (target, PORT + 1))
+                    sender.sendto(packet, (target, self.peer_port))
                     sent = True
                 except OSError as exc:
                     error = exc
             if not sent and error:
                 raise error
 
+    def motion_ready(self):
+        return (
+            self.socket is not None
+            and self.socket.fileno() >= 0
+            and self.worker is not None
+            and self.worker.is_alive()
+            and not self.stop_event.is_set()
+            and not self.link.stop_event.is_set()
+        )
+
+    def send_motion(self, raw, peer):
+        if not self.motion_ready():
+            raise ConnectionError("Movimiento UDP no disponible")
+        self.socket.sendto(raw, peer)
+
     def close(self):
         self.stop_event.set()
+        if self.link.motion_transport is self:
+            self.link.motion_transport = None
+        self.motion.close()
         if self.wake_writer:
             try:
                 self.wake_writer.send(b"x")

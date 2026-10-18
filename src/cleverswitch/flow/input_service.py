@@ -14,6 +14,7 @@ import threading
 import time
 
 from .input_geometry import Desktop
+from .input_motion_link import CAPABILITY, supports_motion
 from .input_protocol import VERSION, Kind
 from .input_session import Session
 from .input_stream import Channel
@@ -82,17 +83,25 @@ class Service:
         if self.closed or not self.enabled or not self.can_start() or not self.backend.ready():
             raise ConnectionError("Entrada por red no disponible")
 
-    def offer(self):
+    def capabilities(self):
+        transport = getattr(self.link, "motion_transport", None)
+        return {CAPABILITY: 1} if transport is not None and transport.motion_ready() else {}
+
+    def offer(self, *, motion=False):
         self._check_ready()
         self.offered = self.backend.desktop
-        return {"version": VERSION, "displays": self.offered.wire()}
+        value = {"version": VERSION, "displays": self.offered.wire()}
+        if motion:
+            value["motion"] = 1
+        return value
 
     def _validate(self, value):
         if (
             type(value) is not dict
-            or set(value) != {"version", "displays"}
+            or set(value) not in ({"version", "displays"}, {"version", "displays", "motion"})
             or type(value["version"]) is not int
             or value["version"] != VERSION
+            or ("motion" in value and (type(value["motion"]) is not int or value["motion"] != 1))
         ):
             raise ValueError("Entrada por red incompatible")
         return Desktop.from_wire(value["displays"])
@@ -112,9 +121,10 @@ class Service:
             remote = self._validate(value)
             self.offer()
             self.remote = remote
-            return self.offer(), self.attach
+            motion = "motion" in value and supports_motion(self.capabilities())
+            return self.offer(motion=motion), lambda connection: self.attach(connection, motion=motion)
 
-    def connect(self):
+    def connect(self, capabilities=None):
         # Exactly one initiator prevents simultaneous duplicate TLS sessions.
         if self.role != "windows":
             return False
@@ -126,7 +136,10 @@ class Service:
             self.offer()
             self.connecting = True
         try:
-            self.link.open_input(self.offer(), self.attach)
+            motion = supports_motion(capabilities) and supports_motion(self.capabilities())
+            self.link.open_input(
+                self.offer(motion=motion), lambda connection, response: self.attach(connection, response, motion=motion)
+            )
             return True
         except Exception:
             self._stop_backend()
@@ -135,17 +148,20 @@ class Service:
             with self.lock:
                 self.connecting = False
 
-    def attach(self, connection, response=None):
+    def attach(self, connection, response=None, *, motion=False):
         try:
-            return self._attach(connection, response)
+            return self._attach(connection, response, motion=motion)
         except Exception:
             self._stop_backend()
             raise
 
-    def _attach(self, connection, response=None):
+    def _attach(self, connection, response=None, *, motion=False):
         with self.lock:
             if response is not None:
                 self.remote = self._validate(response)
+                if "motion" in response and not motion:
+                    raise ValueError("Transporte de movimiento no solicitado")
+                motion = motion and "motion" in response
             if self.closed or not self.enabled or self.remote is None:
                 raise ConnectionError("Entrada por red cancelada")
             self._prepare()
@@ -167,6 +183,8 @@ class Service:
                 self._receive,
                 lambda: self._ended(session),
                 self._tick,
+                motion_link=self.link if motion else None,
+                focus=lambda: self._focus(session),
             )
             session.on_active = lambda active: self._active(channel, active)
             self.session, self.channel = session, channel
@@ -174,6 +192,11 @@ class Service:
             self.armed = False
             self.on_change()
             return channel
+
+    @staticmethod
+    def _focus(session):
+        with session.lock:
+            return session.phase, session.epoch
 
     def _active(self, channel, active):
         channel.set_active(active)
@@ -276,6 +299,7 @@ class Service:
             and getattr(self.backend, "display_invalidated", False) is not True
             and self.session is not None
             and self.channel is not None
+            and self.channel.ready.is_set()
             and not self.channel.stop.is_set()
         )
 
@@ -401,4 +425,5 @@ class Service:
             "received_moves_coalesced": channel.received_coalesced if channel else 0,
             "write_calls": channel.writes if channel else 0,
             "round_trip": channel.timing() if channel else None,
+            "motion": channel.lane.diagnostic() if channel and channel.lane else {"negotiated": False},
         }

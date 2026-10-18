@@ -224,6 +224,7 @@ class Runtime:
                         "version": INPUT_VERSION,
                         "enabled": True,
                         "available": bool(self.input_service and self.input_service.backend.ready()),
+                        "capabilities": self.input_service.capabilities() if self.input_service else {},
                     },
                 }
             if op in ("follow", "prepare"):
@@ -558,7 +559,7 @@ class Runtime:
             return wait
         if service.role == "windows" and self.input_budget.due():
             try:
-                if service.connect():
+                if service.connect(peer.get("capabilities")):
                     self.input_seen_channel = service.channel
                     self.input_online_since = time.monotonic()
                     self.input_budget.suspend()

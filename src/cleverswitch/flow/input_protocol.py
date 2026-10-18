@@ -16,6 +16,8 @@ VERSION = 1
 HEADER = struct.Struct("!4sBBHQQ")
 MAGIC = b"CSFI"
 LIMIT = 128
+ROUTED = 14  # Negotiated extension; legacy channels never accept or send it.
+ROUTE = struct.Struct("!BQQdd")
 
 
 class Kind(enum.IntEnum):
@@ -84,10 +86,63 @@ class Packet:
         return HEADER.pack(MAGIC, VERSION, self.kind, len(payload), sequence, self.epoch) + payload
 
 
+@dataclasses.dataclass(frozen=True, repr=False)
+class Routed:
+    packet: Packet
+    action: int
+    serial: int
+    position: tuple
+
+    def __post_init__(self):
+        if not isinstance(self.packet, Packet) or self.kind not in (
+            Kind.MOVE, Kind.KEY, Kind.BUTTON, Kind.WHEEL, Kind.LOCKS
+        ):
+            raise ValueError("Acción de transporte inválida")
+        if (
+            type(self.action) is not int
+            or not (0 if self.kind == Kind.MOVE else 1) <= self.action < 2**64
+            or type(self.serial) is not int
+            or not 0 <= self.serial < 2**64
+        ):
+            raise ValueError("Secuencia de transporte inválida")
+        Packet(Kind.MOVE, self.epoch, self.position)
+        if self.kind == Kind.MOVE and self.packet.values != self.position:
+            raise ValueError("Posición de transporte inválida")
+
+    @property
+    def kind(self):
+        return self.packet.kind
+
+    @property
+    def epoch(self):
+        return self.packet.epoch
+
+    def encode(self, sequence):
+        if type(sequence) is not int or not 0 < sequence < 2**64:
+            raise ValueError("Secuencia de entrada inválida")
+        payload = ROUTE.pack(self.kind, self.action, self.serial, *self.position)
+        if self.kind != Kind.MOVE:
+            payload += FORMATS[self.kind].pack(*self.packet.values)
+        return HEADER.pack(MAGIC, VERSION, ROUTED, len(payload), sequence, self.epoch) + payload
+
+    @classmethod
+    def decode(cls, epoch, payload):
+        if len(payload) < ROUTE.size:
+            raise ValueError("Formato de transporte inválido")
+        code, action, serial, x, y = ROUTE.unpack_from(payload)
+        kind = Kind(code)
+        expected = 0 if kind == Kind.MOVE else FORMATS[kind].size
+        if len(payload) != ROUTE.size + expected:
+            raise ValueError("Formato de transporte inválido")
+        values = (x, y) if kind == Kind.MOVE else FORMATS[kind].unpack_from(payload, ROUTE.size)
+        return cls(Packet(kind, epoch, values), action, serial, (x, y))
+
+
 class Decoder:
-    def __init__(self):
+    def __init__(self, *, routed=False):
         self.buffer = bytearray()
         self.sequence = 0
+        self.routed = routed
 
     def feed(self, data):
         # The caller supplies bounded socket reads. Reject oversized direct input
@@ -98,19 +153,25 @@ class Decoder:
         packets = []
         while len(self.buffer) >= HEADER.size:
             magic, version, code, size, sequence, epoch = HEADER.unpack_from(self.buffer)
-            try:
-                kind = Kind(code)
-            except ValueError:
-                raise ValueError("Tipo de entrada inválido") from None
-            if magic != MAGIC or version != VERSION or size > LIMIT or size != FORMATS[kind].size:
+            extended = self.routed and code == ROUTED
+            if not extended:
+                try:
+                    kind = Kind(code)
+                except ValueError:
+                    raise ValueError("Tipo de entrada inválido") from None
+            valid_size = ROUTE.size <= size <= ROUTE.size + 16 if extended else size == FORMATS[kind].size
+            if magic != MAGIC or version != VERSION or size > LIMIT or not valid_size:
                 raise ValueError("Formato de entrada inválido")
             if sequence != self.sequence + 1:
                 raise ValueError("Secuencia de entrada inválida")
             total = HEADER.size + size
             if len(self.buffer) < total:
                 break
-            values = FORMATS[kind].unpack_from(self.buffer, HEADER.size)
-            packets.append(Packet(kind, epoch, values))
+            if extended:
+                packets.append(Routed.decode(epoch, self.buffer[HEADER.size:total]))
+            else:
+                values = FORMATS[kind].unpack_from(self.buffer, HEADER.size)
+                packets.append(Packet(kind, epoch, values))
             del self.buffer[:total]
             self.sequence = sequence
         return packets
@@ -136,7 +197,7 @@ class Outbox:
         self.coalesced = 0
 
     def put(self, packet):
-        if not isinstance(packet, Packet):
+        if not isinstance(packet, (Packet, Routed)):
             raise ValueError("Evento de entrada inválido")
         with self.lock:
             if self.closed:
@@ -147,6 +208,8 @@ class Outbox:
                 and self.items
                 and self.items[-1].kind == Kind.MOVE
                 and self.items[-1].epoch == packet.epoch
+                and type(self.items[-1]) is type(packet)
+                and (not isinstance(packet, Routed) or self.items[-1].action == packet.action)
             ):
                 self.items[-1] = packet
                 self.coalesced += 1
